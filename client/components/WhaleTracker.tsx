@@ -22,12 +22,21 @@ export function WhaleTracker() {
 
   const fetchWhaleData = async () => {
     try {
-      const response = await fetch('/api/whale-tracking');
+      const response = await fetch('/api/scan/whale-activity');
       const data = await response.json();
       setWhaleData(data);
       setLastUpdate(new Date());
     } catch (error) {
       console.error('Error fetching whale data:', error);
+      // Fallback to original endpoint
+      try {
+        const fallbackResponse = await fetch('/api/whale-tracking');
+        const fallbackData = await fallbackResponse.json();
+        setWhaleData(fallbackData);
+        setLastUpdate(new Date());
+      } catch (fallbackError) {
+        console.error('Fallback whale data error:', fallbackError);
+      }
     } finally {
       setIsLoading(false);
     }
