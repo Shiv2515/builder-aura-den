@@ -239,53 +239,47 @@ class SolanaScanner {
 
   async analyzeWithAI(tokenData: TokenMetadata, liquidityData: LiquidityPool | null): Promise<CoinAnalysis> {
     try {
-      const prompt = `
-Analyze this Solana meme coin for explosion potential:
+      console.log(`🚀 Running advanced AI ensemble analysis for ${tokenData.symbol}...`);
 
-Token Details:
-- Name: ${tokenData.name}
-- Symbol: ${tokenData.symbol}
-- Supply: ${tokenData.supply}
-- Holders: ${tokenData.holders}
-- Age: ${Math.floor((Date.now() - tokenData.createdAt) / 3600000)} hours
-
-Liquidity Data:
-- Volume 24h: $${liquidityData?.volume24h?.toFixed(0) || 'N/A'}
-- Liquidity: $${liquidityData?.liquidity?.toFixed(0) || 'N/A'}
-
-Rate this token's explosion potential (0-100) and provide:
-1. AI Score (0-100)
-2. Rug Pull Risk (low/medium/high)
-3. Prediction (bullish/bearish/neutral)
-4. Whale Activity Score (0-100)
-5. Social Buzz Score (0-100)
-6. Brief reasoning
-
-Respond in JSON format only:
-{
-  "aiScore": number,
-  "rugRisk": "low|medium|high",
-  "prediction": "bullish|bearish|neutral",
-  "whaleActivity": number,
-  "socialBuzz": number,
-  "reasoning": "string"
-}
-`;
-
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.7,
-        max_tokens: 500,
-      });
-
-      const aiResponse = JSON.parse(completion.choices[0].message.content || '{}');
-      
-      // Calculate price and market data
+      // Calculate price and market data first
       const price = (Math.random() * 0.001) + 0.000001;
       const change24h = (Math.random() - 0.5) * 200; // -100% to +100%
       const volume = liquidityData?.volume24h || Math.random() * 1000000;
       const mcap = price * Number(tokenData.supply) / Math.pow(10, tokenData.decimals);
+
+      // Run AI Ensemble Analysis
+      const ensembleResult = await aiEnsemble.getEnsembleAnalysis({
+        mint: tokenData.mint,
+        name: tokenData.name,
+        symbol: tokenData.symbol,
+        holders: tokenData.holders,
+        supply: tokenData.supply,
+        volume24h: volume,
+        liquidity: liquidityData?.liquidity || 0,
+        createdAt: tokenData.createdAt
+      });
+
+      // Run Smart Contract Analysis
+      const contractAnalysis = await contractAnalyzer.analyzeContract(tokenData.mint);
+
+      // Run Micro-Timing Analysis
+      const timingAnalysis = await microTimingPredictor.analyzeMicroTiming({
+        mint: tokenData.mint,
+        symbol: tokenData.symbol,
+        price,
+        volume,
+        liquidity: liquidityData?.liquidity || 0,
+        whaleActivity: ensembleResult.advancedMetrics.whaleManipulation,
+        socialBuzz: ensembleResult.advancedMetrics.communityStrength,
+        timestamp: Date.now()
+      });
+
+      // Enhanced reasoning with all AI insights
+      const enhancedReasoning = this.generateEnhancedReasoning(
+        ensembleResult,
+        contractAnalysis,
+        timingAnalysis
+      );
 
       return {
         mint: tokenData.mint,
@@ -295,24 +289,28 @@ Respond in JSON format only:
         change24h,
         volume,
         mcap,
-        aiScore: aiResponse.aiScore || Math.floor(Math.random() * 100),
-        rugRisk: aiResponse.rugRisk || 'medium',
-        whaleActivity: aiResponse.whaleActivity || Math.floor(Math.random() * 100),
-        socialBuzz: aiResponse.socialBuzz || Math.floor(Math.random() * 100),
-        prediction: aiResponse.prediction || 'neutral',
+        aiScore: ensembleResult.finalScore,
+        rugRisk: ensembleResult.consensusRisk,
+        whaleActivity: 100 - ensembleResult.advancedMetrics.whaleManipulation,
+        socialBuzz: ensembleResult.advancedMetrics.communityStrength,
+        prediction: ensembleResult.consensusPrediction,
         holders: tokenData.holders,
         liquidity: liquidityData?.liquidity || 0,
         createdAt: tokenData.createdAt,
-        reasoning: aiResponse.reasoning || 'Analysis based on token metrics and market conditions.'
+        reasoning: enhancedReasoning,
+        // Enhanced properties
+        ensembleAnalysis: ensembleResult,
+        contractAnalysis,
+        timingAnalysis
       };
 
     } catch (error) {
-      console.error('AI Analysis error:', error);
-      
-      // Fallback analysis
+      console.error('Advanced AI Analysis error:', error);
+
+      // Fallback to simple analysis
       const price = (Math.random() * 0.001) + 0.000001;
       const aiScore = Math.floor(Math.random() * 100);
-      
+
       return {
         mint: tokenData.mint,
         name: tokenData.name,
@@ -332,6 +330,38 @@ Respond in JSON format only:
         reasoning: 'Automated analysis based on blockchain metrics and market patterns.'
       };
     }
+  }
+
+  private generateEnhancedReasoning(ensembleResult: any, contractAnalysis: any, timingAnalysis: any): string {
+    const insights = [];
+
+    // AI Ensemble insights
+    insights.push(`Multi-AI score: ${ensembleResult.finalScore}/100 (${ensembleResult.modelAgreement}% consensus)`);
+
+    // Contract security insights
+    if (contractAnalysis.securityScore > 70) {
+      insights.push(`Secure contract (${contractAnalysis.securityScore}/100)`);
+    } else {
+      insights.push(`Contract risks detected (${contractAnalysis.securityScore}/100)`);
+    }
+
+    // Timing insights
+    const signal = timingAnalysis.currentSignal;
+    insights.push(`Current signal: ${signal.signalType.toUpperCase()} (${signal.confidence}% confidence)`);
+
+    // Risk insights
+    if (ensembleResult.advancedMetrics.rugPullProbability < 20) {
+      insights.push('Low rug pull risk');
+    } else if (ensembleResult.advancedMetrics.rugPullProbability > 60) {
+      insights.push('HIGH RUG PULL RISK');
+    }
+
+    // Whale activity insights
+    if (ensembleResult.advancedMetrics.whaleManipulation > 70) {
+      insights.push('High whale manipulation risk');
+    }
+
+    return insights.join(' • ');
   }
 
   isMemeTokenCandidate(metadata: any): boolean {
