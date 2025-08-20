@@ -53,6 +53,10 @@ interface CoinAnalysis {
   liquidity: number;
   createdAt: number;
   reasoning: string;
+  // Advanced AI properties
+  ensembleAnalysis?: any;
+  contractAnalysis?: any;
+  timingAnalysis?: any;
 }
 
 class SolanaScanner {
