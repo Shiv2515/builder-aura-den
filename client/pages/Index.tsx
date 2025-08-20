@@ -240,6 +240,11 @@ export default function Index() {
           </CardContent>
         </Card>
 
+        {/* Whale Tracker */}
+        <div className="mb-8">
+          <WhaleTracker />
+        </div>
+
         {/* Coin Analysis Results */}
         <Card className="bg-card/80 backdrop-blur-sm border-border">
           <CardHeader>
