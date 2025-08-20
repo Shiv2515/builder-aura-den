@@ -241,9 +241,10 @@ export default function Index() {
           </CardContent>
         </Card>
 
-        {/* Whale Tracker */}
-        <div className="mb-8">
+        {/* Two-column layout for Whale Tracker and Rug Pull Alerts */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
           <WhaleTracker />
+          <RugPullAlerts />
         </div>
 
         {/* Coin Analysis Results */}
