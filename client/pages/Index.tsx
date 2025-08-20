@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -15,14 +16,17 @@ import {
   CheckCircle,
   Activity,
   DollarSign,
-  Users
+  Users,
+  RefreshCw,
+  Loader,
+  ExternalLink
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WhaleTracker } from '@/components/WhaleTracker';
 import { RugPullAlerts } from '@/components/RugPullAlerts';
 
 interface CoinData {
-  id: string;
+  mint: string;
   name: string;
   symbol: string;
   price: number;
@@ -34,88 +38,108 @@ interface CoinData {
   whaleActivity: number;
   socialBuzz: number;
   prediction: 'bullish' | 'bearish' | 'neutral';
-  isScanning: boolean;
+  holders: number;
+  liquidity: number;
+  createdAt: number;
+  reasoning: string;
 }
 
-const mockCoins: CoinData[] = [
-  {
-    id: '1',
-    name: 'DogWifHat',
-    symbol: 'WIF',
-    price: 0.000234,
-    change24h: 45.2,
-    volume: 2340000,
-    mcap: 45000000,
-    aiScore: 87,
-    rugRisk: 'low',
-    whaleActivity: 73,
-    socialBuzz: 91,
-    prediction: 'bullish',
-    isScanning: false
-  },
-  {
-    id: '2',
-    name: 'Bonk',
-    symbol: 'BONK',
-    price: 0.000012,
-    change24h: -12.3,
-    volume: 1890000,
-    mcap: 123000000,
-    aiScore: 34,
-    rugRisk: 'medium',
-    whaleActivity: 23,
-    socialBuzz: 67,
-    prediction: 'bearish',
-    isScanning: false
-  },
-  {
-    id: '3',
-    name: 'SolanaSniper',
-    symbol: 'SNIPE',
-    price: 0.000789,
-    change24h: 234.7,
-    volume: 890000,
-    mcap: 12000000,
-    aiScore: 92,
-    rugRisk: 'low',
-    whaleActivity: 89,
-    socialBuzz: 85,
-    prediction: 'bullish',
-    isScanning: true
-  }
-];
+interface ScanStatus {
+  isScanning: boolean;
+  lastScanTime: number;
+  totalScanned: number;
+  rugPullsDetected: number;
+  highPotentialCoins: number;
+  scanProgress: number;
+  nextScanIn: number;
+  stats: {
+    averageAiScore: number;
+    bullishCoins: number;
+    bearishCoins: number;
+    whaleMovements: number;
+  };
+}
 
 export default function Index() {
-  const [coins, setCoins] = useState<CoinData[]>(mockCoins);
-  const [isScanning, setIsScanning] = useState(true);
-  const [scanProgress, setScanProgress] = useState(0);
-  const [totalScanned, setTotalScanned] = useState(2847);
+  const [coins, setCoins] = useState<CoinData[]>([]);
+  const [scanStatus, setScanStatus] = useState<ScanStatus | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+
+  const fetchScanStatus = async () => {
+    try {
+      const response = await fetch('/api/scan/status');
+      if (!response.ok) throw new Error('Failed to fetch scan status');
+      const data = await response.json();
+      setScanStatus(data);
+    } catch (err) {
+      console.error('Error fetching scan status:', err);
+    }
+  };
+
+  const fetchCoins = async (forceRefresh = false) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const response = await fetch(`/api/scan/coins${forceRefresh ? '?forceRefresh=true' : ''}`);
+      if (!response.ok) throw new Error('Failed to fetch coins');
+      
+      const data = await response.json();
+      setCoins(data.coins || []);
+      setLastUpdate(new Date());
+      
+      if (data.scanStatus) {
+        setScanStatus(data.scanStatus);
+      }
+    } catch (err) {
+      setError('Failed to load coin data. Starting new scan...');
+      console.error('Error fetching coins:', err);
+      startNewScan();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const startNewScan = async () => {
+    try {
+      const response = await fetch('/api/scan/start', { method: 'POST' });
+      if (!response.ok) throw new Error('Failed to start scan');
+      
+      const data = await response.json();
+      console.log('Scan started:', data.message);
+      
+      // Wait a bit then fetch results
+      setTimeout(() => fetchCoins(), 5000);
+    } catch (err) {
+      console.error('Error starting scan:', err);
+      setError('Failed to start scan. Please try again.');
+    }
+  };
 
   useEffect(() => {
+    // Initial load
+    fetchCoins();
+    fetchScanStatus();
+
+    // Auto-refresh every 30 seconds
     const interval = setInterval(() => {
-      setScanProgress((prev) => (prev >= 100 ? 0 : prev + 1));
-      setTotalScanned((prev) => prev + Math.floor(Math.random() * 3));
-      
-      if (Math.random() > 0.8) {
-        setCoins(prev => prev.map(coin => ({
-          ...coin,
-          aiScore: Math.max(0, Math.min(100, coin.aiScore + (Math.random() - 0.5) * 10)),
-          whaleActivity: Math.max(0, Math.min(100, coin.whaleActivity + (Math.random() - 0.5) * 15)),
-          socialBuzz: Math.max(0, Math.min(100, coin.socialBuzz + (Math.random() - 0.5) * 20)),
-          isScanning: Math.random() > 0.7
-        })));
+      fetchScanStatus();
+      if (!scanStatus?.isScanning) {
+        fetchCoins();
       }
-    }, 2000);
+    }, 30000);
 
     return () => clearInterval(interval);
   }, []);
 
   const getRiskColor = (risk: string) => {
     switch (risk) {
-      case 'low': return 'text-success';
-      case 'medium': return 'text-warning';
-      case 'high': return 'text-destructive';
-      default: return 'text-muted-foreground';
+      case 'low': return 'text-success border-success';
+      case 'medium': return 'text-warning border-warning';
+      case 'high': return 'text-destructive border-destructive';
+      default: return 'text-muted-foreground border-muted';
     }
   };
 
@@ -125,6 +149,24 @@ export default function Index() {
       case 'bearish': return <TrendingDown className="h-4 w-4 text-destructive" />;
       default: return <Activity className="h-4 w-4 text-muted-foreground" />;
     }
+  };
+
+  const formatTimeAgo = (timestamp: number) => {
+    if (!timestamp) return 'Unknown';
+    const diff = Date.now() - timestamp;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    
+    if (hours > 0) return `${hours}h ago`;
+    if (minutes > 0) return `${minutes}m ago`;
+    return 'Just now';
+  };
+
+  const getAIScoreColor = (score: number) => {
+    if (score >= 80) return 'text-success';
+    if (score >= 60) return 'text-primary';
+    if (score >= 40) return 'text-warning';
+    return 'text-destructive';
   };
 
   return (
@@ -139,17 +181,26 @@ export default function Index() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-foreground">PulseSignal AI</h1>
-                <p className="text-sm text-muted-foreground">Solana Meme Coin Intelligence</p>
+                <p className="text-sm text-muted-foreground">Real-Time Solana Meme Coin Intelligence</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Badge variant={isScanning ? "default" : "secondary"} className="pulse-glow">
-                <Eye className="h-3 w-3 mr-1" />
-                {isScanning ? 'Scanning' : 'Idle'}
+              <Badge variant={scanStatus?.isScanning ? "default" : "secondary"} className={scanStatus?.isScanning ? "pulse-glow" : ""}>
+                {scanStatus?.isScanning ? <Loader className="h-3 w-3 mr-1 animate-spin" /> : <Eye className="h-3 w-3 mr-1" />}
+                {scanStatus?.isScanning ? 'AI Scanning...' : 'Monitoring'}
               </Badge>
-              <Button size="sm" className="bg-accent hover:bg-accent/80">
-                <Zap className="h-4 w-4 mr-2" />
-                Boost Scan
+              <Button 
+                size="sm" 
+                onClick={() => fetchCoins(true)}
+                disabled={isLoading || scanStatus?.isScanning}
+                className="bg-accent hover:bg-accent/80"
+              >
+                {isLoading || scanStatus?.isScanning ? (
+                  <Loader className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                )}
+                {scanStatus?.isScanning ? 'Scanning...' : 'Refresh Scan'}
               </Button>
             </div>
           </div>
@@ -157,6 +208,14 @@ export default function Index() {
       </header>
 
       <div className="container mx-auto px-4 py-8">
+        {/* Error Alert */}
+        {error && (
+          <Alert className="mb-6 border-destructive bg-destructive/10">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card className="bg-card/80 backdrop-blur-sm border-border">
@@ -164,7 +223,9 @@ export default function Index() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Coins Scanned</p>
-                  <p className="text-2xl font-bold text-foreground">{totalScanned.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-foreground">
+                    {scanStatus?.totalScanned?.toLocaleString() || '0'}
+                  </p>
                 </div>
                 <Eye className="h-8 w-8 text-primary" />
               </div>
@@ -176,7 +237,9 @@ export default function Index() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Rug Pulls Detected</p>
-                  <p className="text-2xl font-bold text-destructive">47</p>
+                  <p className="text-2xl font-bold text-destructive">
+                    {scanStatus?.rugPullsDetected || '0'}
+                  </p>
                 </div>
                 <Shield className="h-8 w-8 text-destructive" />
               </div>
@@ -188,7 +251,9 @@ export default function Index() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Whale Moves</p>
-                  <p className="text-2xl font-bold text-accent">128</p>
+                  <p className="text-2xl font-bold text-accent">
+                    {scanStatus?.stats?.whaleMovements || '0'}
+                  </p>
                 </div>
                 <Wallet className="h-8 w-8 text-accent" />
               </div>
@@ -200,7 +265,9 @@ export default function Index() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">High Potential</p>
-                  <p className="text-2xl font-bold text-success">12</p>
+                  <p className="text-2xl font-bold text-success">
+                    {scanStatus?.highPotentialCoins || '0'}
+                  </p>
                 </div>
                 <TrendingUp className="h-8 w-8 text-success" />
               </div>
@@ -208,35 +275,48 @@ export default function Index() {
           </Card>
         </div>
 
-        {/* Scanning Progress */}
+        {/* AI Scanning Progress */}
         <Card className="mb-8 bg-card/80 backdrop-blur-sm border-border">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Brain className="h-5 w-5 text-primary" />
-              <span>AI Scanning Progress</span>
+              <span>AI Blockchain Scanner</span>
+              {scanStatus?.isScanning && <Badge variant="default" className="pulse-glow">LIVE</Badge>}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Current Scan Cycle</span>
-                <span className="text-foreground">{scanProgress}% Complete</span>
+                <span className="text-muted-foreground">
+                  {scanStatus?.isScanning ? 'Scanning Solana Network...' : 'Monitoring Market'}
+                </span>
+                <span className="text-foreground">
+                  {scanStatus?.isScanning ? `${scanStatus.scanProgress}% Complete` : 'Ready'}
+                </span>
               </div>
-              <Progress value={scanProgress} className="h-2" />
+              <Progress 
+                value={scanStatus?.isScanning ? scanStatus.scanProgress : 100} 
+                className="h-2" 
+              />
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="h-4 w-4 text-success" />
                   <span className="text-muted-foreground">Blockchain Analysis</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Activity className="h-4 w-4 text-primary" />
-                  <span className="text-muted-foreground">Social Sentiment</span>
+                  <Brain className="h-4 w-4 text-primary" />
+                  <span className="text-muted-foreground">OpenAI Processing</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Users className="h-4 w-4 text-accent" />
                   <span className="text-muted-foreground">Whale Tracking</span>
                 </div>
               </div>
+              {scanStatus?.lastScanTime && (
+                <div className="text-xs text-muted-foreground text-center pt-2 border-t">
+                  Last scan: {formatTimeAgo(scanStatus.lastScanTime)} • Next scan: {Math.floor((scanStatus.nextScanIn || 0) / 60000)}m
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -247,98 +327,159 @@ export default function Index() {
           <RugPullAlerts />
         </div>
 
-        {/* Coin Analysis Results */}
+        {/* AI-Discovered Coins */}
         <Card className="bg-card/80 backdrop-blur-sm border-border">
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>Live Meme Coin Analysis</span>
-              <Badge variant="outline" className="text-primary border-primary">
-                Solana Network
-              </Badge>
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center space-x-2">
+                <span>AI-Discovered Meme Coins</span>
+                {scanStatus?.isScanning && <Loader className="h-4 w-4 animate-spin" />}
+              </CardTitle>
+              <div className="flex items-center space-x-2">
+                <Badge variant="outline" className="text-primary border-primary">
+                  Solana Network
+                </Badge>
+                <Badge variant="outline">
+                  AI Powered
+                </Badge>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {coins.map((coin) => (
-                <div
-                  key={coin.id}
-                  className={cn(
-                    "p-4 rounded-lg border transition-all duration-300",
-                    coin.isScanning ? "border-primary bg-primary/5 pulse-glow" : "border-border bg-background/50"
-                  )}
-                >
-                  <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 items-center">
-                    {/* Coin Info */}
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center text-sm font-bold text-white">
-                        {coin.symbol.slice(0, 2)}
+            {isLoading && coins.length === 0 ? (
+              <div className="text-center py-12">
+                <Loader className="h-12 w-12 text-primary mx-auto mb-4 animate-spin" />
+                <p className="text-lg font-semibold text-foreground">AI Scanning Solana Network...</p>
+                <p className="text-muted-foreground">Discovering high-potential meme coins</p>
+              </div>
+            ) : coins.length === 0 ? (
+              <div className="text-center py-12">
+                <Brain className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-lg font-semibold text-foreground">No Coins Found</p>
+                <p className="text-muted-foreground mb-4">Start a new scan to discover potential coins</p>
+                <Button onClick={startNewScan}>
+                  <Zap className="h-4 w-4 mr-2" />
+                  Start AI Scan
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {coins.map((coin, index) => (
+                  <div
+                    key={coin.mint}
+                    className={cn(
+                      "p-4 rounded-lg border transition-all duration-300",
+                      index === 0 && coin.aiScore > 85 ? "border-primary bg-primary/5 pulse-glow" : "border-border bg-background/50",
+                      "hover:border-primary/50"
+                    )}
+                  >
+                    <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 items-center">
+                      {/* Coin Info */}
+                      <div className="flex items-center space-x-3">
+                        <div className="relative">
+                          <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center text-sm font-bold text-white">
+                            {coin.symbol.slice(0, 2)}
+                          </div>
+                          {index === 0 && coin.aiScore > 85 && (
+                            <div className="absolute -top-1 -right-1 w-4 h-4 bg-success rounded-full flex items-center justify-center">
+                              <Zap className="h-2 w-2 text-white" />
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-foreground">{coin.name}</p>
+                          <p className="text-sm text-muted-foreground flex items-center space-x-1">
+                            <span>{coin.symbol}</span>
+                            <span>•</span>
+                            <span>{coin.holders.toLocaleString()} holders</span>
+                          </p>
+                        </div>
                       </div>
+
+                      {/* Price & Change */}
                       <div>
-                        <p className="font-semibold text-foreground">{coin.name}</p>
-                        <p className="text-sm text-muted-foreground">{coin.symbol}</p>
+                        <p className="font-mono text-foreground">${coin.price.toFixed(8)}</p>
+                        <div className="flex items-center space-x-1">
+                          {getPredictionIcon(coin.prediction)}
+                          <span className={cn(
+                            "text-sm font-medium",
+                            coin.change24h > 0 ? "text-success" : "text-destructive"
+                          )}>
+                            {coin.change24h > 0 ? '+' : ''}{coin.change24h.toFixed(1)}%
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* AI Score */}
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">AI Score</p>
+                        <div className="flex items-center space-x-2">
+                          <Progress value={coin.aiScore} className="h-2 flex-1" />
+                          <span className={cn("text-sm font-bold", getAIScoreColor(coin.aiScore))}>
+                            {coin.aiScore}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Whale Activity */}
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">Whale Activity</p>
+                        <div className="flex items-center space-x-2">
+                          <Progress value={coin.whaleActivity} className="h-2 flex-1" />
+                          <span className="text-sm font-bold text-accent">{coin.whaleActivity}</span>
+                        </div>
+                      </div>
+
+                      {/* Risk Assessment */}
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">Rug Risk</p>
+                        <Badge variant="outline" className={getRiskColor(coin.rugRisk)}>
+                          <AlertTriangle className="h-3 w-3 mr-1" />
+                          {coin.rugRisk.toUpperCase()}
+                        </Badge>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="space-y-2">
+                        <div className="text-xs space-y-1">
+                          <div className="flex items-center space-x-1">
+                            <DollarSign className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-muted-foreground">MCap:</span>
+                            <span className="text-foreground">${(coin.mcap / 1000000).toFixed(1)}M</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Activity className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-muted-foreground">Vol:</span>
+                            <span className="text-foreground">${(coin.volume / 1000000).toFixed(1)}M</span>
+                          </div>
+                        </div>
+                        <Button size="sm" variant="outline" className="w-full text-xs">
+                          <ExternalLink className="h-3 w-3 mr-1" />
+                          View Details
+                        </Button>
                       </div>
                     </div>
 
-                    {/* Price & Change */}
-                    <div>
-                      <p className="font-mono text-foreground">${coin.price.toFixed(6)}</p>
-                      <div className="flex items-center space-x-1">
-                        {getPredictionIcon(coin.prediction)}
-                        <span className={cn(
-                          "text-sm font-medium",
-                          coin.change24h > 0 ? "text-success" : "text-destructive"
-                        )}>
-                          {coin.change24h > 0 ? '+' : ''}{coin.change24h.toFixed(1)}%
-                        </span>
+                    {/* AI Reasoning */}
+                    {coin.reasoning && (
+                      <div className="mt-3 pt-3 border-t border-border">
+                        <p className="text-sm text-muted-foreground">
+                          <Brain className="h-3 w-3 inline mr-1" />
+                          AI Analysis: {coin.reasoning}
+                        </p>
                       </div>
-                    </div>
-
-                    {/* AI Score */}
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">AI Score</p>
-                      <div className="flex items-center space-x-2">
-                        <Progress value={coin.aiScore} className="h-2 flex-1" />
-                        <span className="text-sm font-bold text-primary">{coin.aiScore}</span>
-                      </div>
-                    </div>
-
-                    {/* Whale Activity */}
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Whale Activity</p>
-                      <div className="flex items-center space-x-2">
-                        <Progress value={coin.whaleActivity} className="h-2 flex-1" />
-                        <span className="text-sm font-bold text-accent">{coin.whaleActivity}</span>
-                      </div>
-                    </div>
-
-                    {/* Risk Assessment */}
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Rug Risk</p>
-                      <Badge variant="outline" className={getRiskColor(coin.rugRisk)}>
-                        <AlertTriangle className="h-3 w-3 mr-1" />
-                        {coin.rugRisk.toUpperCase()}
-                      </Badge>
-                    </div>
-
-                    {/* Market Data */}
-                    <div className="space-y-1">
-                      <div className="flex items-center space-x-1 text-sm">
-                        <DollarSign className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-muted-foreground">Vol:</span>
-                        <span className="text-foreground">${(coin.volume / 1000000).toFixed(1)}M</span>
-                      </div>
-                      <div className="flex items-center space-x-1 text-sm">
-                        <Activity className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-muted-foreground">MCap:</span>
-                        <span className="text-foreground">${(coin.mcap / 1000000).toFixed(1)}M</span>
-                      </div>
-                    </div>
+                    )}
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
+
+        {/* Last Update */}
+        <div className="text-center mt-8 text-sm text-muted-foreground">
+          Last updated: {lastUpdate.toLocaleTimeString()} • Powered by PulseSignal AI
+        </div>
       </div>
     </div>
   );
