@@ -3,6 +3,14 @@ import express from "express";
 import cors from "cors";
 import { handleDemo } from "./routes/demo";
 import { handleAIAnalysis, handleWhaleTracking } from "./routes/ai-analysis";
+import {
+  handleStartScan,
+  handleGetTopCoins,
+  handleGetScanStatus,
+  handleAnalyzeCoin,
+  handleGetWhaleActivity,
+  startAutoScanning
+} from "./routes/coin-scanner";
 
 export function createServer() {
   const app = express();
