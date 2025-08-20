@@ -19,6 +19,8 @@ export function createServer() {
   });
 
   app.get("/api/demo", handleDemo);
+  app.post("/api/ai-analysis", handleAIAnalysis);
+  app.get("/api/whale-tracking", handleWhaleTracking);
 
   return app;
 }
