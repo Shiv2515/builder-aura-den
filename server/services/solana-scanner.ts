@@ -334,17 +334,19 @@ Respond in JSON format only:
   isMemeTokenCandidate(metadata: any): boolean {
     const name = metadata.name?.toLowerCase() || '';
     const symbol = metadata.symbol?.toLowerCase() || '';
-    
+
     // Look for meme coin indicators
     const memeKeywords = [
       'dog', 'cat', 'pepe', 'moon', 'rocket', 'diamond', 'ape', 'banana',
       'shib', 'doge', 'elon', 'mars', 'lambo', 'hodl', 'pump', 'gem',
-      'safe', 'baby', 'mini', 'mega', 'ultra', 'super', 'turbo'
+      'safe', 'baby', 'mini', 'mega', 'ultra', 'super', 'turbo', 'wif',
+      'bonk', 'solana', 'sol', 'meme', 'token', 'coin'
     ];
-    
-    return memeKeywords.some(keyword => 
+
+    // More permissive detection for demonstration
+    return memeKeywords.some(keyword =>
       name.includes(keyword) || symbol.includes(keyword)
-    ) || Math.random() > 0.7; // Include some random tokens for variety
+    ) || Math.random() > 0.3; // Include more tokens for variety
   }
 
   async getTopCoins(): Promise<CoinAnalysis[]> {
