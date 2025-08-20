@@ -18,6 +18,7 @@ import {
   Users
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { WhaleTracker } from '@/components/WhaleTracker';
 
 interface CoinData {
   id: string;
