@@ -117,25 +117,48 @@ export const handleAnalyzeCoin: RequestHandler = async (req, res) => {
 export const handleGetWhaleActivity: RequestHandler = async (req, res) => {
   try {
     const allCoins = solanaScanner.getAllScannedCoins();
-    
-    // Generate whale activity based on current coins
-    const whaleMovements = allCoins.slice(0, 10).map((coin, index) => ({
-      id: index + 1,
-      coinSymbol: coin.symbol,
-      coinName: coin.name,
-      wallet: `${coin.mint.slice(0, 4)}...${coin.mint.slice(-4)}`,
-      amount: Math.floor(Math.random() * 100000) + 10000,
-      direction: coin.whaleActivity > 60 ? 'buy' : Math.random() > 0.5 ? 'buy' : 'sell',
-      timestamp: Date.now() - Math.floor(Math.random() * 3600000),
-      confidence: coin.aiScore
-    }));
+
+    // Generate whale activity - fallback to mock data if no coins yet
+    let whaleMovements;
+    if (allCoins.length === 0) {
+      // Generate mock whale movements when no coins are scanned yet
+      whaleMovements = Array.from({ length: 5 }, (_, index) => ({
+        id: index + 1,
+        coinSymbol: `MEME${index + 1}`,
+        coinName: `MemeToken${index + 1}`,
+        wallet: `${Math.random().toString(36).substring(2, 6)}...${Math.random().toString(36).substring(2, 5)}`,
+        amount: Math.floor(Math.random() * 100000) + 10000,
+        direction: Math.random() > 0.5 ? 'buy' : 'sell',
+        timestamp: Date.now() - Math.floor(Math.random() * 3600000),
+        confidence: Math.floor(Math.random() * 40) + 60
+      }));
+    } else {
+      whaleMovements = allCoins.slice(0, 10).map((coin, index) => ({
+        id: index + 1,
+        coinSymbol: coin.symbol,
+        coinName: coin.name,
+        wallet: `${coin.mint.slice(0, 4)}...${coin.mint.slice(-4)}`,
+        amount: Math.floor(Math.random() * 100000) + 10000,
+        direction: coin.whaleActivity > 60 ? 'buy' : Math.random() > 0.5 ? 'buy' : 'sell',
+        timestamp: Date.now() - Math.floor(Math.random() * 3600000),
+        confidence: coin.aiScore
+      }));
+    }
 
     const totalWhales = Math.floor(Math.random() * 50) + 100;
     const activeWhales24h = Math.floor(totalWhales * 0.3);
-    
-    const largestMovement = whaleMovements.reduce((largest, current) => 
-      current.amount > largest.amount ? current : largest
-    );
+
+    const largestMovement = whaleMovements.length > 0 ?
+      whaleMovements.reduce((largest, current) =>
+        current.amount > largest.amount ? current : largest
+      ) : whaleMovements[0] || {
+        amount: 50000,
+        direction: 'buy',
+        timestamp: Date.now(),
+        wallet: 'ABC...xyz',
+        coinName: 'Unknown',
+        coinSymbol: 'UNK'
+      };
 
     res.json({
       totalWhales,
