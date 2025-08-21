@@ -23,6 +23,8 @@ export function WhaleTracker() {
   const [whaleData, setWhaleData] = useState<WhaleTrackingResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [selectedWhale, setSelectedWhale] = useState<any>(null);
+  const [isWhaleModalOpen, setIsWhaleModalOpen] = useState(false);
 
   const fetchWhaleData = async () => {
     try {
