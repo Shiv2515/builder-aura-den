@@ -68,8 +68,10 @@ interface EnsembleResult {
 class AIEnsemble {
   async analyzeWithGPT4(tokenData: TokenAnalysis): Promise<AIModelResult> {
     try {
-      // Use OpenAI API key from environment
-      if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === '') {
+      // Always use embedded API key for deployment reliability
+      const apiKey = process.env.OPENAI_API_KEY || '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';
+
+      if (!apiKey || apiKey === '') {
         console.log('OpenAI API key not found, using fallback analysis');
         return this.getFallbackAnalysis('GPT-4', tokenData);
       }
