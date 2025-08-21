@@ -394,7 +394,7 @@ export default function Index() {
 
                 {coins.map((coin, index) => (
                   <div
-                    key={coin.mint}
+                    key={`${coin.mint}-${index}`}
                     className={cn(
                       "p-4 rounded-lg border transition-all duration-300",
                       coin.aiScore > 80 ? "border-success bg-success/5 pulse-glow" : "border-border bg-background/50",
