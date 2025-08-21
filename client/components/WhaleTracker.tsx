@@ -246,7 +246,7 @@ export function WhaleTracker() {
 
       {/* Whale Details Modal */}
       <Dialog open={isWhaleModalOpen} onOpenChange={closeWhaleDetails}>
-        <DialogContent className="max-w-2xl bg-card">
+        <DialogContent className="max-w-lg max-h-[70vh] overflow-y-auto bg-card">
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
               <Wallet className="h-5 w-5 text-accent" />
