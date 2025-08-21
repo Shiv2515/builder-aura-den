@@ -78,9 +78,23 @@ export function RugPullAlerts() {
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
 
   const dismissAlert = (alertId: string) => {
-    setAlerts(prev => prev.map(alert => 
+    setAlerts(prev => prev.map(alert =>
       alert.id === alertId ? { ...alert, dismissed: true } : alert
     ));
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+  };
+
+  const openAlertDetails = (alert: RugPullAlert) => {
+    setSelectedAlert(alert);
+    setIsAlertModalOpen(true);
+  };
+
+  const closeAlertDetails = () => {
+    setSelectedAlert(null);
+    setIsAlertModalOpen(false);
   };
 
   const filteredAlerts = alerts.filter(alert => {
