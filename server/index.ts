@@ -9,6 +9,9 @@ import {
   handleGetScanStatus,
   handleAnalyzeCoin,
   handleGetWhaleActivity,
+  handleGetAdvancedAnalysis,
+  handleGetTimingAnalysis,
+  handleGetContractAnalysis,
   startAutoScanning
 } from "./routes/coin-scanner";
 
