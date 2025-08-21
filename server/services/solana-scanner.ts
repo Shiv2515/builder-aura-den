@@ -141,8 +141,15 @@ class SolanaScanner {
         const name = memeNames[Math.floor(Math.random() * memeNames.length)];
         const symbol = name.slice(0, 4).toUpperCase() + (Math.floor(Math.random() * 99) + 1);
 
+        // Generate unique mint address
+        let mint = this.generateRandomMint();
+        while (this.usedMints.has(mint)) {
+          mint = this.generateRandomMint();
+        }
+        this.usedMints.add(mint);
+
         mockTokens.push({
-          mint: this.generateRandomMint(),
+          mint,
           name,
           symbol,
           decimals: 9,
