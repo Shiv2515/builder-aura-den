@@ -326,35 +326,24 @@ export function WhaleTracker() {
               </div>
 
               {/* Additional Analysis */}
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">AI Analysis</p>
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Quick Analysis</p>
 
-                <div className="p-3 border rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm">Whale Classification</span>
-                    <Badge variant="outline">
+                <div className="grid grid-cols-1 gap-2">
+                  <div className="flex items-center justify-between p-2 border rounded text-sm">
+                    <span>Classification</span>
+                    <Badge variant="outline" className="text-xs">
                       {selectedWhale.amount > 100000 ? 'Mega Whale' :
                        selectedWhale.amount > 50000 ? 'Large Whale' :
                        selectedWhale.amount > 20000 ? 'Medium Whale' : 'Small Whale'}
                     </Badge>
                   </div>
-                </div>
 
-                <div className="p-3 border rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm">Market Impact</span>
-                    <span className="text-sm font-medium">
+                  <div className="flex items-center justify-between p-2 border rounded text-sm">
+                    <span>Market Impact</span>
+                    <span className="text-xs font-medium">
                       {selectedWhale.direction === 'buy' ? 'Bullish Signal' : 'Bearish Signal'}
                     </span>
-                  </div>
-                </div>
-
-                <div className="p-3 border rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm">Risk Level</span>
-                    <Badge variant={selectedWhale.direction === 'sell' ? 'destructive' : 'default'}>
-                      {selectedWhale.direction === 'sell' ? 'Monitor' : 'Positive'}
-                    </Badge>
                   </div>
                 </div>
               </div>
