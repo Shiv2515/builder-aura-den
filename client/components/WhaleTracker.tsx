@@ -281,42 +281,34 @@ export function WhaleTracker() {
               </div>
 
               {/* Transaction Details */}
-              <div className="grid grid-cols-2 gap-4">
-                <Card>
-                  <CardContent className="pt-4">
-                    <div className="text-center">
-                      <p className="text-sm text-muted-foreground">Transaction Amount</p>
-                      <p className={cn(
-                        "text-2xl font-bold",
-                        selectedWhale.direction === 'buy' ? "text-success" : "text-destructive"
-                      )}>
-                        {formatAmount(selectedWhale.amount)}
-                      </p>
-                      <Badge variant={selectedWhale.direction === 'buy' ? 'default' : 'destructive'} className="mt-2">
-                        {selectedWhale.direction === 'buy' ? (
-                          <ArrowUpRight className="h-3 w-3 mr-1" />
-                        ) : (
-                          <ArrowDownRight className="h-3 w-3 mr-1" />
-                        )}
-                        {selectedWhale.direction.toUpperCase()}
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 bg-muted/50 rounded-lg text-center">
+                  <p className="text-xs text-muted-foreground">Amount</p>
+                  <p className={cn(
+                    "text-lg font-bold",
+                    selectedWhale.direction === 'buy' ? "text-success" : "text-destructive"
+                  )}>
+                    {formatAmount(selectedWhale.amount)}
+                  </p>
+                  <Badge variant={selectedWhale.direction === 'buy' ? 'default' : 'destructive'} className="mt-1 text-xs">
+                    {selectedWhale.direction === 'buy' ? (
+                      <ArrowUpRight className="h-3 w-3 mr-1" />
+                    ) : (
+                      <ArrowDownRight className="h-3 w-3 mr-1" />
+                    )}
+                    {selectedWhale.direction.toUpperCase()}
+                  </Badge>
+                </div>
 
-                <Card>
-                  <CardContent className="pt-4">
-                    <div className="text-center">
-                      <p className="text-sm text-muted-foreground">Detection Confidence</p>
-                      <p className="text-2xl font-bold text-primary">{selectedWhale.confidence}%</p>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        {selectedWhale.confidence > 80 ? 'Very High' :
-                         selectedWhale.confidence > 60 ? 'High' :
-                         selectedWhale.confidence > 40 ? 'Medium' : 'Low'} Confidence
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
+                <div className="p-3 bg-muted/50 rounded-lg text-center">
+                  <p className="text-xs text-muted-foreground">Confidence</p>
+                  <p className="text-lg font-bold text-primary">{selectedWhale.confidence}%</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {selectedWhale.confidence > 80 ? 'Very High' :
+                     selectedWhale.confidence > 60 ? 'High' :
+                     selectedWhale.confidence > 40 ? 'Medium' : 'Low'}
+                  </p>
+                </div>
               </div>
 
               {/* Timeline */}
