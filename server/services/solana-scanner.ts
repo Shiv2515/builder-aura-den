@@ -453,8 +453,12 @@ class SolanaScanner {
   }
 
   getAllScannedCoins(): CoinAnalysis[] {
-    return Array.from(this.scannedTokens.values())
-      .sort((a, b) => b.aiScore - a.aiScore);
+    const allCoins = Array.from(this.scannedTokens.values());
+    // Filter out duplicates by mint address and sort by AI score
+    const uniqueCoins = allCoins.filter((coin, index, self) =>
+      index === self.findIndex(c => c.mint === coin.mint)
+    );
+    return uniqueCoins.sort((a, b) => b.aiScore - a.aiScore);
   }
 }
 
