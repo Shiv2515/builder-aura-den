@@ -70,6 +70,20 @@ export function WhaleTracker() {
     return `$${amount}`;
   };
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+  };
+
+  const openWhaleDetails = (whale: any) => {
+    setSelectedWhale(whale);
+    setIsWhaleModalOpen(true);
+  };
+
+  const closeWhaleDetails = () => {
+    setSelectedWhale(null);
+    setIsWhaleModalOpen(false);
+  };
+
   if (isLoading) {
     return (
       <Card className="bg-card/80 backdrop-blur-sm border-border">
