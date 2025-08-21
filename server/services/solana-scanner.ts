@@ -406,6 +406,7 @@ class SolanaScanner {
   async getTopCoins(): Promise<CoinAnalysis[]> {
     try {
       this.isScanning = true;
+      this.usedMints.clear(); // Clear previous mints to ensure fresh tokens
       console.log('🚀 Starting comprehensive coin scan...');
 
       // Scan for new tokens
