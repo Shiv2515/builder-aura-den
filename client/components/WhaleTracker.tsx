@@ -185,7 +185,8 @@ export function WhaleTracker() {
             {whaleData.movements.slice(0, 8).map((movement) => (
               <div
                 key={movement.id}
-                className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-border hover:border-primary/30 transition-colors"
+                className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-border hover:border-primary/30 transition-colors cursor-pointer"
+                onClick={() => openWhaleDetails(movement)}
               >
                 <div className="flex items-center space-x-3">
                   {movement.direction === 'buy' ? (
@@ -194,11 +195,24 @@ export function WhaleTracker() {
                     <TrendingDown className="h-4 w-4 text-destructive" />
                   )}
                   <div>
-                    <p className="text-sm font-medium text-foreground">
-                      {movement.wallet}
-                    </p>
+                    <div className="flex items-center space-x-2">
+                      <p className="text-sm font-medium text-foreground font-mono">
+                        {movement.wallet}
+                      </p>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-4 w-4 p-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          copyToClipboard(movement.wallet);
+                        }}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    </div>
                     <p className="text-xs text-muted-foreground">
-                      {formatTimeAgo(movement.timestamp)}
+                      {formatTimeAgo(movement.timestamp)} • Click for details
                     </p>
                   </div>
                 </div>
@@ -214,6 +228,7 @@ export function WhaleTracker() {
                     <span className="text-xs text-muted-foreground">
                       {movement.confidence}%
                     </span>
+                    <Info className="h-3 w-3 text-primary" />
                   </div>
                 </div>
               </div>
