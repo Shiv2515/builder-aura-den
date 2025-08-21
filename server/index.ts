@@ -39,6 +39,9 @@ export function createServer() {
   app.get("/api/scan/status", handleGetScanStatus);
   app.get("/api/scan/analyze/:mint", handleAnalyzeCoin);
   app.get("/api/scan/whale-activity", handleGetWhaleActivity);
+  app.get("/api/scan/advanced/:mint", handleGetAdvancedAnalysis);
+  app.get("/api/scan/timing/:mint", handleGetTimingAnalysis);
+  app.get("/api/scan/contract/:mint", handleGetContractAnalysis);
 
   // Start auto-scanning when server starts
   startAutoScanning();
