@@ -382,7 +382,7 @@ export default function Index() {
                     key={coin.mint}
                     className={cn(
                       "p-4 rounded-lg border transition-all duration-300",
-                      index === 0 && coin.aiScore > 85 ? "border-primary bg-primary/5 pulse-glow" : "border-border bg-background/50",
+                      coin.aiScore > 80 ? "border-success bg-success/5 pulse-glow" : "border-border bg-background/50",
                       "hover:border-primary/50"
                     )}
                   >
