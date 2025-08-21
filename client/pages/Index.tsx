@@ -172,6 +172,16 @@ export default function Index() {
     return 'text-destructive';
   };
 
+  const openCoinDetails = (coin: CoinData) => {
+    setSelectedCoin(coin);
+    setIsDetailsModalOpen(true);
+  };
+
+  const closeCoinDetails = () => {
+    setSelectedCoin(null);
+    setIsDetailsModalOpen(false);
+  };
+
   return (
     <div className="min-h-screen gradient-bg crypto-grid">
       {/* Header */}
