@@ -121,12 +121,20 @@ export const handleGetWhaleActivity: RequestHandler = async (req, res) => {
     // Generate whale activity - fallback to mock data if no coins yet
     let whaleMovements;
     if (allCoins.length === 0) {
-      // Generate mock whale movements when no coins are scanned yet
+      // Generate mock whale movements with real-looking Solana addresses when no coins are scanned yet
+      const realWhaleAddresses = [
+        '5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1',
+        'GThUX1Atko4tqhN2NaiTazWSeFWMuiUiswPEFuqKRDNA',
+        'DjVE6JNiYqPL2QXyCUUh8rNjHrbz9hXHNYt99MQ59qw1',
+        '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM',
+        'CuieVDEDtLo7FypA9SbLM9saXFdb1dsshEkyErMqkRQq',
+      ];
+
       whaleMovements = Array.from({ length: 5 }, (_, index) => ({
         id: index + 1,
         coinSymbol: `MEME${index + 1}`,
         coinName: `MemeToken${index + 1}`,
-        wallet: `${Math.random().toString(36).substring(2, 6)}...${Math.random().toString(36).substring(2, 5)}`,
+        wallet: realWhaleAddresses[index] || realWhaleAddresses[0],
         amount: Math.floor(Math.random() * 100000) + 10000,
         direction: Math.random() > 0.5 ? 'buy' : 'sell',
         timestamp: Date.now() - Math.floor(Math.random() * 3600000),
