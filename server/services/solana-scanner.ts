@@ -63,6 +63,7 @@ class SolanaScanner {
   private scannedTokens: Map<string, CoinAnalysis> = new Map();
   private isScanning = false;
   private lastScanTime = 0;
+  private usedMints: Set<string> = new Set();
 
   async scanNewTokens(): Promise<TokenMetadata[]> {
     try {
