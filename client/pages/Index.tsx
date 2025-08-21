@@ -499,6 +499,13 @@ export default function Index() {
           Last updated: {lastUpdate.toLocaleTimeString()} • Powered by PulseSignal AI
         </div>
       </div>
+
+      {/* Coin Details Modal */}
+      <CoinDetailsModal
+        coin={selectedCoin}
+        isOpen={isDetailsModalOpen}
+        onClose={closeCoinDetails}
+      />
     </div>
   );
 }
