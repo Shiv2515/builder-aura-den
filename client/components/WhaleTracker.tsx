@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
   Wallet,
   TrendingUp,
   TrendingDown,
@@ -10,7 +11,10 @@ import {
   Clock,
   ArrowUpRight,
   ArrowDownRight,
-  RefreshCw
+  RefreshCw,
+  Copy,
+  ExternalLink,
+  Info
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WhaleTrackingResponse } from '@shared/crypto-api';
