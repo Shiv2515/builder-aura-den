@@ -249,8 +249,13 @@ export function RugPullAlerts() {
                           <span>Detected {formatTimeAgo(alert.timestamp)}</span>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Button size="sm" variant="outline" className="h-6 text-xs">
-                            <ExternalLink className="h-3 w-3 mr-1" />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-6 text-xs"
+                            onClick={() => openAlertDetails(alert)}
+                          >
+                            <Info className="h-3 w-3 mr-1" />
                             Details
                           </Button>
                           <Button
