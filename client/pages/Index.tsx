@@ -24,6 +24,7 @@ import {
 import { cn } from '@/lib/utils';
 import { WhaleTracker } from '@/components/WhaleTracker';
 import { RugPullAlerts } from '@/components/RugPullAlerts';
+import { CoinDetailsModal } from '@/components/CoinDetailsModal';
 
 interface CoinData {
   mint: string;
