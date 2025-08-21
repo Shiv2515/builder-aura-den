@@ -377,6 +377,21 @@ export default function Index() {
               </div>
             ) : (
               <div className="space-y-4">
+                {/* High Potential Coins Alert */}
+                {coins.filter(coin => coin.aiScore > 80).length > 0 && (
+                  <div className="p-4 bg-success/10 border border-success/30 rounded-lg mb-6">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Zap className="h-5 w-5 text-success" />
+                      <h3 className="text-lg font-bold text-success">
+                        🚀 HIGH POTENTIAL DETECTED ({coins.filter(coin => coin.aiScore > 80).length} coins)
+                      </h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      AI has identified coins with 60-70% chance of explosive growth. These are highlighted with green borders below.
+                    </p>
+                  </div>
+                )}
+
                 {coins.map((coin, index) => (
                   <div
                     key={coin.mint}
