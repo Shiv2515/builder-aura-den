@@ -400,11 +400,24 @@ export default function Index() {
                           )}
                         </div>
                         <div>
-                          <p className="font-semibold text-foreground">{coin.name}</p>
+                          <div className="flex items-center space-x-2">
+                            <p className="font-semibold text-foreground">{coin.name}</p>
+                            {coin.aiScore > 80 && (
+                              <Badge className="bg-success text-success-foreground text-xs px-2 py-0">
+                                HIGH POTENTIAL
+                              </Badge>
+                            )}
+                          </div>
                           <p className="text-sm text-muted-foreground flex items-center space-x-1">
                             <span>{coin.symbol}</span>
                             <span>•</span>
                             <span>{coin.holders.toLocaleString()} holders</span>
+                            {coin.aiScore > 80 && (
+                              <>
+                                <span>•</span>
+                                <span className="text-success font-medium">🚀 EXPLOSIVE POTENTIAL</span>
+                              </>
+                            )}
                           </p>
                         </div>
                       </div>
