@@ -393,7 +393,7 @@ export default function Index() {
                           <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center text-sm font-bold text-white">
                             {coin.symbol.slice(0, 2)}
                           </div>
-                          {index === 0 && coin.aiScore > 85 && (
+                          {coin.aiScore > 80 && (
                             <div className="absolute -top-1 -right-1 w-4 h-4 bg-success rounded-full flex items-center justify-center">
                               <Zap className="h-2 w-2 text-white" />
                             </div>
