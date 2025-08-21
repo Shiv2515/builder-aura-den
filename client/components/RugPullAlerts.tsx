@@ -3,7 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Progress } from '@/components/ui/progress';
+import {
   Shield,
   AlertTriangle,
   CheckCircle,
@@ -12,7 +14,11 @@ import {
   TrendingDown,
   Users,
   DollarSign,
-  ExternalLink
+  ExternalLink,
+  Copy,
+  Eye,
+  Info,
+  Zap
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
