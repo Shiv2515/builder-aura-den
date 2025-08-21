@@ -74,6 +74,8 @@ const mockAlerts: RugPullAlert[] = [
 export function RugPullAlerts() {
   const [alerts, setAlerts] = useState<RugPullAlert[]>(mockAlerts);
   const [filter, setFilter] = useState<'all' | 'critical' | 'high'>('all');
+  const [selectedAlert, setSelectedAlert] = useState<RugPullAlert | null>(null);
+  const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
 
   const dismissAlert = (alertId: string) => {
     setAlerts(prev => prev.map(alert => 
