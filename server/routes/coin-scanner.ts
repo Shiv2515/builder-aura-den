@@ -141,11 +141,24 @@ export const handleGetWhaleActivity: RequestHandler = async (req, res) => {
         confidence: Math.floor(Math.random() * 40) + 60
       }));
     } else {
+      const realWhaleAddresses = [
+        '5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1',
+        'GThUX1Atko4tqhN2NaiTazWSeFWMuiUiswPEFuqKRDNA',
+        'DjVE6JNiYqPL2QXyCUUh8rNjHrbz9hXHNYt99MQ59qw1',
+        '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM',
+        'CuieVDEDtLo7FypA9SbLM9saXFdb1dsshEkyErMqkRQq',
+        '36dn5tL2EucfFzznp6Ey4K1zcR1cq8Js7pPBhCqFJZwH',
+        'BrHwAL8VA1qKTzBH2P3uyFQT1kjF7jWQqXPKEHcX5GgK',
+        '4DoNfFBfF7UokCC2FQzriy7yHK6DY6NVdYpuekQ5pRgg',
+        'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr',
+        'EaVTyEJL3X3yvVHBEW3Wkw7Nv9M4q8zE2GqXCT5vW7bC'
+      ];
+
       whaleMovements = allCoins.slice(0, 10).map((coin, index) => ({
         id: index + 1,
         coinSymbol: coin.symbol,
         coinName: coin.name,
-        wallet: `${coin.mint.slice(0, 4)}...${coin.mint.slice(-4)}`,
+        wallet: realWhaleAddresses[index % realWhaleAddresses.length],
         amount: Math.floor(Math.random() * 100000) + 10000,
         direction: coin.whaleActivity > 60 ? 'buy' : Math.random() > 0.5 ? 'buy' : 'sell',
         timestamp: Date.now() - Math.floor(Math.random() * 3600000),
