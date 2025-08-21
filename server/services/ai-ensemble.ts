@@ -68,6 +68,11 @@ interface EnsembleResult {
 class AIEnsemble {
   async analyzeWithGPT4(tokenData: TokenAnalysis): Promise<AIModelResult> {
     try {
+      // Skip OpenAI if no API key
+      if (!process.env.OPENAI_API_KEY) {
+        return this.getFallbackAnalysis('GPT-4', tokenData);
+      }
+
       const prompt = `
 ADVANCED SOLANA MEME COIN ANALYSIS - GPT-4 MODEL
 
