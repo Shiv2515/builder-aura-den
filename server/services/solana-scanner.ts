@@ -160,7 +160,8 @@ class SolanaScanner {
   }
 
   private generateRandomMint(): string {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    // Generate valid Base58 characters only (no 0, O, I, l)
+    const chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
     let result = '';
     for (let i = 0; i < 44; i++) {
       result += chars.charAt(Math.floor(Math.random() * chars.length));
