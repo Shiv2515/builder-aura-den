@@ -466,7 +466,12 @@ export default function Index() {
                             <span className="text-foreground">${(coin.volume / 1000000).toFixed(1)}M</span>
                           </div>
                         </div>
-                        <Button size="sm" variant="outline" className="w-full text-xs">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full text-xs"
+                          onClick={() => openCoinDetails(coin)}
+                        >
                           <ExternalLink className="h-3 w-3 mr-1" />
                           View Details
                         </Button>
