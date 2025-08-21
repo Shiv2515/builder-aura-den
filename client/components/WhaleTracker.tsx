@@ -243,6 +243,149 @@ export function WhaleTracker() {
           </p>
         </div>
       </CardContent>
+
+      {/* Whale Details Modal */}
+      <Dialog open={isWhaleModalOpen} onOpenChange={closeWhaleDetails}>
+        <DialogContent className="max-w-2xl bg-card">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <Wallet className="h-5 w-5 text-accent" />
+              <span>Whale Movement Details</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          {selectedWhale && (
+            <div className="space-y-6">
+              {/* Whale Address */}
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-2">Wallet Address</p>
+                <div className="flex items-center justify-between">
+                  <p className="font-mono text-sm break-all">{selectedWhale.wallet}</p>
+                  <div className="flex space-x-2 ml-4">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => copyToClipboard(selectedWhale.wallet)}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => window.open(`https://solscan.io/account/${selectedWhale.wallet}`, '_blank')}
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Transaction Details */}
+              <div className="grid grid-cols-2 gap-4">
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground">Transaction Amount</p>
+                      <p className={cn(
+                        "text-2xl font-bold",
+                        selectedWhale.direction === 'buy' ? "text-success" : "text-destructive"
+                      )}>
+                        {formatAmount(selectedWhale.amount)}
+                      </p>
+                      <Badge variant={selectedWhale.direction === 'buy' ? 'default' : 'destructive'} className="mt-2">
+                        {selectedWhale.direction === 'buy' ? (
+                          <ArrowUpRight className="h-3 w-3 mr-1" />
+                        ) : (
+                          <ArrowDownRight className="h-3 w-3 mr-1" />
+                        )}
+                        {selectedWhale.direction.toUpperCase()}
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground">Detection Confidence</p>
+                      <p className="text-2xl font-bold text-primary">{selectedWhale.confidence}%</p>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        {selectedWhale.confidence > 80 ? 'Very High' :
+                         selectedWhale.confidence > 60 ? 'High' :
+                         selectedWhale.confidence > 40 ? 'Medium' : 'Low'} Confidence
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Timeline */}
+              <div>
+                <p className="text-sm text-muted-foreground mb-3">Transaction Timeline</p>
+                <div className="flex items-center space-x-2 p-3 bg-muted/30 rounded-lg">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">
+                    {new Date(selectedWhale.timestamp).toLocaleString()}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    ({formatTimeAgo(selectedWhale.timestamp)})
+                  </span>
+                </div>
+              </div>
+
+              {/* Additional Analysis */}
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">AI Analysis</p>
+
+                <div className="p-3 border rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm">Whale Classification</span>
+                    <Badge variant="outline">
+                      {selectedWhale.amount > 100000 ? 'Mega Whale' :
+                       selectedWhale.amount > 50000 ? 'Large Whale' :
+                       selectedWhale.amount > 20000 ? 'Medium Whale' : 'Small Whale'}
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="p-3 border rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm">Market Impact</span>
+                    <span className="text-sm font-medium">
+                      {selectedWhale.direction === 'buy' ? 'Bullish Signal' : 'Bearish Signal'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-3 border rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm">Risk Level</span>
+                    <Badge variant={selectedWhale.direction === 'sell' ? 'destructive' : 'default'}>
+                      {selectedWhale.direction === 'sell' ? 'Monitor' : 'Positive'}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              {/* Coin Information */}
+              {selectedWhale.coinSymbol && (
+                <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                  <p className="text-sm text-muted-foreground mb-2">Related Coin</p>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center text-xs font-bold text-white">
+                      {selectedWhale.coinSymbol?.slice(0, 2) || 'UN'}
+                    </div>
+                    <div>
+                      <p className="font-semibold">{selectedWhale.coinName || 'Unknown Coin'}</p>
+                      <p className="text-sm text-muted-foreground">{selectedWhale.coinSymbol || 'UNKNOWN'}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
