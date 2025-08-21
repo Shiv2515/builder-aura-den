@@ -131,7 +131,7 @@ export function CoinDetailsModal({ coin, isOpen, onClose }: CoinDetailsModalProp
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-card">
+      <DialogContent className="max-w-2xl max-h-[75vh] overflow-y-auto bg-card">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
