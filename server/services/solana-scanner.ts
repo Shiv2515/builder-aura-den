@@ -67,7 +67,7 @@ class SolanaScanner {
 
   async scanNewTokens(): Promise<TokenMetadata[]> {
     try {
-      console.log('���� Scanning for new Solana tokens...');
+      console.log('🔍 Scanning for new Solana tokens...');
 
       // Try real blockchain scanning first
       try {
@@ -321,9 +321,10 @@ class SolanaScanner {
     try {
       console.log(`🚀 Running advanced AI ensemble analysis for ${tokenData.symbol}...`);
 
-      // Try to get live price data first
+      // Try to get live market data first
       let price = await this.getLivePrice(tokenData.mint);
       let mcap = await this.getLiveMarketCap(tokenData.mint);
+      let volume = await this.getLiveVolume(tokenData.mint);
 
       // If no live data, generate realistic meme coin ranges
       if (!price || price === 0) {
@@ -345,8 +346,13 @@ class SolanaScanner {
         }
       }
 
+      // Generate realistic volume if not available
+      if (!volume || volume === 0) {
+        // Volume typically 1-10% of market cap for active meme coins
+        volume = mcap * (Math.random() * 0.09 + 0.01);
+      }
+
       const change24h = (Math.random() - 0.5) * 200; // -100% to +100%
-      const volume = liquidityData?.volume24h || Math.random() * 1000000;
 
       // Run AI Ensemble Analysis
       const ensembleResult = await aiEnsemble.getEnsembleAnalysis({
