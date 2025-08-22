@@ -117,8 +117,11 @@ Consider:
 - Meme coin lifecycle patterns
 - Liquidity pool health
 - Holder distribution quality
-- Social sentiment authenticity
+- Social sentiment authenticity and momentum
+- Community engagement quality vs fake bot activity
+- Viral potential and influencer involvement
 - Developer credibility indicators
+- Correlation between social buzz and trading activity
 
 Respond in JSON:
 {
