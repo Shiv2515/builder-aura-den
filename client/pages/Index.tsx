@@ -73,11 +73,15 @@ export default function Index() {
   const fetchScanStatus = async () => {
     try {
       const response = await fetch('/api/scan/status');
-      if (!response.ok) throw new Error('Failed to fetch scan status');
+      if (!response.ok) {
+        console.error('Scan status response not ok:', response.status, response.statusText);
+        throw new Error(`Failed to fetch scan status: ${response.status}`);
+      }
       const data = await response.json();
       setScanStatus(data);
     } catch (err) {
       console.error('Error fetching scan status:', err);
+      // Don't set error state for scan status, just log it
     }
   };
 
@@ -85,21 +89,24 @@ export default function Index() {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const response = await fetch(`/api/scan/coins${forceRefresh ? '?forceRefresh=true' : ''}`);
-      if (!response.ok) throw new Error('Failed to fetch coins');
-      
+      if (!response.ok) {
+        console.error('Coins response not ok:', response.status, response.statusText);
+        throw new Error(`Failed to fetch coins: ${response.status}`);
+      }
+
       const data = await response.json();
       setCoins(data.coins || []);
       setLastUpdate(new Date());
-      
+
       if (data.scanStatus) {
         setScanStatus(data.scanStatus);
       }
     } catch (err) {
-      setError('Failed to load coin data. Starting new scan...');
       console.error('Error fetching coins:', err);
-      startNewScan();
+      // Don't always start a new scan on error, just show error
+      setError(`Failed to load coin data: ${err.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -107,17 +114,21 @@ export default function Index() {
 
   const startNewScan = async () => {
     try {
+      setError(null);
       const response = await fetch('/api/scan/start', { method: 'POST' });
-      if (!response.ok) throw new Error('Failed to start scan');
-      
+      if (!response.ok) {
+        console.error('Start scan response not ok:', response.status, response.statusText);
+        throw new Error(`Failed to start scan: ${response.status}`);
+      }
+
       const data = await response.json();
       console.log('Scan started:', data.message);
-      
+
       // Wait a bit then fetch results
       setTimeout(() => fetchCoins(), 5000);
     } catch (err) {
       console.error('Error starting scan:', err);
-      setError('Failed to start scan. Please try again.');
+      setError(`Failed to start scan: ${err.message}`);
     }
   };
 
