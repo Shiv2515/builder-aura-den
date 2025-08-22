@@ -95,6 +95,15 @@ Volume 24h: $${tokenData.volume24h.toLocaleString()}
 Liquidity: $${tokenData.liquidity.toLocaleString()}
 Age: ${Math.floor((Date.now() - tokenData.createdAt) / 3600000)} hours
 
+SOCIAL SENTIMENT DATA:
+Twitter Mentions: ${tokenData.socialMetrics?.twitterMentions || 0}
+Reddit Posts: ${tokenData.socialMetrics?.redditPosts || 0}
+Sentiment Score: ${((tokenData.socialMetrics?.sentiment || 0.5) * 100).toFixed(1)}% positive
+Engagement Score: ${tokenData.socialMetrics?.engagementScore || 0}/100
+Virality Score: ${tokenData.socialMetrics?.viralityScore || 0}/100
+Community Health: ${tokenData.socialMetrics?.communityHealth || 0}/100
+Influencer Buzz: ${tokenData.socialMetrics?.influencerBuzz || 0}/100
+
 ANALYZE FOR:
 1. Explosion potential (0-100)
 2. Rug pull probability 
