@@ -43,6 +43,111 @@ export function RugPullAlerts() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchRugPullAlerts = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Get current coins first
+      const coinsResponse = await fetch('/api/scan/coins');
+      if (!coinsResponse.ok) throw new Error('Failed to fetch coins');
+
+      const coinsData = await coinsResponse.json();
+      const coins = coinsData.coins || [];
+
+      // Analyze each coin for rug pull risks
+      const rugPullAlerts: RugPullAlert[] = [];
+
+      for (const coin of coins.slice(0, 10)) { // Limit to avoid too many requests
+        try {
+          const contractResponse = await fetch(`/api/scan/contract/${coin.mint}`);
+          if (contractResponse.ok) {
+            const contractAnalysis = await contractResponse.json();
+
+            // Generate alert if high risk detected
+            if (contractAnalysis.riskFactors?.rugPullProbability > 60) {
+              const alert = createAlertFromAnalysis(coin, contractAnalysis);
+              if (alert) rugPullAlerts.push(alert);
+            }
+          }
+        } catch (error) {
+          console.error(`Error analyzing ${coin.symbol}:`, error);
+        }
+      }
+
+      setAlerts(rugPullAlerts);
+    } catch (err) {
+      setError('Failed to fetch rug pull alerts');
+      console.error('Rug pull alerts error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const createAlertFromAnalysis = (coin: any, analysis: any): RugPullAlert | null => {
+    const rugPullProb = analysis.riskFactors?.rugPullProbability || 0;
+    const honeypotProb = analysis.riskFactors?.honeypotProbability || 0;
+    const securityScore = analysis.securityScore || 100;
+
+    if (rugPullProb < 60 && honeypotProb < 50 && securityScore > 50) {
+      return null; // Not risky enough for alert
+    }
+
+    const reasons: string[] = [];
+
+    // Add specific risk reasons based on analysis
+    if (analysis.ownershipAnalysis?.riskLevel === 'high') {
+      reasons.push('Contract ownership not renounced - can be modified');
+    }
+
+    if (analysis.liquidityAnalysis?.canRugPull) {
+      reasons.push('Liquidity not locked - can be removed anytime');
+    }
+
+    if (analysis.holderAnalysis?.topHolderConcentration > 50) {
+      reasons.push(`Top holder controls ${analysis.holderAnalysis.topHolderConcentration.toFixed(1)}% of supply`);
+    }
+
+    if (analysis.transactionAnalysis?.honeypotRisk > 50) {
+      reasons.push('Honeypot characteristics detected - selling may be restricted');
+    }
+
+    if (analysis.liquidityAnalysis?.liquidityHealth < 30) {
+      reasons.push('Low liquidity health - price manipulation risk');
+    }
+
+    if (analysis.holderAnalysis?.developersHolding > 25) {
+      reasons.push(`Developers hold ${analysis.holderAnalysis.developersHolding.toFixed(1)}% of tokens`);
+    }
+
+    // Determine risk level
+    let riskLevel: 'high' | 'critical' = 'high';
+    if (rugPullProb > 80 || honeypotProb > 70 || securityScore < 30) {
+      riskLevel = 'critical';
+    }
+
+    return {
+      id: coin.mint,
+      coinName: coin.name,
+      coinSymbol: coin.symbol,
+      riskLevel,
+      reasons: reasons.slice(0, 4), // Limit to top 4 reasons
+      timestamp: Date.now(),
+      dismissed: false,
+      liquidityChange: analysis.liquidityAnalysis?.liquidityHealth < 50 ? -30 : 0,
+      holderChange: analysis.holderAnalysis?.topHolderConcentration > 60 ? -20 : 0,
+      confidence: Math.min(95, rugPullProb + honeypotProb / 2)
+    };
+  };
+
+  useEffect(() => {
+    fetchRugPullAlerts();
+
+    // Refresh alerts every 5 minutes
+    const interval = setInterval(fetchRugPullAlerts, 300000);
+    return () => clearInterval(interval);
+  }, []);
+
   const dismissAlert = (alertId: string) => {
     setAlerts(prev => prev.map(alert =>
       alert.id === alertId ? { ...alert, dismissed: true } : alert
