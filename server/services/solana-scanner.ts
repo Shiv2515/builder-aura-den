@@ -566,7 +566,7 @@ class SolanaScanner {
       console.error('Advanced AI Analysis error:', error);
 
       // Fallback using actual token metrics and live data where possible
-      console.log(`⚠️ Using fallback analysis for ${tokenData.symbol}`);
+      console.log(`��️ Using fallback analysis for ${tokenData.symbol}`);
 
       // Try to get any available live data
       let price = await this.getLivePrice(tokenData.mint);
@@ -602,9 +602,12 @@ class SolanaScanner {
       const ageInHours = (Date.now() - tokenData.createdAt) / 3600000;
       const change24h = ageInHours < 24 ? 0 : (volume / mcap > 0.1 ? 15 : -5);
 
+      // Get social sentiment for fallback analysis too
+      const socialMetrics = await socialSentimentAnalyzer.analyzeSocialSentiment(tokenData.symbol, tokenData.name);
+
       // Data-driven activity metrics
       const whaleActivity = Math.min(100, (volume / mcap) * 1000);
-      const socialBuzz = Math.min(100, tokenData.holders / 100);
+      const socialBuzz = Math.floor((socialMetrics.sentiment * 50) + (socialMetrics.viralityScore * 0.5));
       const liquidity = liquidityData?.liquidity || Math.max(50000, volume * 0.5);
 
       return {
