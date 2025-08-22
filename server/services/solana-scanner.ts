@@ -501,7 +501,10 @@ class SolanaScanner {
 
       const change24h = (Math.random() - 0.5) * 200; // -100% to +100%
 
-      // Run AI Ensemble Analysis
+      // Run Social Sentiment Analysis
+      const socialMetrics = await socialSentimentAnalyzer.analyzeSocialSentiment(tokenData.symbol, tokenData.name);
+
+      // Run AI Ensemble Analysis with social data
       const ensembleResult = await aiEnsemble.getEnsembleAnalysis({
         mint: tokenData.mint,
         name: tokenData.name,
@@ -510,7 +513,8 @@ class SolanaScanner {
         supply: tokenData.supply,
         volume24h: volume,
         liquidity: liquidityData?.liquidity || 0,
-        createdAt: tokenData.createdAt
+        createdAt: tokenData.createdAt,
+        socialMetrics
       });
 
       // Run Smart Contract Analysis
