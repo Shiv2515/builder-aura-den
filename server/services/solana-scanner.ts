@@ -264,6 +264,27 @@ class SolanaScanner {
     }
   }
 
+  async getLiveVolume(mint: string): Promise<number> {
+    try {
+      // Try DexScreener API for volume data
+      const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${mint}`);
+      if (response.ok) {
+        const data = await response.json();
+        const pair = data.pairs?.[0];
+        if (pair?.volume?.h24) {
+          console.log(`📊 Got live 24h volume for ${mint}: $${pair.volume.h24}`);
+          return parseFloat(pair.volume.h24);
+        }
+      }
+
+      console.log(`⚠️ No live volume found for ${mint}, will generate realistic volume`);
+      return 0;
+    } catch (error) {
+      console.log(`⚠️ Error fetching live volume for ${mint}:`, error.message);
+      return 0;
+    }
+  }
+
   async getHolderCount(mint: string): Promise<number> {
     try {
       // Get token accounts for this mint
