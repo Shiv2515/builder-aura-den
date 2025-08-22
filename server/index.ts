@@ -42,6 +42,9 @@ export function createServer() {
   app.get("/api/scan/advanced/:mint", handleGetAdvancedAnalysis);
   app.get("/api/scan/timing/:mint", handleGetTimingAnalysis);
   app.get("/api/scan/contract/:mint", handleGetContractAnalysis);
+  app.get("/api/scan/holders/:mint", handleGetHolderDistribution);
+  app.get("/api/scan/liquidity/:mint", handleGetLiquidityAnalysis);
+  app.get("/api/realtime/events", handleGetRealtimeEvents);
 
   // Start auto-scanning when server starts
   startAutoScanning();

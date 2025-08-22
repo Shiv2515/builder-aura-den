@@ -1,5 +1,7 @@
 import { RequestHandler } from "express";
 import { solanaScanner } from "../services/solana-scanner";
+import { holderDistributionService } from "../services/holder-distribution";
+import { realTimeMonitor } from "../services/real-time-monitor";
 
 export const handleStartScan: RequestHandler = async (req, res) => {
   try {
@@ -284,5 +286,56 @@ export const stopAutoScanning = () => {
     clearInterval(autoScanInterval);
     autoScanInterval = null;
     console.log('🛑 Auto-scanning stopped');
+  }
+};
+
+export const handleGetHolderDistribution: RequestHandler = async (req, res) => {
+  try {
+    const { mint } = req.params;
+
+    if (!mint) {
+      return res.status(400).json({ error: 'Mint address required' });
+    }
+
+    const holderData = await holderDistributionService.getHolderDistribution(mint);
+    res.json(holderData);
+  } catch (error) {
+    console.error('Error getting holder distribution:', error);
+    res.status(500).json({ error: 'Failed to get holder distribution' });
+  }
+};
+
+export const handleGetLiquidityAnalysis: RequestHandler = async (req, res) => {
+  try {
+    const { mint } = req.params;
+
+    if (!mint) {
+      return res.status(400).json({ error: 'Mint address required' });
+    }
+
+    const liquidityData = await holderDistributionService.getLiquidityAnalysis(mint);
+    res.json(liquidityData);
+  } catch (error) {
+    console.error('Error getting liquidity analysis:', error);
+    res.status(500).json({ error: 'Failed to get liquidity analysis' });
+  }
+};
+
+export const handleGetRealtimeEvents: RequestHandler = (req, res) => {
+  try {
+    const { minutes = 60 } = req.query;
+    const timeframe = parseInt(minutes as string) || 60;
+
+    const events = realTimeMonitor.getRecentEvents(timeframe);
+
+    res.json({
+      events,
+      timeframe,
+      count: events.length,
+      lastUpdated: Date.now()
+    });
+  } catch (error) {
+    console.error('Error getting realtime events:', error);
+    res.status(500).json({ error: 'Failed to get realtime events' });
   }
 };
