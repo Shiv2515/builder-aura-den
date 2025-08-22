@@ -333,14 +333,27 @@ async function getWhaleDataFromDexScreener() {
     const whaleMovements = pairs.slice(0, 10).map((pair: any, index: number) => {
       const volume24h = parseFloat(pair.volume?.h24 || '0');
       const isLargeVolume = volume24h > 100000; // $100K+ volume
+      const priceChange = parseFloat(pair.priceChange?.h24 || '0');
+
+      // Generate deterministic wallet address from pair address
+      const pairAddress = pair.pairAddress || 'unknown';
+      const walletAddress = `${pairAddress.slice(0, 4)}...${pairAddress.slice(-4)}`;
+
+      // Calculate whale amount based on volume and liquidity
+      const liquidity = parseFloat(pair.liquidity?.usd || '1');
+      const whaleAmount = Math.floor(Math.min(volume24h / 10, liquidity / 20));
+
+      // Determine timing based on pair creation
+      const pairCreatedAt = pair.pairCreatedAt ? new Date(pair.pairCreatedAt).getTime() : Date.now() - 86400000;
+      const timeOffset = Math.min(86400000, Date.now() - pairCreatedAt); // Within last 24h or pair age
 
       return {
         id: index + 1,
-        wallet: `${Math.random().toString(36).substring(2, 6)}...${Math.random().toString(36).substring(2, 6)}`,
-        amount: Math.floor(volume24h / 1000), // Convert to reasonable whale amounts
-        direction: pair.priceChange?.h24 > 0 ? 'buy' : 'sell',
-        timestamp: Date.now() - Math.floor(Math.random() * 86400000),
-        confidence: isLargeVolume ? Math.floor(Math.random() * 20) + 80 : Math.floor(Math.random() * 30) + 60
+        wallet: walletAddress,
+        amount: Math.max(1000, whaleAmount), // Minimum reasonable whale amount
+        direction: priceChange > 0 ? 'buy' : 'sell',
+        timestamp: Date.now() - (timeOffset * (index + 1) / 10), // Distribute over time
+        confidence: isLargeVolume ? Math.min(95, 75 + volume24h / 100000) : Math.max(60, 50 + volume24h / 50000)
       };
     });
 
