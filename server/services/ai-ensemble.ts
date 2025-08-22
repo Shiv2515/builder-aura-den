@@ -158,51 +158,117 @@ Respond in JSON:
   }
 
   async analyzeWithClaude(tokenData: TokenAnalysis): Promise<AIModelResult> {
-    // Simulate Claude analysis (in production would use Anthropic API)
+    // Data-driven Claude simulation with real analysis metrics
     try {
-      const prompt = `
-CLAUDE-3 SOLANA MEME COIN DEEP ANALYSIS
+      console.log(`🧠 Claude-style conservative analysis for ${tokenData.symbol}...`);
 
-Advanced pattern recognition for: ${tokenData.name} (${tokenData.symbol})
+      // Conservative scoring based on real data patterns
+      let conservativeScore = 0;
 
-Focus on:
-- Hidden contract vulnerabilities
-- Whale accumulation patterns
-- Social media manipulation detection
-- Micro-trend analysis
-- Risk correlation factors
+      // Holder analysis (more conservative than GPT-4)
+      if (tokenData.holders > 5000) conservativeScore += 25;
+      else if (tokenData.holders > 1000) conservativeScore += 15;
+      else if (tokenData.holders > 500) conservativeScore += 10;
+      else conservativeScore += 5;
 
-Provide contrarian analysis to GPT-4 for ensemble diversity.`;
+      // Volume sustainability check
+      const volumeToMcap = tokenData.volume24h / (tokenData.holders * 1000); // rough mcap estimate
+      if (volumeToMcap > 0.1) conservativeScore += 20; // High volume-to-market-cap ratio
+      else if (volumeToMcap > 0.05) conservativeScore += 10;
+      else conservativeScore -= 5;
 
-      // Simulate Claude's more conservative approach
-      const baseScore = Math.max(20, Math.min(80, 
-        (tokenData.holders / 100) + 
-        (tokenData.volume24h / 100000) * 10 +
-        Math.random() * 30
-      ));
+      // Liquidity health (conservative view)
+      if (tokenData.liquidity > 1000000) conservativeScore += 20;
+      else if (tokenData.liquidity > 500000) conservativeScore += 15;
+      else if (tokenData.liquidity > 100000) conservativeScore += 10;
+      else conservativeScore -= 10;
+
+      // Age factor (newer = more risk in conservative view)
+      const ageInDays = (Date.now() - tokenData.createdAt) / 86400000;
+      if (ageInDays > 30) conservativeScore += 15; // Established
+      else if (ageInDays > 7) conservativeScore += 10; // Week old
+      else if (ageInDays > 1) conservativeScore += 5; // Day old
+      else conservativeScore -= 15; // Too new
+
+      // Supply analysis
+      const supplyNum = parseFloat(tokenData.supply);
+      if (supplyNum < 1e12) conservativeScore += 10; // Reasonable supply
+      else if (supplyNum > 1e15) conservativeScore -= 15; // Excessive supply
+
+      // Cap the score (Claude is more conservative)
+      const finalScore = Math.max(10, Math.min(75, conservativeScore));
+
+      // Risk assessment (more conservative than other models)
+      let rugRisk: 'low' | 'medium' | 'high';
+      if (finalScore > 60 && tokenData.liquidity > 500000 && ageInDays > 7) rugRisk = 'low';
+      else if (finalScore > 40 && tokenData.liquidity > 100000) rugRisk = 'medium';
+      else rugRisk = 'high';
+
+      // Prediction (more cautious)
+      let prediction: 'bullish' | 'bearish' | 'neutral';
+      if (finalScore > 65 && rugRisk === 'low') prediction = 'bullish';
+      else if (finalScore < 30 || rugRisk === 'high') prediction = 'bearish';
+      else prediction = 'neutral';
+
+      // Market psychology based on actual metrics
+      const fomo = Math.max(20, Math.min(80, (tokenData.volume24h / 100000) * 20));
+      const fear = rugRisk === 'high' ? 70 : rugRisk === 'medium' ? 40 : 20;
+      const greed = Math.min(90, tokenData.holders / 100);
+      const hype = Math.max(10, Math.min(70, finalScore * 0.8));
 
       return {
-        modelName: 'Claude-3',
-        aiScore: Math.floor(baseScore),
-        rugRisk: baseScore > 60 ? 'low' : baseScore > 35 ? 'medium' : 'high',
-        prediction: baseScore > 65 ? 'bullish' : baseScore < 40 ? 'bearish' : 'neutral',
-        confidence: Math.floor(baseScore + Math.random() * 20),
-        reasoning: `Claude-3 conservative analysis: ${baseScore > 60 ? 'Strong fundamentals detected' : baseScore > 35 ? 'Mixed signals observed' : 'High risk indicators present'}. Pattern recognition suggests ${baseScore > 50 ? 'legitimate' : 'suspicious'} community activity.`,
-        marketPsychology: {
-          fomo: Math.floor(Math.random() * 40) + 30,
-          fear: Math.floor(Math.random() * 50) + 25,
-          greed: Math.floor(Math.random() * 60) + 40,
-          hype: Math.floor(Math.random() * 70) + 30
-        },
+        modelName: 'Claude-3 (Conservative)',
+        aiScore: finalScore,
+        rugRisk,
+        prediction,
+        confidence: Math.max(50, finalScore - 10), // Conservative confidence
+        reasoning: this.generateClaudeReasoning(finalScore, rugRisk, tokenData, ageInDays),
+        marketPsychology: { fomo, fear, greed, hype },
         timingPrediction: {
-          nextMoveIn: Math.floor(Math.random() * 180) + 30,
-          pumpDuration: Math.floor(Math.random() * 240) + 60,
-          volatilityScore: Math.floor(Math.random() * 50) + 50
+          nextMoveIn: rugRisk === 'low' ? 90 : 150, // More conservative timing
+          pumpDuration: prediction === 'bullish' ? 180 : 60,
+          volatilityScore: rugRisk === 'high' ? 85 : 45
         }
       };
     } catch (error) {
+      console.error('Claude analysis error:', error);
       return this.getFallbackAnalysis('Claude-3', tokenData);
     }
+  }
+
+  private generateClaudeReasoning(score: number, rugRisk: string, tokenData: TokenAnalysis, ageInDays: number): string {
+    const factors = [];
+
+    if (tokenData.holders > 5000) {
+      factors.push("Strong holder base indicates community resilience");
+    } else if (tokenData.holders < 500) {
+      factors.push("Limited holder base raises concentration risk concerns");
+    }
+
+    if (tokenData.liquidity > 1000000) {
+      factors.push("Substantial liquidity supports price stability");
+    } else if (tokenData.liquidity < 100000) {
+      factors.push("Low liquidity creates manipulation vulnerability");
+    }
+
+    if (ageInDays > 30) {
+      factors.push("Token maturity reduces early-stage volatility risk");
+    } else if (ageInDays < 1) {
+      factors.push("Extremely new token carries elevated uncertainty");
+    }
+
+    if (rugRisk === 'high') {
+      factors.push("Multiple risk indicators suggest extreme caution warranted");
+    } else if (rugRisk === 'low') {
+      factors.push("Risk metrics within acceptable parameters for meme coin category");
+    }
+
+    const volumeRatio = tokenData.volume24h / (tokenData.holders * 1000);
+    if (volumeRatio > 0.1) {
+      factors.push("High volume-to-holder ratio indicates active trading interest");
+    }
+
+    return `Conservative analysis (Score: ${score}/75): ${factors.join(". ")}.`;
   }
 
   async analyzeWithQuantModel(tokenData: TokenAnalysis): Promise<AIModelResult> {
