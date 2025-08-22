@@ -35,47 +35,13 @@ interface RugPullAlert {
   confidence: number;
 }
 
-const mockAlerts: RugPullAlert[] = [
-  {
-    id: '1',
-    coinName: 'ShadyCoin',
-    coinSymbol: 'SHADY',
-    riskLevel: 'critical',
-    reasons: [
-      'Liquidity dropped 85% in 10 minutes',
-      'Top wallet holds 90% of supply',
-      'Contract ownership not renounced',
-      'No social media presence'
-    ],
-    timestamp: Date.now() - 300000, // 5 minutes ago
-    dismissed: false,
-    liquidityChange: -85,
-    holderChange: -67,
-    confidence: 94
-  },
-  {
-    id: '2',
-    coinName: 'MoonRocket',
-    coinSymbol: 'MOON',
-    riskLevel: 'high',
-    reasons: [
-      'Unusual whale selling pattern',
-      'Liquidity provider removed 40%',
-      'Social mentions suddenly stopped'
-    ],
-    timestamp: Date.now() - 900000, // 15 minutes ago
-    dismissed: false,
-    liquidityChange: -40,
-    holderChange: -12,
-    confidence: 78
-  }
-];
-
 export function RugPullAlerts() {
-  const [alerts, setAlerts] = useState<RugPullAlert[]>(mockAlerts);
+  const [alerts, setAlerts] = useState<RugPullAlert[]>([]);
   const [filter, setFilter] = useState<'all' | 'critical' | 'high'>('all');
   const [selectedAlert, setSelectedAlert] = useState<RugPullAlert | null>(null);
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const dismissAlert = (alertId: string) => {
     setAlerts(prev => prev.map(alert =>
