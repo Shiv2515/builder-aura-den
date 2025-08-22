@@ -632,18 +632,37 @@ class SolanaScanner {
     const name = metadata.name?.toLowerCase() || '';
     const symbol = metadata.symbol?.toLowerCase() || '';
 
-    // Look for meme coin indicators
+    // Primary meme coin indicators
     const memeKeywords = [
       'dog', 'cat', 'pepe', 'moon', 'rocket', 'diamond', 'ape', 'banana',
       'shib', 'doge', 'elon', 'mars', 'lambo', 'hodl', 'pump', 'gem',
       'safe', 'baby', 'mini', 'mega', 'ultra', 'super', 'turbo', 'wif',
-      'bonk', 'solana', 'sol', 'meme', 'token', 'coin'
+      'bonk', 'solana', 'sol', 'meme', 'token', 'coin', 'inu', 'floki'
     ];
 
-    // More permissive detection for demonstration
-    return memeKeywords.some(keyword =>
+    // Check for direct meme keywords
+    const hasMemeKeyword = memeKeywords.some(keyword =>
       name.includes(keyword) || symbol.includes(keyword)
-    ) || Math.random() > 0.3; // Include more tokens for variety
+    );
+
+    // Check for meme coin patterns
+    const hasMemePatter =
+      // Typical meme naming patterns
+      (/\b(safe|baby|mini|mega|ultra|super|turbo)\w+/i.test(name)) ||
+      (/\w+(inu|doge|shib|pepe|floki|coin|token)\b/i.test(name)) ||
+      // Symbol patterns
+      (symbol.length <= 6 && /[0-9]/.test(symbol)) || // Short symbols with numbers
+      (symbol.includes('doge') || symbol.includes('shib') || symbol.includes('pepe'));
+
+    // Check against known legitimate project patterns (exclude these)
+    const isLegitProject =
+      name.includes('usd') || name.includes('usdc') || name.includes('usdt') ||
+      name.includes('btc') || name.includes('eth') || name.includes('sol') ||
+      name.includes('ray') || name.includes('serum') || name.includes('orca') ||
+      symbol === 'sol' || symbol === 'ray' || symbol === 'srm';
+
+    // Return true if it matches meme patterns but isn't a known legitimate token
+    return (hasMemeKeyword || hasMemePatter) && !isLegitProject;
   }
 
   async getTopCoins(): Promise<CoinAnalysis[]> {
