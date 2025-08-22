@@ -9,10 +9,10 @@ importers:
   .:
     dependencies:
       '@solana/spl-token':
-        specifier: ^0.4.13
+        specifier: 0.4.13
         version: 0.4.13(@solana/web3.js@1.98.4(bufferutil@4.0.9)(typescript@5.9.2)(utf-8-validate@5.0.10))(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.2)(utf-8-validate@5.0.10)
       '@solana/web3.js':
-        specifier: ^1.98.4
+        specifier: 1.98.4
         version: 1.98.4(bufferutil@4.0.9)(typescript@5.9.2)(utf-8-validate@5.0.10)
       dotenv:
         specifier: ^17.2.1
@@ -21,10 +21,10 @@ importers:
         specifier: ^5.1.0
         version: 5.1.0
       node-fetch:
-        specifier: ^3.3.2
+        specifier: 3.3.2
         version: 3.3.2
       openai:
-        specifier: ^5.13.1
+        specifier: 5.13.1
         version: 5.13.1(ws@7.5.10(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.25.76)
       zod:
         specifier: ^3.25.76
