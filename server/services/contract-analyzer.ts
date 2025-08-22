@@ -150,23 +150,49 @@ class ContractAnalyzer {
 
   private async analyzeLiquidity(mint: string): Promise<ContractAnalysis['liquidityAnalysis']> {
     try {
-      // In production, this would check actual DEX pools (Raydium, Orca, etc.)
-      // For now, we'll simulate realistic liquidity analysis
-      
-      const hasLiquidity = Math.random() > 0.2; // 80% have some liquidity
-      const lpTokensLocked = Math.random() > 0.4; // 60% have locked LP
-      const lockDuration = lpTokensLocked ? Math.floor(Math.random() * 365) + 30 : 0;
-      const liquidityHealth = hasLiquidity ? Math.floor(Math.random() * 60) + 40 : 20;
-      const canRugPull = !lpTokensLocked || lockDuration < 30;
+      console.log(`💧 Analyzing real liquidity for ${mint.slice(0, 8)}...`);
+
+      // Check DexScreener for real pool data
+      const poolData = await this.getRealPoolData(mint);
+
+      if (poolData) {
+        const liquidityUSD = parseFloat(poolData.liquidity?.usd || '0');
+        const volume24h = parseFloat(poolData.volume?.h24 || '0');
+
+        // Calculate liquidity health based on real metrics
+        const liquidityHealth = this.calculateLiquidityHealth(liquidityUSD, volume24h);
+
+        // Check for LP lock indicators based on pool age and characteristics
+        const ageInDays = poolData.pairCreatedAt ?
+          (Date.now() - new Date(poolData.pairCreatedAt).getTime()) / 86400000 : 0;
+
+        const lpTokensLocked = liquidityUSD > 100000 && ageInDays > 7; // Heuristic
+        const lockDuration = lpTokensLocked ? Math.max(30, ageInDays * 1.5) : 0;
+        const canRugPull = !lpTokensLocked || liquidityHealth < 50;
+
+        return {
+          poolAddress: poolData.pairAddress || null,
+          lpTokensLocked,
+          lockDuration: Math.floor(lockDuration),
+          liquidityHealth,
+          canRugPull
+        };
+      }
+
+      // Fallback analysis based on basic token metrics
+      console.log(`⚠️ No pool data found for ${mint.slice(0, 8)}, using token metrics`);
+      const tokenMetrics = await this.analyzeTokenBasics(mint);
 
       return {
-        poolAddress: hasLiquidity ? `${mint.slice(0, 20)}...pool` : null,
-        lpTokensLocked,
-        lockDuration,
-        liquidityHealth,
-        canRugPull
+        poolAddress: null,
+        lpTokensLocked: false,
+        lockDuration: 0,
+        liquidityHealth: tokenMetrics.health,
+        canRugPull: true
       };
+
     } catch (error) {
+      console.error('Liquidity analysis error:', error);
       return {
         poolAddress: null,
         lpTokensLocked: false,
@@ -174,6 +200,62 @@ class ContractAnalyzer {
         liquidityHealth: 20,
         canRugPull: true
       };
+    }
+  }
+
+  private async getRealPoolData(mint: string) {
+    try {
+      const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${mint}`);
+      if (!response.ok) return null;
+
+      const data = await response.json();
+      return data.pairs?.[0] || null;
+    } catch (error) {
+      console.log(`DexScreener lookup failed for ${mint.slice(0, 8)}:`, error.message);
+      return null;
+    }
+  }
+
+  private calculateLiquidityHealth(liquidityUSD: number, volume24h: number): number {
+    if (liquidityUSD === 0) return 10;
+
+    let health = 0;
+
+    // Base liquidity score
+    if (liquidityUSD > 1000000) health += 40;
+    else if (liquidityUSD > 500000) health += 35;
+    else if (liquidityUSD > 100000) health += 25;
+    else if (liquidityUSD > 50000) health += 20;
+    else if (liquidityUSD > 10000) health += 15;
+    else health += 10;
+
+    // Volume to liquidity ratio (healthy = 0.1-0.5)
+    const volumeRatio = liquidityUSD > 0 ? volume24h / liquidityUSD : 0;
+    if (volumeRatio >= 0.1 && volumeRatio <= 0.5) health += 30;
+    else if (volumeRatio < 0.1) health += 20; // Low volume ok
+    else if (volumeRatio > 2) health -= 10; // Too high = manipulation risk
+
+    // Volume activity bonus
+    if (volume24h > 100000) health += 20;
+    else if (volume24h > 10000) health += 15;
+    else health += 5;
+
+    return Math.max(10, Math.min(100, health));
+  }
+
+  private async analyzeTokenBasics(mint: string) {
+    try {
+      const mintInfo = await getMint(connection, new PublicKey(mint));
+      const supply = Number(mintInfo.supply);
+
+      // Basic health check
+      let health = 20;
+      if (supply > 1000000 && supply < 1e15) health += 10;
+      if (mintInfo.mintAuthority === null) health += 20; // Good sign
+
+      return { health };
+    } catch {
+      return { health: 10 };
     }
   }
 
