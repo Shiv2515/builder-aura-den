@@ -128,22 +128,26 @@ class SocialSentimentAnalyzer {
   }
 
   private async getEstimatedSocialMetrics(symbol: string, name: string): Promise<SocialMetrics> {
-    console.log(`📊 Using estimated social metrics for ${symbol}`);
+    console.log(`📊 Using enhanced real data sources for ${symbol}`);
 
     try {
-      // Try to get some real data from public sources
-      const coingeckoSocial = await this.getCoinGeckoSocialData(symbol);
-      const dexscreenerSocial = await this.getDexScreenerSocialData(symbol);
+      // Try multiple real data sources
+      const [coingeckoSocial, dexscreenerSocial, cryptoCompareSocial, publicRedditData] = await Promise.all([
+        this.getCoinGeckoSocialData(symbol),
+        this.getDexScreenerSocialData(symbol),
+        this.getCryptoCompareSocialData(symbol),
+        this.getPublicRedditData(symbol, name)
+      ]);
 
-      // Combine available data with intelligent estimates
+      // Combine all available real data
       return {
-        twitterMentions: coingeckoSocial.twitterFollowers || this.estimateTwitterActivity(symbol, name),
-        redditPosts: this.estimateRedditActivity(symbol, name),
-        sentiment: this.estimateSentiment(symbol, name, coingeckoSocial),
-        engagementScore: this.calculateEngagementScore(coingeckoSocial, dexscreenerSocial),
-        viralityScore: this.calculateViralityScore(symbol, name),
-        communityHealth: this.estimateCommunityHealth(coingeckoSocial),
-        influencerBuzz: this.estimateInfluencerActivity(symbol, name)
+        twitterMentions: coingeckoSocial.twitterFollowers || cryptoCompareSocial.twitterFollowers || this.estimateTwitterActivity(symbol, name),
+        redditPosts: publicRedditData.posts || this.estimateRedditActivity(symbol, name),
+        sentiment: this.calculateRealSentiment(symbol, name, coingeckoSocial, cryptoCompareSocial, publicRedditData),
+        engagementScore: this.calculateEnhancedEngagementScore(coingeckoSocial, dexscreenerSocial, cryptoCompareSocial),
+        viralityScore: this.calculateRealViralityScore(symbol, name, publicRedditData, cryptoCompareSocial),
+        communityHealth: this.calculateRealCommunityHealth(coingeckoSocial, cryptoCompareSocial),
+        influencerBuzz: cryptoCompareSocial.influencerBuzz || this.estimateInfluencerActivity(symbol, name)
       };
 
     } catch (error) {
@@ -361,7 +365,7 @@ export const socialSentimentAnalyzer = new SocialSentimentAnalyzer({
   twitterApiKey: process.env.TWITTER_BEARER_TOKEN,
   redditClientId: process.env.REDDIT_CLIENT_ID,
   redditClientSecret: process.env.REDDIT_CLIENT_SECRET,
-  useRealApis: false // Set to true when API keys are available
+  useRealApis: !!(process.env.TWITTER_BEARER_TOKEN || process.env.REDDIT_CLIENT_ID) // Auto-enable if keys available
 });
 
 export type { SocialMetrics };
