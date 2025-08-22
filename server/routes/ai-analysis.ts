@@ -277,12 +277,15 @@ function analyzeTransactionForWhales(transaction: any, sigInfo: any) {
           const solAmount = Number(lamports) / 1e9;
 
           if (solAmount >= 50) { // 50+ SOL considered whale movement
+            // Determine direction based on account balance changes
+            const direction = this.determineTransactionDirection(transaction, instruction);
+
             return {
               isWhaleMovement: true,
               amount: Math.floor(solAmount),
-              direction: Math.random() > 0.5 ? 'buy' : 'sell', // Transaction direction analysis would be complex
+              direction,
               wallet: transaction.transaction.message.accountKeys[0].toString(),
-              confidence: Math.min(95, 60 + solAmount / 10)
+              confidence: Math.min(95, Math.max(70, 60 + solAmount / 20))
             };
           }
         }
