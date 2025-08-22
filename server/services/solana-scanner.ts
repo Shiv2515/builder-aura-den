@@ -193,7 +193,7 @@ class SolanaScanner {
         const data = await response.json();
         return data.data?.[mint] || null;
       }
-      
+
       // Fallback to creating basic metadata
       return {
         name: `MemeToken_${mint.slice(0, 6)}`,
@@ -202,6 +202,65 @@ class SolanaScanner {
       };
     } catch (error) {
       return null;
+    }
+  }
+
+  async getLivePrice(mint: string): Promise<number> {
+    try {
+      // Try Jupiter price API
+      const jupiterResponse = await fetch(`https://price.jup.ag/v4/price?ids=${mint}`);
+      if (jupiterResponse.ok) {
+        const data = await jupiterResponse.json();
+        const priceData = data.data?.[mint];
+        if (priceData?.price) {
+          console.log(`📈 Got live price for ${mint}: $${priceData.price}`);
+          return parseFloat(priceData.price);
+        }
+      }
+
+      // Try DexScreener API as fallback
+      const dexResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${mint}`);
+      if (dexResponse.ok) {
+        const data = await dexResponse.json();
+        const pair = data.pairs?.[0];
+        if (pair?.priceUsd) {
+          console.log(`📈 Got live price from DexScreener for ${mint}: $${pair.priceUsd}`);
+          return parseFloat(pair.priceUsd);
+        }
+      }
+
+      console.log(`⚠️ No live price found for ${mint}, will generate realistic price`);
+      return 0;
+    } catch (error) {
+      console.log(`⚠️ Error fetching live price for ${mint}:`, error.message);
+      return 0;
+    }
+  }
+
+  async getLiveMarketCap(mint: string): Promise<number> {
+    try {
+      // Try DexScreener API for market cap data
+      const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${mint}`);
+      if (response.ok) {
+        const data = await response.json();
+        const pair = data.pairs?.[0];
+        if (pair?.fdv) {
+          console.log(`💰 Got live market cap for ${mint}: $${pair.fdv}`);
+          return parseFloat(pair.fdv);
+        }
+        // Calculate from price and supply if available
+        if (pair?.priceUsd && pair?.totalSupply) {
+          const mcap = parseFloat(pair.priceUsd) * parseFloat(pair.totalSupply);
+          console.log(`💰 Calculated market cap for ${mint}: $${mcap}`);
+          return mcap;
+        }
+      }
+
+      console.log(`⚠️ No live market cap found for ${mint}, will generate realistic market cap`);
+      return 0;
+    } catch (error) {
+      console.log(`⚠️ Error fetching live market cap for ${mint}:`, error.message);
+      return 0;
     }
   }
 
