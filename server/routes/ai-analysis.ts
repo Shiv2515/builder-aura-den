@@ -1,4 +1,7 @@
 import { RequestHandler } from "express";
+import { Connection, PublicKey } from '@solana/web3.js';
+
+const connection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
 
 interface AIAnalysisRequest {
   coinData: {
