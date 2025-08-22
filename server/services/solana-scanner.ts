@@ -550,7 +550,7 @@ class SolanaScanner {
         aiScore: ensembleResult.finalScore,
         rugRisk: ensembleResult.consensusRisk,
         whaleActivity: 100 - ensembleResult.advancedMetrics.whaleManipulation,
-        socialBuzz: ensembleResult.advancedMetrics.communityStrength,
+        socialBuzz: Math.floor((socialMetrics.sentiment * 50) + (socialMetrics.viralityScore * 0.5)),
         prediction: ensembleResult.consensusPrediction,
         holders: tokenData.holders,
         liquidity: liquidityData?.liquidity || 0,
