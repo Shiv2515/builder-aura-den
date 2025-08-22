@@ -447,13 +447,16 @@ class SolanaScanner {
       const circulatingSupply = Number(tokenData.supply) / Math.pow(10, tokenData.decimals);
       const price = circulatingSupply > 0 ? mcap / circulatingSupply : Math.random() * 0.5 + 0.00001;
 
+      // Generate realistic volume (1-10% of market cap)
+      const volume = mcap * (Math.random() * 0.09 + 0.01);
+
       return {
         mint: tokenData.mint,
         name: tokenData.name,
         symbol: tokenData.symbol,
         price,
         change24h: (Math.random() - 0.5) * 200,
-        volume: Math.random() * 1000000,
+        volume,
         mcap,
         aiScore,
         rugRisk: aiScore > 70 ? 'low' : aiScore > 40 ? 'medium' : 'high',
