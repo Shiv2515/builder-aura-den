@@ -108,8 +108,19 @@ async function simulateAIAnalysis(
   if (score > 75) prediction = 'bullish';
   else if (score < 35) prediction = 'bearish';
 
-  // Calculate confidence
-  const confidence = Math.min(95, Math.max(20, score + Math.random() * 20));
+  // Calculate confidence based on data quality and consistency
+  let confidence = score; // Base confidence matches score
+
+  // Increase confidence for coins with more data points
+  if (coinData.holders > 1000) confidence += 10;
+  if (coinData.volume > 100000) confidence += 10;
+  if (whaleMovements.length > 5) confidence += 5;
+
+  // Decrease confidence for very new or suspicious tokens
+  if (coinData.holders < 100) confidence -= 15;
+  if (coinData.volume < 1000) confidence -= 10;
+
+  confidence = Math.min(95, Math.max(25, confidence));
 
   const reasoning = generateReasoning(score, rugRisk, prediction, coinData, whaleMovements, socialData);
 
