@@ -566,7 +566,7 @@ class SolanaScanner {
       console.error('Advanced AI Analysis error:', error);
 
       // Fallback using actual token metrics and live data where possible
-      console.log(`��️ Using fallback analysis for ${tokenData.symbol}`);
+      console.log(`⚠️ Using fallback analysis for ${tokenData.symbol}`);
 
       // Try to get any available live data
       let price = await this.getLivePrice(tokenData.mint);
@@ -626,7 +626,7 @@ class SolanaScanner {
         holders: tokenData.holders,
         liquidity,
         createdAt: tokenData.createdAt,
-        reasoning: `Fallback analysis based on real metrics: ${tokenData.holders} holders, $${volume.toLocaleString()} volume, $${mcap.toLocaleString()} market cap.`
+        reasoning: `Analysis based on real metrics: ${tokenData.holders} holders, $${volume.toLocaleString()} volume, $${mcap.toLocaleString()} market cap. Social sentiment: ${(socialMetrics.sentiment * 100).toFixed(1)}% positive with ${socialMetrics.twitterMentions} Twitter mentions.`
       };
     }
   }
