@@ -14,7 +14,15 @@ interface TokenAnalysis {
   liquidity: number;
   createdAt: number;
   contractData?: any;
-  socialMetrics?: any;
+  socialMetrics?: {
+    twitterMentions: number;
+    redditPosts: number;
+    sentiment: number;
+    engagementScore: number;
+    viralityScore: number;
+    communityHealth: number;
+    influencerBuzz: number;
+  };
 }
 
 interface AIModelResult {
