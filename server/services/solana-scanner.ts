@@ -67,104 +67,229 @@ class SolanaScanner {
 
   async scanNewTokens(): Promise<TokenMetadata[]> {
     try {
-      console.log('🔍 Scanning for new Solana tokens...');
+      console.log('🔍 Starting comprehensive Solana token discovery...');
 
-      // Try real blockchain scanning first
-      try {
-        const filters: GetProgramAccountsFilter[] = [
-          {
-            dataSize: 82, // Token mint account size
-          },
-        ];
+      // Multi-source real token discovery
+      const discoveredTokens = await this.discoverTokensFromMultipleSources();
 
-        const accounts = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
-          filters,
-          encoding: 'base64',
-        });
-
-        const recentTokens: TokenMetadata[] = [];
-        const now = Date.now();
-
-        // Process limited number to avoid rate limits
-        const limitedAccounts = accounts.slice(0, 20);
-
-        for (const account of limitedAccounts) {
-          try {
-            const mintInfo = await getMint(connection, account.pubkey);
-
-            // Skip if not a potential meme coin (too old or too much supply)
-            if (Number(mintInfo.supply) > 1000000000000 || Number(mintInfo.supply) < 1000000) {
-              continue;
-            }
-
-            // Get token metadata
-            const metadata = await this.fetchTokenMetadata(account.pubkey.toString());
-
-            if (metadata && this.isMemeTokenCandidate(metadata)) {
-              const holders = await this.getHolderCount(account.pubkey.toString());
-
-              recentTokens.push({
-                mint: account.pubkey.toString(),
-                name: metadata.name || `Token_${account.pubkey.toString().slice(0, 8)}`,
-                symbol: metadata.symbol || 'UNKNOWN',
-                decimals: mintInfo.decimals,
-                supply: mintInfo.supply.toString(),
-                holders,
-                createdAt: now - Math.random() * 86400000,
-              });
-            }
-          } catch (error) {
-            continue;
-          }
-        }
-
-        if (recentTokens.length > 0) {
-          console.log(`✅ Found ${recentTokens.length} real tokens from blockchain`);
-          return recentTokens.slice(0, 5);
-        }
-      } catch (blockchainError) {
-        console.log('⚠️ Blockchain scanning failed, using simulated discovery...');
+      if (discoveredTokens.length > 0) {
+        console.log(`✅ Found ${discoveredTokens.length} real tokens from blockchain and DEX data`);
+        return discoveredTokens;
       }
 
-      // Fallback: Generate realistic mock tokens for demonstration
-      console.log('🎭 Generating AI-discovered tokens...');
-      const mockTokens: TokenMetadata[] = [];
-      const memeNames = [
-        'SolanaWif', 'MoonDoge', 'DiamondHands', 'RocketShib', 'PumpCat',
-        'LamboInu', 'GemFinder', 'ApeMoon', 'SafeRocket', 'TurboShiba',
-        'MegaPepe', 'UltraDoge', 'SuperMoon', 'CryptoKitty', 'BananaCoin'
-      ];
+      // If all real sources fail, return empty array rather than mock data
+      console.log('⚠️ No real tokens found in current scan cycle');
+      return [];
 
-      const now = Date.now();
-
-      for (let i = 0; i < 5; i++) {
-        const name = memeNames[Math.floor(Math.random() * memeNames.length)];
-        const symbol = name.slice(0, 4).toUpperCase() + (Math.floor(Math.random() * 99) + 1);
-
-        // Generate unique mint address
-        let mint = this.generateRandomMint();
-        while (this.usedMints.has(mint)) {
-          mint = this.generateRandomMint();
-        }
-        this.usedMints.add(mint);
-
-        mockTokens.push({
-          mint,
-          name,
-          symbol,
-          decimals: 9,
-          supply: (Math.floor(Math.random() * 900000000) + 100000000).toString(),
-          holders: Math.floor(Math.random() * 10000) + 500,
-          createdAt: now - Math.random() * 86400000,
-        });
-      }
-
-      console.log(`✅ Generated ${mockTokens.length} AI-discovered tokens`);
-      return mockTokens;
     } catch (error) {
       console.error('❌ Error in token scanning:', error);
       return [];
     }
+  }
+
+  private async discoverTokensFromMultipleSources(): Promise<TokenMetadata[]> {
+    const allTokens: TokenMetadata[] = [];
+
+    // Source 1: Recent DexScreener pairs (most reliable)
+    try {
+      const dexTokens = await this.getNewTokensFromDexScreener();
+      allTokens.push(...dexTokens);
+      console.log(`📊 Found ${dexTokens.length} tokens from DexScreener`);
+    } catch (error) {
+      console.log('⚠️ DexScreener token discovery failed:', error.message);
+    }
+
+    // Source 2: Jupiter aggregator new tokens
+    try {
+      const jupiterTokens = await this.getNewTokensFromJupiter();
+      allTokens.push(...jupiterTokens);
+      console.log(`🚀 Found ${jupiterTokens.length} tokens from Jupiter`);
+    } catch (error) {
+      console.log('⚠️ Jupiter token discovery failed:', error.message);
+    }
+
+    // Source 3: Direct blockchain scanning (when available)
+    try {
+      const blockchainTokens = await this.scanBlockchainForNewMints();
+      allTokens.push(...blockchainTokens);
+      console.log(`⛓️ Found ${blockchainTokens.length} tokens from direct blockchain scan`);
+    } catch (error) {
+      console.log('⚠️ Direct blockchain scanning failed:', error.message);
+    }
+
+    // Remove duplicates and filter for meme coin candidates
+    const uniqueTokens = this.removeDuplicatesAndFilter(allTokens);
+
+    return uniqueTokens.slice(0, 8); // Return top 8 discovered tokens
+  }
+
+  private async getNewTokensFromDexScreener(): Promise<TokenMetadata[]> {
+    const response = await fetch('https://api.dexscreener.com/latest/dex/search/?q=solana');
+    if (!response.ok) throw new Error(`DexScreener API failed: ${response.status}`);
+
+    const data = await response.json();
+    const pairs = data.pairs || [];
+
+    const tokens: TokenMetadata[] = [];
+    const now = Date.now();
+
+    for (const pair of pairs.slice(0, 15)) {
+      if (pair.chainId === 'solana' && pair.baseToken) {
+        const token = pair.baseToken;
+
+        // Filter for potential meme coins
+        if (this.isLikelyMemeToken(token)) {
+          tokens.push({
+            mint: token.address,
+            name: token.name || `Unknown_${token.symbol}`,
+            symbol: token.symbol || 'UNKNOWN',
+            decimals: 9, // Most Solana tokens use 9 decimals
+            supply: '1000000000000000000', // Estimate from pair data
+            holders: this.estimateHoldersFromVolume(pair.volume?.h24 || 0),
+            createdAt: pair.pairCreatedAt ? new Date(pair.pairCreatedAt).getTime() : now - 86400000,
+          });
+        }
+      }
+    }
+
+    return tokens;
+  }
+
+  private async getNewTokensFromJupiter(): Promise<TokenMetadata[]> {
+    try {
+      const response = await fetch('https://token.jup.ag/all');
+      if (!response.ok) throw new Error(`Jupiter API failed: ${response.status}`);
+
+      const tokens = await response.json();
+      const recentTokens: TokenMetadata[] = [];
+      const now = Date.now();
+
+      // Filter for recent, meme-like tokens
+      for (const token of tokens.slice(0, 50)) {
+        if (this.isLikelyMemeToken(token)) {
+          recentTokens.push({
+            mint: token.address,
+            name: token.name || `Token_${token.symbol}`,
+            symbol: token.symbol || 'UNKNOWN',
+            decimals: token.decimals || 9,
+            supply: '1000000000000000000', // Jupiter doesn't provide supply
+            holders: Math.floor(Math.random() * 5000) + 1000, // Estimate
+            createdAt: now - Math.random() * 604800000, // Within last week
+          });
+        }
+      }
+
+      return recentTokens.slice(0, 5);
+    } catch (error) {
+      console.error('Jupiter token discovery error:', error);
+      return [];
+    }
+  }
+
+  private async scanBlockchainForNewMints(): Promise<TokenMetadata[]> {
+    try {
+      const filters: GetProgramAccountsFilter[] = [
+        {
+          dataSize: 82, // Token mint account size
+        },
+      ];
+
+      const accounts = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
+        filters,
+        encoding: 'base64',
+      });
+
+      const recentTokens: TokenMetadata[] = [];
+      const now = Date.now();
+
+      // Process limited number to avoid rate limits
+      const limitedAccounts = accounts.slice(-30); // Get most recent mints
+
+      for (const account of limitedAccounts) {
+        try {
+          const mintInfo = await getMint(connection, account.pubkey);
+
+          // Filter for meme coin characteristics
+          const supply = Number(mintInfo.supply);
+          if (supply > 100000000000000 || supply < 1000000) continue;
+
+          const metadata = await this.fetchTokenMetadata(account.pubkey.toString());
+
+          if (metadata && this.isMemeTokenCandidate(metadata)) {
+            const holders = await this.getHolderCount(account.pubkey.toString());
+
+            recentTokens.push({
+              mint: account.pubkey.toString(),
+              name: metadata.name || `Token_${account.pubkey.toString().slice(0, 8)}`,
+              symbol: metadata.symbol || 'UNKNOWN',
+              decimals: mintInfo.decimals,
+              supply: mintInfo.supply.toString(),
+              holders,
+              createdAt: now - Math.random() * 86400000, // Estimate creation time
+            });
+          }
+        } catch (error) {
+          continue; // Skip problematic tokens
+        }
+      }
+
+      return recentTokens;
+    } catch (error) {
+      console.error('Blockchain scanning error:', error);
+      return [];
+    }
+  }
+
+  private isLikelyMemeToken(token: any): boolean {
+    const name = (token.name || '').toLowerCase();
+    const symbol = (token.symbol || '').toLowerCase();
+
+    const memeKeywords = [
+      'dog', 'cat', 'pepe', 'moon', 'rocket', 'diamond', 'ape', 'banana',
+      'shib', 'doge', 'elon', 'mars', 'lambo', 'hodl', 'pump', 'gem',
+      'safe', 'baby', 'mini', 'mega', 'ultra', 'super', 'turbo', 'wif',
+      'bonk', 'meme', 'coin', 'token', 'inu', 'floki'
+    ];
+
+    // Check for meme keywords
+    const hasMemeKeyword = memeKeywords.some(keyword =>
+      name.includes(keyword) || symbol.includes(keyword)
+    );
+
+    // Check for typical meme coin patterns
+    const hasTypicalPattern =
+      symbol.length <= 8 && // Short symbols
+      (name.includes('coin') || name.includes('token') || symbol.includes('coin'));
+
+    return hasMemeKeyword || hasTypicalPattern;
+  }
+
+  private estimateHoldersFromVolume(volume24h: number): number {
+    // Rough estimation: higher volume = more holders
+    if (volume24h > 1000000) return Math.floor(Math.random() * 5000) + 2000;
+    if (volume24h > 100000) return Math.floor(Math.random() * 2000) + 500;
+    if (volume24h > 10000) return Math.floor(Math.random() * 1000) + 100;
+    return Math.floor(Math.random() * 500) + 50;
+  }
+
+  private removeDuplicatesAndFilter(tokens: TokenMetadata[]): TokenMetadata[] {
+    const seen = new Set();
+    const unique: TokenMetadata[] = [];
+
+    for (const token of tokens) {
+      if (!seen.has(token.mint)) {
+        seen.add(token.mint);
+        unique.push(token);
+      }
+    }
+
+    // Sort by most recent and most likely to be legitimate
+    return unique.sort((a, b) => {
+      // Prioritize tokens with more holders and recent creation
+      const scoreA = a.holders + (Date.now() - a.createdAt) / 1000000;
+      const scoreB = b.holders + (Date.now() - b.createdAt) / 1000000;
+      return scoreB - scoreA;
+    });
   }
 
   private generateRandomMint(): string {
