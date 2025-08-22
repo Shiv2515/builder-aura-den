@@ -12,6 +12,9 @@ import {
   handleGetAdvancedAnalysis,
   handleGetTimingAnalysis,
   handleGetContractAnalysis,
+  handleGetHolderDistribution,
+  handleGetLiquidityAnalysis,
+  handleGetRealtimeEvents,
   startAutoScanning
 } from "./routes/coin-scanner";
 
