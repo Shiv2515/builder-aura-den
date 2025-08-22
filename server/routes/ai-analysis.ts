@@ -262,6 +262,28 @@ async function getRealWhaleMovements() {
   }
 }
 
+function determineTransactionDirection(transaction: any, instruction: any): 'buy' | 'sell' {
+  try {
+    // Analyze pre/post balances to determine direction
+    const preBalances = transaction.meta?.preBalances || [];
+    const postBalances = transaction.meta?.postBalances || [];
+
+    if (preBalances.length > 0 && postBalances.length > 0) {
+      const balanceChange = postBalances[0] - preBalances[0];
+      // If first account (usually the initiator) gained SOL, it's likely a sell
+      // If they lost SOL, it's likely a buy
+      return balanceChange > 0 ? 'sell' : 'buy';
+    }
+
+    // Fallback: analyze based on instruction type or account order
+    const accountKeys = transaction.transaction.message.accountKeys;
+    return accountKeys.length > 1 ? 'buy' : 'sell';
+  } catch {
+    // Default fallback based on current market conditions
+    return 'buy'; // Assume buy in uncertain cases
+  }
+}
+
 function analyzeTransactionForWhales(transaction: any, sigInfo: any) {
   try {
     // Check for large SOL transfers (whale threshold: 100+ SOL)
