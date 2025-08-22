@@ -29,6 +29,10 @@ export function WhaleTracker() {
   const fetchWhaleData = async () => {
     try {
       const response = await fetch('/api/scan/whale-activity');
+      if (!response.ok) {
+        console.error('Whale activity response not ok:', response.status, response.statusText);
+        throw new Error(`Failed to fetch whale activity: ${response.status}`);
+      }
       const data = await response.json();
       setWhaleData(data);
       setLastUpdate(new Date());
@@ -37,11 +41,29 @@ export function WhaleTracker() {
       // Fallback to original endpoint
       try {
         const fallbackResponse = await fetch('/api/whale-tracking');
+        if (!fallbackResponse.ok) {
+          console.error('Fallback whale tracking response not ok:', fallbackResponse.status, fallbackResponse.statusText);
+          throw new Error(`Failed to fetch whale tracking: ${fallbackResponse.status}`);
+        }
         const fallbackData = await fallbackResponse.json();
         setWhaleData(fallbackData);
         setLastUpdate(new Date());
       } catch (fallbackError) {
         console.error('Fallback whale data error:', fallbackError);
+        // Create fallback data to prevent blank screen
+        setWhaleData({
+          totalWhales: 0,
+          activeWhales24h: 0,
+          largestMovement: {
+            amount: 0,
+            direction: 'buy',
+            timestamp: Date.now(),
+            wallet: 'No data',
+            coin: 'No data'
+          },
+          movements: [],
+          lastUpdate: Date.now()
+        });
       }
     } finally {
       setIsLoading(false);
