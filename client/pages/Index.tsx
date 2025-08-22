@@ -500,7 +500,16 @@ export default function Index() {
                           <div className="flex items-center space-x-1">
                             <Activity className="h-3 w-3 text-muted-foreground" />
                             <span className="text-muted-foreground">Vol:</span>
-                            <span className="text-foreground">${(coin.volume / 1000000).toFixed(1)}M</span>
+                            <span className="text-foreground">
+                              {coin.volume >= 1000000000 ?
+                                `$${(coin.volume / 1000000000).toFixed(1)}B` :
+                                coin.volume >= 1000000 ?
+                                `$${(coin.volume / 1000000).toFixed(1)}M` :
+                                coin.volume >= 1000 ?
+                                `$${(coin.volume / 1000).toFixed(1)}K` :
+                                `$${coin.volume.toFixed(0)}`
+                              }
+                            </span>
                           </div>
                         </div>
                         <Button
