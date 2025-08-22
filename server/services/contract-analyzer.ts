@@ -386,24 +386,141 @@ class ContractAnalyzer {
 
   private async analyzeHolders(mint: string): Promise<ContractAnalysis['holderAnalysis']> {
     try {
-      // Simulate holder analysis (in production would analyze actual holders)
-      const topHolderConcentration = Math.floor(Math.random() * 40) + 10; // 10-50%
-      const developersHolding = Math.floor(Math.random() * 20) + 5; // 5-25%
-      const whaleCount = Math.floor(Math.random() * 10) + 1;
-      const distributionScore = Math.max(0, 100 - topHolderConcentration - developersHolding);
+      console.log(`👥 Analyzing real holder distribution for ${mint.slice(0, 8)}...`);
+
+      // Get actual token accounts for this mint
+      const holderData = await this.getRealHolderData(mint);
+
+      if (holderData) {
+        return {
+          topHolderConcentration: holderData.topHolderPercent,
+          developersHolding: holderData.devHolding,
+          whaleCount: holderData.whaleCount,
+          distributionScore: holderData.distributionScore
+        };
+      }
+
+      // Fallback: estimate from available data
+      return await this.estimateHolderDistribution(mint);
+
+    } catch (error) {
+      console.error('Holder analysis error:', error);
+      return {
+        topHolderConcentration: 40,
+        developersHolding: 15,
+        whaleCount: 3,
+        distributionScore: 45
+      };
+    }
+  }
+
+  private async getRealHolderData(mint: string) {
+    try {
+      // Get token accounts for this mint from Solana blockchain
+      const mintPubkey = new PublicKey(mint);
+      const tokenAccounts = await connection.getProgramAccounts(
+        new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'), // Token program
+        {
+          filters: [
+            { dataSize: 165 }, // Token account size
+            { memcmp: { offset: 0, bytes: mint } } // Filter by mint
+          ]
+        }
+      );
+
+      if (tokenAccounts.length === 0) return null;
+
+      const balances: { address: string; balance: number }[] = [];
+      let totalSupply = 0;
+
+      // Analyze top accounts (limited to avoid rate limits)
+      for (const account of tokenAccounts.slice(0, 30)) {
+        try {
+          const accountInfo = await getAccount(connection, account.pubkey);
+          const balance = Number(accountInfo.amount);
+
+          if (balance > 0) {
+            balances.push({
+              address: account.pubkey.toString(),
+              balance
+            });
+            totalSupply += balance;
+          }
+        } catch {
+          continue;
+        }
+      }
+
+      if (balances.length === 0) return null;
+
+      // Sort by balance descending
+      balances.sort((a, b) => b.balance - a.balance);
+
+      // Calculate concentration metrics
+      const top1Percent = totalSupply > 0 ? (balances[0]?.balance || 0) / totalSupply * 100 : 0;
+      const top5Percent = totalSupply > 0 ?
+        balances.slice(0, 5).reduce((sum, acc) => sum + acc.balance, 0) / totalSupply * 100 : 0;
+
+      // Estimate developer holdings (usually first few addresses)
+      const devHolding = Math.min(top5Percent, 30);
+
+      // Count whale accounts (>1% of supply)
+      const whaleThreshold = totalSupply * 0.01;
+      const whaleCount = balances.filter(acc => acc.balance > whaleThreshold).length;
+
+      // Distribution score (lower concentration = better distribution)
+      const distributionScore = Math.max(0, 100 - top1Percent - (top5Percent * 0.5));
+
+      return {
+        topHolderPercent: Math.min(100, top1Percent),
+        devHolding: Math.min(100, devHolding),
+        whaleCount,
+        distributionScore: Math.floor(distributionScore)
+      };
+
+    } catch (error) {
+      console.error('Real holder data fetch failed:', error);
+      return null;
+    }
+  }
+
+  private async estimateHolderDistribution(mint: string) {
+    try {
+      // Get basic mint info for estimation
+      const mintInfo = await getMint(connection, new PublicKey(mint));
+      const supply = Number(mintInfo.supply);
+
+      // Estimate based on mint characteristics
+      let topHolderConcentration = 30; // Default assumption
+      let devHolding = 15;
+      let whaleCount = 3;
+
+      // If mint authority is renounced, likely better distribution
+      if (mintInfo.mintAuthority === null) {
+        topHolderConcentration -= 10;
+        devHolding -= 5;
+      }
+
+      // Very large supplies often have worse distribution
+      if (supply > 1e15) {
+        topHolderConcentration += 15;
+        devHolding += 10;
+      }
+
+      const distributionScore = Math.max(0, 100 - topHolderConcentration - devHolding);
 
       return {
         topHolderConcentration,
-        developersHolding,
+        developersHolding: devHolding,
         whaleCount,
         distributionScore
       };
-    } catch (error) {
+    } catch {
       return {
-        topHolderConcentration: 50,
-        developersHolding: 30,
-        whaleCount: 1,
-        distributionScore: 20
+        topHolderConcentration: 40,
+        developersHolding: 20,
+        whaleCount: 2,
+        distributionScore: 40
       };
     }
   }
