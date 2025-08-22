@@ -486,7 +486,16 @@ export default function Index() {
                           <div className="flex items-center space-x-1">
                             <DollarSign className="h-3 w-3 text-muted-foreground" />
                             <span className="text-muted-foreground">MCap:</span>
-                            <span className="text-foreground">${(coin.mcap / 1000000).toFixed(1)}M</span>
+                            <span className="text-foreground">
+                              {coin.mcap >= 1000000000 ?
+                                `$${(coin.mcap / 1000000000).toFixed(1)}B` :
+                                coin.mcap >= 1000000 ?
+                                `$${(coin.mcap / 1000000).toFixed(1)}M` :
+                                coin.mcap >= 1000 ?
+                                `$${(coin.mcap / 1000).toFixed(1)}K` :
+                                `$${coin.mcap.toFixed(0)}`
+                              }
+                            </span>
                           </div>
                           <div className="flex items-center space-x-1">
                             <Activity className="h-3 w-3 text-muted-foreground" />
