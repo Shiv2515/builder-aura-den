@@ -262,11 +262,28 @@ export function RugPullAlerts() {
         </div>
       </CardHeader>
       <CardContent>
-        {filteredAlerts.length === 0 ? (
+        {error && (
+          <Alert className="mb-4 border-destructive bg-destructive/10">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {isLoading ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-sm text-muted-foreground">Scanning for rug pull threats...</p>
+          </div>
+        ) : filteredAlerts.length === 0 ? (
           <div className="text-center py-8">
             <CheckCircle className="h-12 w-12 text-success mx-auto mb-4" />
             <p className="text-lg font-semibold text-foreground">All Clear!</p>
-            <p className="text-muted-foreground">No active rug pull threats detected</p>
+            <p className="text-muted-foreground">
+              {alerts.length === 0
+                ? "No tokens analyzed yet"
+                : "No active rug pull threats detected"
+              }
+            </p>
           </div>
         ) : (
           <div className="space-y-4 max-h-96 overflow-y-auto">
