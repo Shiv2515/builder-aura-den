@@ -1,7 +1,7 @@
 // EMERGENCY: Ultra-conservative settings to stop rate limiting
 export const PRODUCTION_CONFIG = {
   // EMERGENCY: Dramatically increased delays to stop rate limiting
-  SOLANA_RPC_DELAY: 60000, // 1 MINUTE between calls
+  SOLANA_RPC_DELAY: 10000, // 10 seconds between calls (testing new RPC)
   WHALE_CHECK_INTERVAL: 3600000, // 1 HOUR
   BLOCK_CHECK_INTERVAL: 3600000, // 1 HOUR
   TOKEN_METRICS_INTERVAL: 7200000, // 2 HOURS
