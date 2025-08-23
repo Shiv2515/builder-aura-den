@@ -117,6 +117,30 @@ export const handleGetTopCoins: RequestHandler = async (req, res) => {
 
 export const handleGetScanStatus: RequestHandler = async (req, res) => {
   try {
+    const { PRODUCTION_CONFIG } = await import('../config/production');
+
+    // EMERGENCY: Return mock status if in emergency mode
+    if (PRODUCTION_CONFIG.EMERGENCY_MODE) {
+      console.log('🚨 Emergency mode: Returning fallback scan status');
+      res.json({
+        isScanning: false,
+        totalScanned: 2,
+        rugPullsDetected: 0,
+        highPotentialCoins: 1,
+        scanProgress: 100,
+        nextScanIn: 7200,
+        stats: {
+          averageAiScore: 85,
+          bullishCoins: 1,
+          bearishCoins: 0,
+          whaleMovements: 0
+        },
+        lastScanTime: Date.now() - 300000,
+        emergencyMode: true
+      });
+      return;
+    }
+
     const allCoins = solanaScanner.getAllScannedCoins();
     const criticalRugRisks = allCoins.filter(coin => coin.rugRisk === 'high').length;
     const highPotential = allCoins.filter(coin => coin.aiScore > 80).length;
