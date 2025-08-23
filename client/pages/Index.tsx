@@ -189,13 +189,13 @@ export default function Index() {
     fetchCoins();
     fetchScanStatus();
 
-    // Auto-refresh every 30 seconds
+    // Auto-refresh every 60 seconds for better reliability
     const interval = setInterval(() => {
       fetchScanStatus();
       if (!scanStatus?.isScanning) {
         fetchCoins();
       }
-    }, 30000);
+    }, 60000);
 
     return () => clearInterval(interval);
   }, []);

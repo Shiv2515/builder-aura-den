@@ -73,7 +73,7 @@ export function WhaleTracker() {
 
   useEffect(() => {
     fetchWhaleData();
-    const interval = setInterval(fetchWhaleData, 30000); // Update every 30 seconds
+    const interval = setInterval(fetchWhaleData, 60000); // Update every 60 seconds for better reliability
     return () => clearInterval(interval);
   }, []);
 
