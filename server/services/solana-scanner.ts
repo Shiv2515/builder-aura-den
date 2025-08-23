@@ -6,7 +6,7 @@ import { contractAnalyzer } from './contract-analyzer';
 import { microTimingPredictor } from './micro-timing';
 import { socialSentimentAnalyzer } from './social-sentiment';
 
-const SOLANA_RPC_URL = 'https://solana-rpc.publicnode.com';
+const SOLANA_RPC_URL = 'https://billowing-maximum-layer.solana-mainnet.quiknode.pro/ffd12f08ca809a65bf9998681e0177cfb60a2d11/';
 const connection = new Connection(SOLANA_RPC_URL, 'confirmed');
 
 const openai = new OpenAI({
