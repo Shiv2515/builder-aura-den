@@ -70,7 +70,7 @@ export default function Index() {
   const [selectedCoin, setSelectedCoin] = useState<CoinData | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
-  const fetchScanStatus = async () => {
+  const fetchScanStatus = async (retryCount = 0) => {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // Increased timeout
@@ -91,6 +91,14 @@ export default function Index() {
       setScanStatus(data);
     } catch (err) {
       console.error('Error fetching scan status:', err);
+
+      // Retry up to 2 times with exponential backoff
+      if (retryCount < 2 && !err.name?.includes('Abort')) {
+        console.log(`Retrying scan status fetch in ${(retryCount + 1) * 2} seconds...`);
+        setTimeout(() => fetchScanStatus(retryCount + 1), (retryCount + 1) * 2000);
+        return;
+      }
+
       // Only provide fallback if we don't have existing data
       if (!scanStatus) {
         setScanStatus({
@@ -112,7 +120,7 @@ export default function Index() {
     }
   };
 
-  const fetchCoins = async (forceRefresh = false) => {
+  const fetchCoins = async (forceRefresh = false, retryCount = 0) => {
     try {
       setIsLoading(true);
       setError(null);
@@ -151,6 +159,13 @@ export default function Index() {
       }
     } catch (err) {
       console.error('Error fetching coins:', err);
+
+      // Retry up to 2 times with exponential backoff
+      if (retryCount < 2 && !err.name?.includes('Abort')) {
+        console.log(`Retrying coins fetch in ${(retryCount + 1) * 2} seconds...`);
+        setTimeout(() => fetchCoins(forceRefresh, retryCount + 1), (retryCount + 1) * 2000);
+        return;
+      }
 
       // Only show error if we don't have any coins to display
       if (coins.length === 0) {
