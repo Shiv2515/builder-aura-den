@@ -1,5 +1,7 @@
 import OpenAI from 'openai';
+import { getProductionSettings } from '../config/production';
 
+const productionSettings = getProductionSettings();
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
