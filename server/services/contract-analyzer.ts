@@ -1,7 +1,7 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import { getMint, getAccount } from '@solana/spl-token';
 
-const connection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
+const connection = new Connection('https://solana-rpc.publicnode.com', 'confirmed');
 
 interface ContractAnalysis {
   mint: string;

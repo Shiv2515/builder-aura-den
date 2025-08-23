@@ -17,7 +17,7 @@ COPY . .
 # Set environment variables for build
 ENV NODE_ENV=production
 ENV OPENAI_API_KEY=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
-ENV SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
+ENV SOLANA_RPC_URL=https://solana-rpc.publicnode.com
 
 # Build the application
 RUN pnpm run build
