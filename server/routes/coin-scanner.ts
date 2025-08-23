@@ -29,8 +29,65 @@ export const handleStartScan: RequestHandler = async (req, res) => {
 
 export const handleGetTopCoins: RequestHandler = async (req, res) => {
   try {
+    const { PRODUCTION_CONFIG } = await import('../config/production');
+
+    // EMERGENCY: Return mock data if in emergency mode
+    if (PRODUCTION_CONFIG.EMERGENCY_MODE) {
+      console.log('🚨 Emergency mode: Returning fallback coin data');
+      res.json({
+        coins: [
+          {
+            mint: "So11111111111111111111111111111111111111112",
+            name: "Solana",
+            symbol: "SOL",
+            price: 20.50,
+            change24h: 2.3,
+            volume: 1000000,
+            mcap: 9500000000,
+            aiScore: 75,
+            rugRisk: "low",
+            whaleActivity: 25,
+            socialBuzz: 65,
+            prediction: "bullish",
+            holders: 1500000,
+            liquidity: 5000000,
+            lastUpdate: Date.now()
+          },
+          {
+            mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+            name: "USD Coin",
+            symbol: "USDC",
+            price: 1.00,
+            change24h: 0.1,
+            volume: 8000000,
+            mcap: 9300000000,
+            aiScore: 95,
+            rugRisk: "low",
+            whaleActivity: 15,
+            socialBuzz: 30,
+            prediction: "neutral",
+            holders: 2000000,
+            liquidity: 10000000,
+            lastUpdate: Date.now()
+          }
+        ],
+        scanStatus: {
+          isScanning: false,
+          lastScanTime: Date.now() - 300000,
+          totalCoinsScanned: 2
+        },
+        metadata: {
+          timestamp: Date.now(),
+          network: 'solana-mainnet',
+          aiEnabled: false,
+          emergencyMode: true
+        }
+      });
+      return;
+    }
+
     const { forceRefresh } = req.query;
-    
+
     let coins;
     if (forceRefresh === 'true' || solanaScanner.getAllScannedCoins().length === 0) {
       console.log('🔄 Force refreshing coin data...');
