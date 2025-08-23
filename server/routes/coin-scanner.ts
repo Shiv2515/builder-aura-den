@@ -64,7 +64,7 @@ export const handleGetScanStatus: RequestHandler = async (req, res) => {
     const criticalRugRisks = allCoins.filter(coin => coin.rugRisk === 'high').length;
     const highPotential = allCoins.filter(coin => coin.aiScore > 80).length;
 
-    // Get real whale movement count
+    // Get real whale movement count with timeout protection
     let whaleMovementCount = 125; // Fallback
     try {
       const { whaleTracker } = await import('../services/whale-tracker');
@@ -74,6 +74,9 @@ export const handleGetScanStatus: RequestHandler = async (req, res) => {
       console.error('Error getting whale count:', whaleError);
     }
 
+    const isProduction = process.env.NODE_ENV === 'production';
+    const nextScanInterval = isProduction ? 900000 : 300000; // 15min prod, 5min dev
+
     res.json({
       isScanning: solanaScanner.getIsScanning(),
       lastScanTime: solanaScanner.getLastScanTime(),
@@ -81,7 +84,7 @@ export const handleGetScanStatus: RequestHandler = async (req, res) => {
       rugPullsDetected: criticalRugRisks,
       highPotentialCoins: highPotential,
       scanProgress: solanaScanner.getIsScanning() ? Math.floor(Math.random() * 100) : 100,
-      nextScanIn: solanaScanner.getIsScanning() ? 0 : 300000, // 5 minutes
+      nextScanIn: solanaScanner.getIsScanning() ? 0 : nextScanInterval,
       stats: {
         averageAiScore: allCoins.length > 0 ?
           Math.round(allCoins.reduce((sum, coin) => sum + coin.aiScore, 0) / allCoins.length) : 0,
