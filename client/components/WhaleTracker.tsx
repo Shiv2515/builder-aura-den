@@ -28,12 +28,15 @@ export function WhaleTracker() {
 
   const fetchWhaleData = async () => {
     try {
-      // Add timeout to prevent hanging during rate limits
+      // Increased timeout and better error handling
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
       const response = await fetch('/api/scan/whale-activity', {
-        signal: controller.signal
+        signal: controller.signal,
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
       });
       clearTimeout(timeoutId);
 
@@ -46,41 +49,22 @@ export function WhaleTracker() {
       setLastUpdate(new Date());
     } catch (error) {
       console.error('Error fetching whale data:', error);
-      // Fallback to original endpoint
-      try {
-        const fallbackController = new AbortController();
-        const fallbackTimeoutId = setTimeout(() => fallbackController.abort(), 5000);
 
-        const fallbackResponse = await fetch('/api/whale-tracking', {
-          signal: fallbackController.signal
+      // Only show fallback if we don't have existing data
+      if (!whaleData) {
+        setWhaleData({
+          totalWhales: 0,
+          activeWhales24h: 0,
+          largestMovement: {
+            amount: 0,
+            direction: 'buy',
+            timestamp: Date.now(),
+            wallet: 'Loading...',
+            coin: 'Whale data will update shortly'
+          },
+          movements: [],
+          lastUpdate: Date.now()
         });
-        clearTimeout(fallbackTimeoutId);
-
-        if (!fallbackResponse.ok) {
-          console.error('Fallback whale tracking response not ok:', fallbackResponse.status, fallbackResponse.statusText);
-          throw new Error(`Failed to fetch whale tracking: ${fallbackResponse.status}`);
-        }
-        const fallbackData = await fallbackResponse.json();
-        setWhaleData(fallbackData);
-        setLastUpdate(new Date());
-      } catch (fallbackError) {
-        console.error('Fallback whale data error:', fallbackError);
-        // Create fallback data to prevent blank screen
-        if (!whaleData) { // Only set fallback if we don't have any existing data
-          setWhaleData({
-            totalWhales: 0,
-            activeWhales24h: 0,
-            largestMovement: {
-              amount: 0,
-              direction: 'buy',
-              timestamp: Date.now(),
-              wallet: 'API Unavailable',
-              coin: 'Please try again later'
-            },
-            movements: [],
-            lastUpdate: Date.now()
-          });
-        }
       }
     } finally {
       setIsLoading(false);
