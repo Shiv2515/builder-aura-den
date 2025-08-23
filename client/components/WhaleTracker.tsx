@@ -26,7 +26,7 @@ export function WhaleTracker() {
   const [selectedWhale, setSelectedWhale] = useState<any>(null);
   const [isWhaleModalOpen, setIsWhaleModalOpen] = useState(false);
 
-  const fetchWhaleData = async () => {
+  const fetchWhaleData = async (retryCount = 0) => {
     try {
       // Increased timeout and better error handling
       const controller = new AbortController();
@@ -49,6 +49,13 @@ export function WhaleTracker() {
       setLastUpdate(new Date());
     } catch (error) {
       console.error('Error fetching whale data:', error);
+
+      // Retry up to 2 times with exponential backoff
+      if (retryCount < 2 && !error.name?.includes('Abort')) {
+        console.log(`Retrying whale data fetch in ${(retryCount + 1) * 2} seconds...`);
+        setTimeout(() => fetchWhaleData(retryCount + 1), (retryCount + 1) * 2000);
+        return;
+      }
 
       // Only show fallback if we don't have existing data
       if (!whaleData) {
