@@ -17,9 +17,17 @@ export default defineConfig(({ mode }) => ({
     outDir: "dist/spa",
   },
   plugins: [
-    react(),
+    react({
+      jsxRuntime: 'automatic',
+      jsxImportSource: 'react',
+      // Force refresh to avoid runtime conflicts
+      refresh: true
+    }),
     expressPlugin()
   ],
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime']
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./client"),
