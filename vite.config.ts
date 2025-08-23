@@ -19,7 +19,15 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react({
       jsxRuntime: 'automatic',
-      jsxImportSource: 'react'
+      jsxImportSource: 'react',
+      plugins: [
+        ['@swc/plugin-transform-imports', {
+          '@/components/ui': {
+            transform: '@/components/ui/{{member}}',
+            preventFullImport: true
+          }
+        }]
+      ]
     }),
     expressPlugin()
   ],
