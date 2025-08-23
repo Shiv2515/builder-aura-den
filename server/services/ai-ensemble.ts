@@ -78,6 +78,12 @@ interface EnsembleResult {
 class AIEnsemble {
   async analyzeWithGPT4(tokenData: TokenAnalysis): Promise<AIModelResult> {
     try {
+      // Check if AI analysis is disabled in production config
+      if (!productionSettings.ENABLE_AI_ANALYSIS) {
+        console.log('AI analysis disabled in production config, using fallback');
+        return this.getFallbackAnalysis('GPT-3.5-Turbo', tokenData);
+      }
+
       // Always use embedded API key for deployment reliability
       const apiKey = process.env.OPENAI_API_KEY || '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';
 
