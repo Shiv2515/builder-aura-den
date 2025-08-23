@@ -49,8 +49,8 @@ export function createServer() {
   app.get("/api/scan/liquidity/:mint", handleGetLiquidityAnalysis);
   app.get("/api/realtime/events", handleGetRealtimeEvents);
 
-  // Start auto-scanning when server starts
-  startAutoScanning();
+  // EMERGENCY: Auto-scanning disabled due to rate limiting
+  // startAutoScanning();
 
   return app;
 }

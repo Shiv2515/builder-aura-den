@@ -457,7 +457,7 @@ class RealTimeMonitor extends EventEmitter {
 // Create singleton instance
 export const realTimeMonitor = new RealTimeMonitor();
 
-// Auto-start monitoring
-realTimeMonitor.startMonitoring().catch(console.error);
+// EMERGENCY: Real-time monitoring disabled due to rate limiting
+// realTimeMonitor.startMonitoring().catch(console.error);
 
 export type { RealTimeEvent, WhaleTransactionEvent, RugPullEvent };
