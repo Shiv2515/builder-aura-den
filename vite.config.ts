@@ -16,7 +16,13 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: "dist/spa",
   },
-  plugins: [react(), expressPlugin()],
+  plugins: [
+    react({
+      jsxRuntime: 'automatic',
+      jsxImportSource: 'react'
+    }),
+    expressPlugin()
+  ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./client"),
