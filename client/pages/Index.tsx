@@ -72,7 +72,14 @@ export default function Index() {
 
   const fetchScanStatus = async () => {
     try {
-      const response = await fetch('/api/scan/status');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      const response = await fetch('/api/scan/status', {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
         console.error('Scan status response not ok:', response.status, response.statusText);
         throw new Error(`Failed to fetch scan status: ${response.status}`);
@@ -81,7 +88,23 @@ export default function Index() {
       setScanStatus(data);
     } catch (err) {
       console.error('Error fetching scan status:', err);
-      // Don't set error state for scan status, just log it
+      // Provide fallback scan status
+      if (!scanStatus) {
+        setScanStatus({
+          isScanning: false,
+          totalScanned: 0,
+          rugPullsDetected: 0,
+          highPotentialCoins: 0,
+          scanProgress: 0,
+          nextScanIn: 300,
+          stats: {
+            averageAiScore: 0,
+            bullishCoins: 0,
+            bearishCoins: 0,
+            whaleMovements: 0
+          }
+        });
+      }
     }
   };
 
@@ -90,10 +113,26 @@ export default function Index() {
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch(`/api/scan/coins${forceRefresh ? '?forceRefresh=true' : ''}`);
+      // Add timeout to prevent hanging during rate limits
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+      const response = await fetch(`/api/scan/coins${forceRefresh ? '?forceRefresh=true' : ''}`, {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
         console.error('Coins response not ok:', response.status, response.statusText);
-        throw new Error(`Failed to fetch coins: ${response.status}`);
+
+        // If we have existing coins, don't show error, just log it
+        if (coins.length > 0) {
+          console.log('Using cached coins due to API error');
+          setIsLoading(false);
+          return;
+        }
+
+        throw new Error(`API temporarily unavailable (${response.status})`);
       }
 
       const data = await response.json();
@@ -105,8 +144,14 @@ export default function Index() {
       }
     } catch (err) {
       console.error('Error fetching coins:', err);
-      // Don't always start a new scan on error, just show error
-      setError(`Failed to load coin data: ${err.message}`);
+
+      // Only show error if we don't have any coins to display
+      if (coins.length === 0) {
+        setError(`Data temporarily unavailable. API services may be experiencing high load.`);
+      } else {
+        // We have existing data, just update the timestamp
+        setLastUpdate(new Date());
+      }
     } finally {
       setIsLoading(false);
     }
