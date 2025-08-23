@@ -73,10 +73,13 @@ export default function Index() {
   const fetchScanStatus = async () => {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // Increased timeout
 
       const response = await fetch('/api/scan/status', {
-        signal: controller.signal
+        signal: controller.signal,
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
       });
       clearTimeout(timeoutId);
 
@@ -88,7 +91,7 @@ export default function Index() {
       setScanStatus(data);
     } catch (err) {
       console.error('Error fetching scan status:', err);
-      // Provide fallback scan status
+      // Only provide fallback if we don't have existing data
       if (!scanStatus) {
         setScanStatus({
           isScanning: false,
@@ -96,7 +99,8 @@ export default function Index() {
           rugPullsDetected: 0,
           highPotentialCoins: 0,
           scanProgress: 0,
-          nextScanIn: 300,
+          nextScanIn: 30,
+          lastScanTime: Date.now() - 30000,
           stats: {
             averageAiScore: 0,
             bullishCoins: 0,
@@ -113,12 +117,15 @@ export default function Index() {
       setIsLoading(true);
       setError(null);
 
-      // Add timeout to prevent hanging during rate limits
+      // Increased timeout for better reliability
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
       const response = await fetch(`/api/scan/coins${forceRefresh ? '?forceRefresh=true' : ''}`, {
-        signal: controller.signal
+        signal: controller.signal,
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
       });
       clearTimeout(timeoutId);
 
@@ -147,7 +154,7 @@ export default function Index() {
 
       // Only show error if we don't have any coins to display
       if (coins.length === 0) {
-        setError(`Data temporarily unavailable. API services may be experiencing high load.`);
+        setError(`Loading cryptocurrency data... This may take a moment.`);
       } else {
         // We have existing data, just update the timestamp
         setLastUpdate(new Date());
