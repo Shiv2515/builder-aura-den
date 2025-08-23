@@ -16,10 +16,10 @@ export const PRODUCTION_CONFIG = {
   MAX_CONCURRENT_SCANS: 0, // NO concurrent scans
   BATCH_SIZE: 1, // Only 1 at a time
 
-  // EMERGENCY: Disable all expensive features
-  ENABLE_REAL_TIME_MONITORING: false,
-  ENABLE_WHALE_TRACKING: false, // DISABLED
-  ENABLE_AI_ANALYSIS: false,
+  // QuickNode: Re-enable features with premium RPC
+  ENABLE_REAL_TIME_MONITORING: true,
+  ENABLE_WHALE_TRACKING: true, // Re-enabled
+  ENABLE_AI_ANALYSIS: true,
   FALLBACK_ON_API_ERRORS: true,
 
   // EMERGENCY: Minimal settings
@@ -31,7 +31,7 @@ export const PRODUCTION_CONFIG = {
   USE_CACHED_DATA_ON_ERROR: true,
   GRACEFUL_DEGRADATION: true,
   MINIMAL_LOGGING: true,
-  EMERGENCY_MODE: true // New flag for emergency mode
+  EMERGENCY_MODE: false // Disabled for QuickNode premium RPC
 };
 
 // Check if running in production
