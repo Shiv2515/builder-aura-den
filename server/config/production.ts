@@ -1,36 +1,37 @@
-// Production configuration settings - Ultra-conservative to avoid rate limits
+// EMERGENCY: Ultra-conservative settings to stop rate limiting
 export const PRODUCTION_CONFIG = {
-  // API Rate Limiting - Much more conservative
-  SOLANA_RPC_DELAY: 8000, // 8 seconds between calls
-  WHALE_CHECK_INTERVAL: 1800000, // 30 minutes
-  BLOCK_CHECK_INTERVAL: 300000, // 5 minutes
-  TOKEN_METRICS_INTERVAL: 1800000, // 30 minutes
+  // EMERGENCY: Dramatically increased delays to stop rate limiting
+  SOLANA_RPC_DELAY: 60000, // 1 MINUTE between calls
+  WHALE_CHECK_INTERVAL: 3600000, // 1 HOUR
+  BLOCK_CHECK_INTERVAL: 3600000, // 1 HOUR
+  TOKEN_METRICS_INTERVAL: 7200000, // 2 HOURS
 
-  // Cache Settings - Much longer
-  WHALE_DATA_CACHE: 3600000, // 1 hour
-  HOLDER_DATA_CACHE: 7200000, // 2 hours
-  TOKEN_DATA_CACHE: 1800000, // 30 minutes
+  // EMERGENCY: Much longer cache to avoid API calls
+  WHALE_DATA_CACHE: 14400000, // 4 hours
+  HOLDER_DATA_CACHE: 28800000, // 8 hours
+  TOKEN_DATA_CACHE: 7200000, // 2 hours
 
-  // Scanning Settings - Very conservative
-  AUTO_SCAN_INTERVAL: 1800000, // 30 minutes
-  MAX_CONCURRENT_SCANS: 1, // Only 1 concurrent scan
-  BATCH_SIZE: 5, // Much smaller batch size
+  // EMERGENCY: Disable all scanning temporarily
+  AUTO_SCAN_INTERVAL: 7200000, // 2 HOURS
+  MAX_CONCURRENT_SCANS: 0, // NO concurrent scans
+  BATCH_SIZE: 1, // Only 1 at a time
 
-  // Feature Flags - Disable AI to avoid OpenAI quota issues
-  ENABLE_REAL_TIME_MONITORING: false, // Disable to reduce API calls
-  ENABLE_WHALE_TRACKING: true,
-  ENABLE_AI_ANALYSIS: false, // Disable to avoid OpenAI quota issues
+  // EMERGENCY: Disable all expensive features
+  ENABLE_REAL_TIME_MONITORING: false,
+  ENABLE_WHALE_TRACKING: false, // DISABLED
+  ENABLE_AI_ANALYSIS: false,
   FALLBACK_ON_API_ERRORS: true,
 
-  // Performance Settings - Very limited
-  MAX_TOKENS_TO_SCAN: 10, // Much fewer tokens
-  MAX_WHALE_WALLETS: 2, // Fewer wallets to check
-  API_TIMEOUT: 30000, // 30 seconds
+  // EMERGENCY: Minimal settings
+  MAX_TOKENS_TO_SCAN: 1, // Only 1 token
+  MAX_WHALE_WALLETS: 0, // NO wallet checks
+  API_TIMEOUT: 60000, // 1 minute timeout
 
-  // Production Optimizations
+  // EMERGENCY: Full fallback mode
   USE_CACHED_DATA_ON_ERROR: true,
   GRACEFUL_DEGRADATION: true,
-  MINIMAL_LOGGING: true // Enable for production
+  MINIMAL_LOGGING: true,
+  EMERGENCY_MODE: true // New flag for emergency mode
 };
 
 // Check if running in production
