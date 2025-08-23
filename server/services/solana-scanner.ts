@@ -6,7 +6,7 @@ import { contractAnalyzer } from './contract-analyzer';
 import { microTimingPredictor } from './micro-timing';
 import { socialSentimentAnalyzer } from './social-sentiment';
 
-const SOLANA_RPC_URL = 'https://api.mainnet-beta.solana.com';
+const SOLANA_RPC_URL = 'https://solana-rpc.publicnode.com';
 const connection = new Connection(SOLANA_RPC_URL, 'confirmed');
 
 const openai = new OpenAI({
