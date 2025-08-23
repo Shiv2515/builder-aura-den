@@ -1,36 +1,36 @@
-// Production configuration settings
+// Production configuration settings - Ultra-conservative to avoid rate limits
 export const PRODUCTION_CONFIG = {
-  // API Rate Limiting
-  SOLANA_RPC_DELAY: 3000, // 3 seconds between calls
-  WHALE_CHECK_INTERVAL: 300000, // 5 minutes
-  BLOCK_CHECK_INTERVAL: 60000, // 1 minute
-  TOKEN_METRICS_INTERVAL: 600000, // 10 minutes
-  
-  // Cache Settings
-  WHALE_DATA_CACHE: 900000, // 15 minutes
-  HOLDER_DATA_CACHE: 1800000, // 30 minutes
-  TOKEN_DATA_CACHE: 600000, // 10 minutes
-  
-  // Scanning Settings
-  AUTO_SCAN_INTERVAL: 900000, // 15 minutes
-  MAX_CONCURRENT_SCANS: 3,
-  BATCH_SIZE: 20, // Reduced batch size for stability
-  
-  // Feature Flags
-  ENABLE_REAL_TIME_MONITORING: true,
+  // API Rate Limiting - Much more conservative
+  SOLANA_RPC_DELAY: 8000, // 8 seconds between calls
+  WHALE_CHECK_INTERVAL: 1800000, // 30 minutes
+  BLOCK_CHECK_INTERVAL: 300000, // 5 minutes
+  TOKEN_METRICS_INTERVAL: 1800000, // 30 minutes
+
+  // Cache Settings - Much longer
+  WHALE_DATA_CACHE: 3600000, // 1 hour
+  HOLDER_DATA_CACHE: 7200000, // 2 hours
+  TOKEN_DATA_CACHE: 1800000, // 30 minutes
+
+  // Scanning Settings - Very conservative
+  AUTO_SCAN_INTERVAL: 1800000, // 30 minutes
+  MAX_CONCURRENT_SCANS: 1, // Only 1 concurrent scan
+  BATCH_SIZE: 5, // Much smaller batch size
+
+  // Feature Flags - Disable AI to avoid OpenAI quota issues
+  ENABLE_REAL_TIME_MONITORING: false, // Disable to reduce API calls
   ENABLE_WHALE_TRACKING: true,
-  ENABLE_AI_ANALYSIS: true,
+  ENABLE_AI_ANALYSIS: false, // Disable to avoid OpenAI quota issues
   FALLBACK_ON_API_ERRORS: true,
-  
-  // Performance Settings
-  MAX_TOKENS_TO_SCAN: 50,
-  MAX_WHALE_WALLETS: 5,
-  API_TIMEOUT: 10000, // 10 seconds
-  
+
+  // Performance Settings - Very limited
+  MAX_TOKENS_TO_SCAN: 10, // Much fewer tokens
+  MAX_WHALE_WALLETS: 2, // Fewer wallets to check
+  API_TIMEOUT: 30000, // 30 seconds
+
   // Production Optimizations
   USE_CACHED_DATA_ON_ERROR: true,
   GRACEFUL_DEGRADATION: true,
-  MINIMAL_LOGGING: false // Set to true for production
+  MINIMAL_LOGGING: true // Enable for production
 };
 
 // Check if running in production
