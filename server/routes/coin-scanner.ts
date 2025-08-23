@@ -147,7 +147,7 @@ export const startAutoScanning = () => {
     clearInterval(autoScanInterval);
   }
 
-  // Scan every 5 minutes
+  // Scan every 15 minutes for production
   autoScanInterval = setInterval(async () => {
     try {
       if (!solanaScanner.getIsScanning()) {
@@ -157,9 +157,9 @@ export const startAutoScanning = () => {
     } catch (error) {
       console.error('Auto-scan error:', error);
     }
-  }, 5 * 60 * 1000);
+  }, 15 * 60 * 1000);
 
-  console.log('✅ Auto-scanning started (every 5 minutes)');
+  console.log('✅ Auto-scanning started (every 15 minutes)');
 };
 
 export const handleGetAdvancedAnalysis: RequestHandler = async (req, res) => {

@@ -52,7 +52,7 @@ interface ComprehensiveTokenData {
 
 class HolderDistributionService {
   private cache: Map<string, ComprehensiveTokenData> = new Map();
-  private cacheTimeout = 300000; // 5 minutes
+  private cacheTimeout = 1800000; // 30 minutes for production
 
   async getComprehensiveTokenData(mint: string): Promise<ComprehensiveTokenData> {
     try {

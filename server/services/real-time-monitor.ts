@@ -122,7 +122,7 @@ class RealTimeMonitor extends EventEmitter {
           }
         }
 
-        await this.sleep(30000); // Check every 30 seconds
+        await this.sleep(300000); // Check every 5 minutes for production
       } catch (error) {
         console.error('Whale monitoring error:', error);
         await this.sleep(60000); // Wait longer on error
@@ -282,7 +282,7 @@ class RealTimeMonitor extends EventEmitter {
           this.lastProcessedSlot = currentSlot;
         }
 
-        await this.sleep(10000); // Check every 10 seconds
+        await this.sleep(60000); // Check every minute for production
       } catch (error) {
         console.error('Block monitoring error:', error);
         await this.sleep(30000);

@@ -718,8 +718,8 @@ class SolanaScanner {
           this.scannedTokens.set(token.mint, analysis);
           analyses.push(analysis);
           
-          // Add delay to avoid rate limits
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          // Add longer delay to avoid rate limits in production
+        await new Promise(resolve => setTimeout(resolve, 3000));
         } catch (error) {
           console.error(`Error analyzing token ${token.mint}:`, error);
         }

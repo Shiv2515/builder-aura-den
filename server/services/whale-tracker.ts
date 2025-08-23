@@ -38,7 +38,7 @@ interface WhaleAnalytics {
 class WhaleTracker {
   private cachedWhaleData: WhaleAnalytics | null = null;
   private lastUpdateTime = 0;
-  private updateInterval = 300000; // 5 minutes
+  private updateInterval = 900000; // 15 minutes for production
 
   async getWhaleActivity(): Promise<WhaleAnalytics> {
     try {
