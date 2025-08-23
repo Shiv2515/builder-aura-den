@@ -17,18 +17,7 @@ export default defineConfig(({ mode }) => ({
     outDir: "dist/spa",
   },
   plugins: [
-    react({
-      jsxRuntime: 'automatic',
-      jsxImportSource: 'react',
-      plugins: [
-        ['@swc/plugin-transform-imports', {
-          '@/components/ui': {
-            transform: '@/components/ui/{{member}}',
-            preventFullImport: true
-          }
-        }]
-      ]
-    }),
+    react(),
     expressPlugin()
   ],
   resolve: {
