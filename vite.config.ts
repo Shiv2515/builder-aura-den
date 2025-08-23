@@ -17,15 +17,7 @@ export default defineConfig(({ mode }) => ({
     outDir: "dist/spa",
   },
   plugins: [
-    react({
-      jsxRuntime: 'classic',
-      jsxImportSource: undefined,
-      babel: {
-        plugins: [
-          ['@babel/plugin-transform-react-jsx', { runtime: 'classic' }]
-        ]
-      }
-    }),
+    react(),
     expressPlugin()
   ],
   resolve: {
