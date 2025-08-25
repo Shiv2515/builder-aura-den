@@ -1,16 +1,11 @@
 import { Connection, PublicKey, GetProgramAccountsFilter } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID, getMint } from '@solana/spl-token';
-import OpenAI from 'openai';
 import crypto from 'crypto';
 
 // PROPRIETARY QUANTUM SCANNER - ADVANCED REAL-TIME ALGORITHM
 // Copyright Protected - Advanced Obfuscated Logic
 const RPC_URL = 'https://billowing-maximum-layer.solana-mainnet.quiknode.pro/ffd12f08ca809a65bf9998681e0177cfb60a2d11/';
 const connection = new Connection(RPC_URL, 'confirmed');
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 // Advanced Mathematical Constants (Proprietary)
 const FIBONACCI_GOLDEN_RATIO = 1.618033988749;
