@@ -1,7 +1,8 @@
 import { RequestHandler } from "express";
 import { quantumScanner } from "../services/quantum-scanner";
-import { holderDistributionService } from "../services/holder-distribution";
-import { realTimeMonitor } from "../services/real-time-monitor";
+// Disabled old services to prevent conflicts
+// import { holderDistributionService } from "../services/holder-distribution";
+// import { realTimeMonitor } from "../services/real-time-monitor";
 
 // QUANTUM SCANNER ROUTES - 100% LIVE DATA, NO FALLBACK
 
@@ -462,4 +463,4 @@ export const handleGetRealtimeEvents: RequestHandler = (req, res) => {
 
 // NO AUTO-SCANNING - Quantum scanner runs continuously
 // Quantum scanner is always active, no manual start/stop needed
-console.log('��� QUANTUM SCANNER: Continuous real-time blockchain analysis active');
+console.log('🌀 QUANTUM SCANNER: Continuous real-time blockchain analysis active');
