@@ -58,8 +58,14 @@ class QuantumScanner {
   private neuralNetwork: number[][] = this.initializeNeuralWeights();
 
   constructor() {
-    this.startQuantumRealtimeScanning();
-    this.initializeAdvancedAlgorithms();
+    // Only start scanning in production, not during build
+    if (process.env.NODE_ENV !== 'development' && typeof window === 'undefined') {
+      // Delay start to prevent build issues
+      setTimeout(() => {
+        this.startQuantumRealtimeScanning();
+        this.initializeAdvancedAlgorithms();
+      }, 5000);
+    }
   }
 
   // PROPRIETARY: Generate quantum entropy seed
