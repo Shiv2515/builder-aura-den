@@ -16,22 +16,22 @@ export const PRODUCTION_CONFIG = {
   MAX_CONCURRENT_SCANS: 0, // NO concurrent scans
   BATCH_SIZE: 1, // Only 1 at a time
 
-  // QuickNode: Re-enable features with premium RPC
+  // QUANTUM: All features enabled for advanced analysis
   ENABLE_REAL_TIME_MONITORING: true,
-  ENABLE_WHALE_TRACKING: true, // Re-enabled
+  ENABLE_WHALE_TRACKING: true,
   ENABLE_AI_ANALYSIS: true,
-  FALLBACK_ON_API_ERRORS: true,
+  FALLBACK_ON_API_ERRORS: false, // NO FALLBACK - Live data only
 
-  // EMERGENCY: Minimal settings
-  MAX_TOKENS_TO_SCAN: 1, // Only 1 token
-  MAX_WHALE_WALLETS: 0, // NO wallet checks
-  API_TIMEOUT: 60000, // 1 minute timeout
+  // QUANTUM: Advanced scanning parameters
+  MAX_TOKENS_TO_SCAN: 50, // Quantum can handle more
+  MAX_WHALE_WALLETS: 100, // Advanced whale analysis
+  API_TIMEOUT: 30000, // 30 second timeout
 
-  // EMERGENCY: Full fallback mode
-  USE_CACHED_DATA_ON_ERROR: true,
-  GRACEFUL_DEGRADATION: true,
+  // QUANTUM: No fallback mode - 100% live data
+  USE_CACHED_DATA_ON_ERROR: false, // NO CACHE
+  GRACEFUL_DEGRADATION: false, // NO DEGRADATION
   MINIMAL_LOGGING: true,
-  EMERGENCY_MODE: false // Disabled for QuickNode premium RPC
+  EMERGENCY_MODE: false // DISABLED - Quantum scanner uses 100% live data only
 };
 
 // Check if running in production
