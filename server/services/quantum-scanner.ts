@@ -166,7 +166,7 @@ class QuantumScanner {
                            (neuralScore * NEURAL_WEIGHTS[1]) + 
                            (chaosResistance * NEURAL_WEIGHTS[2]);
 
-      return quantumFilter > 0.30; // Lower threshold for more tokens
+      return quantumFilter > 0.10; // Very low threshold to include more tokens
     }).slice(0, 50); // Process top 50 tokens for comprehensive analysis
   }
 
