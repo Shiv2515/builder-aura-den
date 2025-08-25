@@ -1054,9 +1054,12 @@ class QuantumScanner {
 
   // Get all scanned tokens (live data only)
   public getScannedTokens(): QuantumTokenMetrics[] {
-    return Array.from(this.scannedTokens.values())
+    const tokens = Array.from(this.scannedTokens.values())
       .sort((a, b) => b.quantumScore - a.quantumScore)
-      .slice(0, 20); // Top 20 tokens
+      .slice(0, 50); // Top 50 tokens
+
+    console.log(`🌀 QUANTUM SCANNER: Returning ${tokens.length} analyzed tokens`);
+    return tokens;
   }
 
   // Get real-time market data for a token
