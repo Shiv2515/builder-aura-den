@@ -57,22 +57,8 @@ export function WhaleTracker() {
         return;
       }
 
-      // Only show fallback if we don't have existing data
-      if (!whaleData) {
-        setWhaleData({
-          totalWhales: 0,
-          activeWhales24h: 0,
-          largestMovement: {
-            amount: 0,
-            direction: 'buy',
-            timestamp: Date.now(),
-            wallet: 'Loading...',
-            coin: 'Whale data will update shortly'
-          },
-          movements: [],
-          lastUpdate: Date.now()
-        });
-      }
+      // NO FALLBACK - Quantum whale analysis provides 100% live data only
+      console.log('Whale data will be available when quantum analysis completes');
     } finally {
       setIsLoading(false);
     }
