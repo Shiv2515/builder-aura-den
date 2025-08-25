@@ -89,27 +89,20 @@ class QuantumScanner {
   // ADVANCED: Start continuous real-time scanning with quantum algorithms
   private async startQuantumRealtimeScanning(): Promise<void> {
     console.log('🌀 QUANTUM SCANNER ACTIVATED - Real-time blockchain scanning initiated');
-    
-    while (this.scanningActive) {
-      try {
-        // Multi-threaded scanning approach
-        await Promise.all([
-          this.scanLatestTokens(),
-          this.updateExistingTokenMetrics(),
-          this.analyzeWhaleMovements(),
-          this.processLiquidityChanges(),
-          this.detectRugPullPatterns()
-        ]);
 
-        // Quantum delay calculation (prevents rate limiting with chaos theory)
-        const quantumDelay = this.calculateQuantumDelay();
-        await this.sleep(quantumDelay);
-      } catch (error) {
-        console.error('❌ Quantum scanning error:', error);
-        // NO FALLBACK - Real data only as requested
-        await this.sleep(5000);
+    // Initial token discovery
+    await this.scanLatestTokens();
+
+    // Set up periodic scanning
+    setInterval(async () => {
+      if (this.scanningActive) {
+        try {
+          await this.scanLatestTokens();
+        } catch (error) {
+          console.error('❌ Periodic scan error:', error);
+        }
       }
-    }
+    }, 30000); // Scan every 30 seconds to avoid conflicts
   }
 
   // PROPRIETARY: Quantum delay calculation to avoid rate limits
