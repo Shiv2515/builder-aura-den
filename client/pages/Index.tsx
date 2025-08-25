@@ -306,6 +306,27 @@ export default function Index() {
               </CardTitle>
             </CardHeader>
             <CardContent>
+              {/* Enhanced Status Message */}
+              {scanStatus.statusMessage && (
+                <div className="mb-4 p-3 bg-accent/10 rounded-lg border border-accent/20">
+                  <p className="text-accent font-medium text-center">
+                    {scanStatus.statusMessage}
+                  </p>
+                  {scanStatus.platformsScanned && (
+                    <div className="mt-2 text-center">
+                      <p className="text-xs text-gray-400 mb-1">Scanning Platforms:</p>
+                      <div className="flex flex-wrap justify-center gap-1">
+                        {scanStatus.platformsScanned.map((platform, index) => (
+                          <Badge key={index} variant="outline" className="text-xs border-accent/30 text-accent">
+                            {platform}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-accent">{scanStatus.totalScanned}</div>
