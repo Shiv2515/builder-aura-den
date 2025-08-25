@@ -375,16 +375,16 @@ export function WhaleTracker() {
               </div>
 
               {/* Coin Information */}
-              {selectedWhale.coinSymbol && (
+              {selectedWhale?.coinSymbol && (
                 <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
                   <p className="text-sm text-muted-foreground mb-2">Related Coin</p>
                   <div className="flex items-center space-x-2">
                     <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center text-xs font-bold text-white">
-                      {selectedWhale.coinSymbol?.slice(0, 2) || 'UN'}
+                      {selectedWhale?.coinSymbol?.slice(0, 2) || 'UN'}
                     </div>
                     <div>
-                      <p className="font-semibold">{selectedWhale.coinName || 'Unknown Coin'}</p>
-                      <p className="text-sm text-muted-foreground">{selectedWhale.coinSymbol || 'UNKNOWN'}</p>
+                      <p className="font-semibold">{selectedWhale?.coinName || 'Unknown Coin'}</p>
+                      <p className="text-sm text-muted-foreground">{selectedWhale?.coinSymbol || 'UNKNOWN'}</p>
                     </div>
                   </div>
                 </div>
