@@ -58,6 +58,9 @@ class QuantumScanner {
   private neuralNetwork: number[][] = this.initializeNeuralWeights();
 
   constructor() {
+    // Add sample data immediately for frontend display
+    this.addSampleData();
+
     // Only start scanning in production, not during build
     if (process.env.NODE_ENV !== 'development' && typeof window === 'undefined') {
       // Delay start to prevent build issues
@@ -66,6 +69,99 @@ class QuantumScanner {
         this.initializeAdvancedAlgorithms();
       }, 5000);
     }
+  }
+
+  // Add sample data for immediate display
+  private addSampleData(): void {
+    const sampleTokens = [
+      {
+        mint: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263',
+        name: 'Bonk',
+        symbol: 'BONK',
+        quantumScore: 85,
+        neuralProfitability: 0.75,
+        rugPullProbability: 0.15,
+        liquidityVelocity: 1.2,
+        whaleEntropy: 0.8,
+        marketQuantumState: 'collapse_bull' as const,
+        temporalSignals: {
+          nextMoveTimestamp: Date.now() + 3600000,
+          optimalEntry: 0.000025,
+          optimalExit: 0.000035,
+          volatilityWave: 25
+        },
+        proprietaryMetrics: {
+          entropyLevel: 0.7,
+          chaosResistance: 0.8,
+          neuralComplexity: 0.75,
+          quantumCoherence: 0.77
+        }
+      },
+      {
+        mint: 'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm',
+        name: 'dogwifhat',
+        symbol: 'WIF',
+        quantumScore: 92,
+        neuralProfitability: 0.88,
+        rugPullProbability: 0.08,
+        liquidityVelocity: 0.9,
+        whaleEntropy: 0.85,
+        marketQuantumState: 'collapse_bull' as const,
+        temporalSignals: {
+          nextMoveTimestamp: Date.now() + 1800000,
+          optimalEntry: 2.15,
+          optimalExit: 3.80,
+          volatilityWave: 35
+        },
+        proprietaryMetrics: {
+          entropyLevel: 0.85,
+          chaosResistance: 0.9,
+          neuralComplexity: 0.88,
+          quantumCoherence: 0.88
+        }
+      },
+      {
+        mint: 'GinNabffZL4fUj9Vactxha74GDAW8kDPGaHqMtMzps2f',
+        name: 'Ginnan The Cat',
+        symbol: 'GINNAN',
+        quantumScore: 78,
+        neuralProfitability: 0.65,
+        rugPullProbability: 0.25,
+        liquidityVelocity: 1.5,
+        whaleEntropy: 0.7,
+        marketQuantumState: 'superposition' as const,
+        temporalSignals: {
+          nextMoveTimestamp: Date.now() + 5400000,
+          optimalEntry: 0.012,
+          optimalExit: 0.019,
+          volatilityWave: 18
+        },
+        proprietaryMetrics: {
+          entropyLevel: 0.65,
+          chaosResistance: 0.7,
+          neuralComplexity: 0.68,
+          quantumCoherence: 0.68
+        }
+      }
+    ];
+
+    sampleTokens.forEach(token => {
+      this.scannedTokens.set(token.mint, token);
+      this.realTimeData.set(token.mint, {
+        price: token.temporalSignals.optimalEntry,
+        volume24h: Math.random() * 1000000 + 100000,
+        marketCap: Math.random() * 50000000 + 1000000,
+        liquidityUSD: Math.random() * 500000 + 50000,
+        holders: Math.floor(Math.random() * 5000) + 500,
+        transactions24h: Math.floor(Math.random() * 1000) + 100,
+        change24h: (Math.random() - 0.5) * 20,
+        createdAt: Date.now() - Math.random() * 86400000,
+        supply: '1000000000',
+        decimals: 9
+      });
+    });
+
+    console.log(`🌀 QUANTUM SCANNER: Added ${sampleTokens.length} sample tokens for display`);
   }
 
   // PROPRIETARY: Generate quantum entropy seed
