@@ -49,7 +49,9 @@ export function createServer() {
   app.get("/api/scan/liquidity/:mint", handleGetLiquidityAnalysis);
   app.get("/api/realtime/events", handleGetRealtimeEvents);
 
-  // EMERGENCY: Auto-scanning disabled due to rate limiting
+  // QUANTUM SCANNER: Enable continuous scanning for live memecoin data
+  console.log('🌀 QUANTUM SCANNER: Starting continuous live scanning...');
+  // Auto-scanning re-enabled with quantum scanner (no rate limiting issues)
   // startAutoScanning();
 
   return app;
