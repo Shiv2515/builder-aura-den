@@ -208,14 +208,14 @@ export function WhaleTracker() {
             <span>Recent Movements</span>
           </h4>
           <div className="space-y-2 max-h-64 overflow-y-auto">
-            {whaleData.movements.slice(0, 8).map((movement) => (
+            {(whaleData.movements || []).slice(0, 8).map((movement, index) => (
               <div
-                key={movement.id}
+                key={movement?.id || index}
                 className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-border hover:border-primary/30 transition-colors cursor-pointer"
                 onClick={() => openWhaleDetails(movement)}
               >
                 <div className="flex items-center space-x-3">
-                  {movement.direction === 'buy' ? (
+                  {movement?.direction === 'buy' ? (
                     <TrendingUp className="h-4 w-4 text-success" />
                   ) : (
                     <TrendingDown className="h-4 w-4 text-destructive" />
@@ -223,7 +223,7 @@ export function WhaleTracker() {
                   <div>
                     <div className="flex items-center space-x-2">
                       <p className="text-sm font-medium text-foreground font-mono">
-                        {movement.wallet}
+                        {movement?.wallet || 'Unknown'}
                       </p>
                       <Button
                         size="sm"
@@ -231,28 +231,28 @@ export function WhaleTracker() {
                         className="h-4 w-4 p-0"
                         onClick={(e) => {
                           e.stopPropagation();
-                          copyToClipboard(movement.wallet);
+                          copyToClipboard(movement?.wallet || '');
                         }}
                       >
                         <Copy className="h-3 w-3" />
                       </Button>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {formatTimeAgo(movement.timestamp)} • Click for details
+                      {movement?.timestamp ? formatTimeAgo(movement.timestamp) : 'Unknown time'} • Click for details
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className={cn(
                     "text-sm font-semibold",
-                    movement.direction === 'buy' ? "text-success" : "text-destructive"
+                    movement?.direction === 'buy' ? "text-success" : "text-destructive"
                   )}>
-                    {formatAmount(movement.amount)}
+                    {movement?.amount ? formatAmount(movement.amount) : '$0'}
                   </p>
                   <div className="flex items-center space-x-1">
                     <Eye className="h-3 w-3 text-muted-foreground" />
                     <span className="text-xs text-muted-foreground">
-                      {movement.confidence}%
+                      {movement?.confidence || 0}%
                     </span>
                     <Info className="h-3 w-3 text-primary" />
                   </div>
@@ -312,27 +312,27 @@ export function WhaleTracker() {
                   <p className="text-xs text-muted-foreground">Amount</p>
                   <p className={cn(
                     "text-lg font-bold",
-                    selectedWhale.direction === 'buy' ? "text-success" : "text-destructive"
+                    selectedWhale?.direction === 'buy' ? "text-success" : "text-destructive"
                   )}>
-                    {formatAmount(selectedWhale.amount)}
+                    {selectedWhale?.amount ? formatAmount(selectedWhale.amount) : '$0'}
                   </p>
-                  <Badge variant={selectedWhale.direction === 'buy' ? 'default' : 'destructive'} className="mt-1 text-xs">
-                    {selectedWhale.direction === 'buy' ? (
+                  <Badge variant={selectedWhale?.direction === 'buy' ? 'default' : 'destructive'} className="mt-1 text-xs">
+                    {selectedWhale?.direction === 'buy' ? (
                       <ArrowUpRight className="h-3 w-3 mr-1" />
                     ) : (
                       <ArrowDownRight className="h-3 w-3 mr-1" />
                     )}
-                    {selectedWhale.direction.toUpperCase()}
+                    {selectedWhale?.direction?.toUpperCase() || 'UNKNOWN'}
                   </Badge>
                 </div>
 
                 <div className="p-3 bg-muted/50 rounded-lg text-center">
                   <p className="text-xs text-muted-foreground">Confidence</p>
-                  <p className="text-lg font-bold text-primary">{selectedWhale.confidence}%</p>
+                  <p className="text-lg font-bold text-primary">{selectedWhale?.confidence || 0}%</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {selectedWhale.confidence > 80 ? 'Very High' :
-                     selectedWhale.confidence > 60 ? 'High' :
-                     selectedWhale.confidence > 40 ? 'Medium' : 'Low'}
+                    {(selectedWhale?.confidence || 0) > 80 ? 'Very High' :
+                     (selectedWhale?.confidence || 0) > 60 ? 'High' :
+                     (selectedWhale?.confidence || 0) > 40 ? 'Medium' : 'Low'}
                   </p>
                 </div>
               </div>
@@ -343,10 +343,10 @@ export function WhaleTracker() {
                 <div className="flex items-center space-x-2 p-3 bg-muted/30 rounded-lg">
                   <Clock className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm">
-                    {new Date(selectedWhale.timestamp).toLocaleString()}
+                    {selectedWhale?.timestamp ? new Date(selectedWhale.timestamp).toLocaleString() : 'Unknown time'}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    ({formatTimeAgo(selectedWhale.timestamp)})
+                    ({selectedWhale?.timestamp ? formatTimeAgo(selectedWhale.timestamp) : 'Unknown'})
                   </span>
                 </div>
               </div>
