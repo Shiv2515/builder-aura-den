@@ -286,19 +286,19 @@ export function WhaleTracker() {
               <div className="p-4 bg-muted/50 rounded-lg">
                 <p className="text-sm text-muted-foreground mb-2">Wallet Address</p>
                 <div className="flex items-center justify-between">
-                  <p className="font-mono text-sm break-all">{selectedWhale.wallet}</p>
+                  <p className="font-mono text-sm break-all">{selectedWhale?.wallet || 'Unknown'}</p>
                   <div className="flex space-x-2 ml-4">
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => copyToClipboard(selectedWhale.wallet)}
+                      onClick={() => copyToClipboard(selectedWhale?.wallet || '')}
                     >
                       <Copy className="h-4 w-4" />
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => window.open(`https://solscan.io/account/${selectedWhale.wallet}`, '_blank')}
+                      onClick={() => window.open(`https://solscan.io/account/${selectedWhale?.wallet || ''}`, '_blank')}
                     >
                       <ExternalLink className="h-4 w-4" />
                     </Button>
@@ -359,16 +359,16 @@ export function WhaleTracker() {
                   <div className="flex items-center justify-between p-2 border rounded text-sm">
                     <span>Classification</span>
                     <Badge variant="outline" className="text-xs">
-                      {selectedWhale.amount > 100000 ? 'Mega Whale' :
-                       selectedWhale.amount > 50000 ? 'Large Whale' :
-                       selectedWhale.amount > 20000 ? 'Medium Whale' : 'Small Whale'}
+                      {(selectedWhale?.amount || 0) > 100000 ? 'Mega Whale' :
+                       (selectedWhale?.amount || 0) > 50000 ? 'Large Whale' :
+                       (selectedWhale?.amount || 0) > 20000 ? 'Medium Whale' : 'Small Whale'}
                     </Badge>
                   </div>
 
                   <div className="flex items-center justify-between p-2 border rounded text-sm">
                     <span>Market Impact</span>
                     <span className="text-xs font-medium">
-                      {selectedWhale.direction === 'buy' ? 'Bullish Signal' : 'Bearish Signal'}
+                      {selectedWhale?.direction === 'buy' ? 'Bullish Signal' : 'Bearish Signal'}
                     </span>
                   </div>
                 </div>
