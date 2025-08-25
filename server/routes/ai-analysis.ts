@@ -1,7 +1,7 @@
 import { RequestHandler } from "express";
 import { Connection, PublicKey } from '@solana/web3.js';
 
-const connection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
+const connection = new Connection('https://billowing-maximum-layer.solana-mainnet.quiknode.pro/ffd12f08ca809a65bf9998681e0177cfb60a2d11/', 'confirmed');
 
 interface AIAnalysisRequest {
   coinData: {

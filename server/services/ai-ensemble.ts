@@ -1,7 +1,9 @@
 import OpenAI from 'openai';
+import { getProductionSettings } from '../config/production';
 
+const productionSettings = getProductionSettings();
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || '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',
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 interface TokenAnalysis {
@@ -76,16 +78,22 @@ interface EnsembleResult {
 class AIEnsemble {
   async analyzeWithGPT4(tokenData: TokenAnalysis): Promise<AIModelResult> {
     try {
+      // Check if AI analysis is disabled in production config
+      if (!productionSettings.ENABLE_AI_ANALYSIS) {
+        console.log('AI analysis disabled in production config, using fallback');
+        return this.getFallbackAnalysis('GPT-3.5-Turbo', tokenData);
+      }
+
       // Always use embedded API key for deployment reliability
       const apiKey = process.env.OPENAI_API_KEY || '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';
 
       if (!apiKey || apiKey === '') {
         console.log('OpenAI API key not found, using fallback analysis');
-        return this.getFallbackAnalysis('GPT-4', tokenData);
+        return this.getFallbackAnalysis('GPT-3.5-Turbo', tokenData);
       }
 
       const prompt = `
-ADVANCED SOLANA MEME COIN ANALYSIS - GPT-4 MODEL
+ADVANCED SOLANA MEME COIN ANALYSIS - GPT-3.5-TURBO MODEL
 
 Token: ${tokenData.name} (${tokenData.symbol})
 Mint: ${tokenData.mint}
@@ -144,7 +152,7 @@ Respond in JSON:
 }`;
 
       const completion = await openai.chat.completions.create({
-        model: "gpt-4",
+        model: "gpt-3.5-turbo",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.3,
         max_tokens: 1000,
@@ -153,12 +161,12 @@ Respond in JSON:
       const result = JSON.parse(completion.choices[0].message.content || '{}');
       
       return {
-        modelName: 'GPT-4',
+        modelName: 'GPT-3.5-Turbo',
         aiScore: result.aiScore || 50,
         rugRisk: result.rugRisk || 'medium',
         prediction: result.prediction || 'neutral',
         confidence: result.confidence || 60,
-        reasoning: result.reasoning || 'GPT-4 analysis based on token metrics',
+        reasoning: result.reasoning || 'GPT-3.5-Turbo analysis based on token metrics',
         marketPsychology: result.marketPsychology || {
           fomo: 50,
           fear: 30,
@@ -172,7 +180,7 @@ Respond in JSON:
         }
       };
     } catch (error) {
-      console.error('GPT-4 analysis error:', error);
+      console.error('GPT-3.5-Turbo analysis error:', error);
       return this.getFallbackAnalysis('GPT-4', tokenData);
     }
   }

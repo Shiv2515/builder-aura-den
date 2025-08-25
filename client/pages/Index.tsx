@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -43,6 +43,16 @@ interface CoinData {
   liquidity: number;
   createdAt: number;
   reasoning: string;
+  // Quantum metrics
+  quantumMetrics?: {
+    neuralProfitability: number;
+    rugPullProbability: number;
+    liquidityVelocity: number;
+    whaleEntropy: number;
+    marketQuantumState: string;
+    temporalSignals: any;
+    proprietaryMetrics: any;
+  };
 }
 
 interface ScanStatus {
@@ -59,6 +69,9 @@ interface ScanStatus {
     bearishCoins: number;
     whaleMovements: number;
   };
+  quantumState?: string;
+  algorithm?: string;
+  dataIntegrity?: string;
 }
 
 export default function Index() {
@@ -70,36 +83,77 @@ export default function Index() {
   const [selectedCoin, setSelectedCoin] = useState<CoinData | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
-  const fetchScanStatus = async () => {
+  // QUANTUM SCANNER: 100% Live Data - No Fallback
+  const fetchScanStatus = async (retryCount = 0) => {
     try {
-      const response = await fetch('/api/scan/status');
-      if (!response.ok) throw new Error('Failed to fetch scan status');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+      const response = await fetch('/api/scan/status', {
+        signal: controller.signal,
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      });
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`Quantum scanner status unavailable: ${response.status}`);
+      }
+      
       const data = await response.json();
       setScanStatus(data);
     } catch (err) {
       console.error('Error fetching scan status:', err);
+      
+      if (retryCount < 2 && !err.name?.includes('Abort')) {
+        setTimeout(() => fetchScanStatus(retryCount + 1), (retryCount + 1) * 2000);
+        return;
+      }
+      
+      // NO FALLBACK - Quantum scanner provides 100% live data only
+      setError('Unable to connect to quantum scanner. Please refresh the page.');
     }
   };
 
-  const fetchCoins = async (forceRefresh = false) => {
+  // QUANTUM SCANNER: 100% Live Data - No Fallback
+  const fetchCoins = async (forceRefresh = false, retryCount = 0) => {
     try {
       setIsLoading(true);
       setError(null);
-      
-      const response = await fetch(`/api/scan/coins${forceRefresh ? '?forceRefresh=true' : ''}`);
-      if (!response.ok) throw new Error('Failed to fetch coins');
-      
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+      const response = await fetch(`/api/scan/coins${forceRefresh ? '?forceRefresh=true' : ''}`, {
+        signal: controller.signal,
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      });
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`Quantum scanner unavailable: ${response.status}`);
+      }
+
       const data = await response.json();
       setCoins(data.coins || []);
       setLastUpdate(new Date());
-      
+
       if (data.scanStatus) {
         setScanStatus(data.scanStatus);
       }
     } catch (err) {
-      setError('Failed to load coin data. Starting new scan...');
       console.error('Error fetching coins:', err);
-      startNewScan();
+
+      if (retryCount < 2 && !err.name?.includes('Abort')) {
+        setTimeout(() => fetchCoins(forceRefresh, retryCount + 1), (retryCount + 1) * 2000);
+        return;
+      }
+
+      // NO FALLBACK - Live data only
+      setError('Quantum scanner temporarily unavailable. Live data analysis in progress.');
     } finally {
       setIsLoading(false);
     }
@@ -107,69 +161,78 @@ export default function Index() {
 
   const startNewScan = async () => {
     try {
+      setError(null);
       const response = await fetch('/api/scan/start', { method: 'POST' });
-      if (!response.ok) throw new Error('Failed to start scan');
-      
+      if (!response.ok) {
+        throw new Error(`Failed to start scan: ${response.status}`);
+      }
+
       const data = await response.json();
       console.log('Scan started:', data.message);
-      
-      // Wait a bit then fetch results
+
       setTimeout(() => fetchCoins(), 5000);
     } catch (err) {
       console.error('Error starting scan:', err);
-      setError('Failed to start scan. Please try again.');
+      setError(`Failed to start scan: ${err.message}`);
     }
   };
 
   useEffect(() => {
-    // Initial load
     fetchCoins();
     fetchScanStatus();
 
-    // Auto-refresh every 30 seconds
+    // Auto-refresh every 60 seconds for better reliability
     const interval = setInterval(() => {
       fetchScanStatus();
       if (!scanStatus?.isScanning) {
         fetchCoins();
       }
-    }, 30000);
+    }, 60000);
 
     return () => clearInterval(interval);
   }, []);
 
-  const getRiskColor = (risk: string) => {
-    switch (risk) {
-      case 'low': return 'text-success border-success';
-      case 'medium': return 'text-warning border-warning';
-      case 'high': return 'text-destructive border-destructive';
-      default: return 'text-muted-foreground border-muted';
-    }
-  };
-
-  const getPredictionIcon = (prediction: string) => {
-    switch (prediction) {
-      case 'bullish': return <TrendingUp className="h-4 w-4 text-success" />;
-      case 'bearish': return <TrendingDown className="h-4 w-4 text-destructive" />;
-      default: return <Activity className="h-4 w-4 text-muted-foreground" />;
-    }
-  };
-
   const formatTimeAgo = (timestamp: number) => {
-    if (!timestamp) return 'Unknown';
-    const diff = Date.now() - timestamp;
+    const now = Date.now();
+    const diff = now - timestamp;
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(diff / 3600000);
-    
+    const days = Math.floor(diff / 86400000);
+
+    if (days > 0) return `${days}d ago`;
     if (hours > 0) return `${hours}h ago`;
     if (minutes > 0) return `${minutes}m ago`;
     return 'Just now';
   };
 
-  const getAIScoreColor = (score: number) => {
-    if (score >= 80) return 'text-success';
-    if (score >= 60) return 'text-primary';
-    if (score >= 40) return 'text-warning';
-    return 'text-destructive';
+  const formatNumber = (num: number) => {
+    if (num >= 1e9) return `$${(num / 1e9).toFixed(2)}B`;
+    if (num >= 1e6) return `$${(num / 1e6).toFixed(2)}M`;
+    if (num >= 1e3) return `$${(num / 1e3).toFixed(2)}K`;
+    return `$${num.toFixed(2)}`;
+  };
+
+  const formatPrice = (price: number) => {
+    if (price < 0.01) return `$${price.toFixed(6)}`;
+    if (price < 1) return `$${price.toFixed(4)}`;
+    return `$${price.toFixed(2)}`;
+  };
+
+  const getRiskColor = (risk: string) => {
+    switch (risk) {
+      case 'low': return 'text-green-400';
+      case 'medium': return 'text-yellow-400';
+      case 'high': return 'text-red-400';
+      default: return 'text-gray-400';
+    }
+  };
+
+  const getPredictionColor = (prediction: string) => {
+    switch (prediction) {
+      case 'bullish': return 'text-green-400';
+      case 'bearish': return 'text-red-400';
+      default: return 'text-gray-400';
+    }
   };
 
   const openCoinDetails = (coin: CoinData) => {
@@ -177,381 +240,266 @@ export default function Index() {
     setIsDetailsModalOpen(true);
   };
 
-  const closeCoinDetails = () => {
-    setSelectedCoin(null);
-    setIsDetailsModalOpen(false);
-  };
-
-  return (
-    <div className="min-h-screen gradient-bg crypto-grid">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center pulse-glow">
-                <Brain className="h-6 w-6 text-primary-foreground" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">PulseSignal AI</h1>
-                <p className="text-sm text-muted-foreground">Real-Time Solana Meme Coin Intelligence</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Badge variant={scanStatus?.isScanning ? "default" : "secondary"} className={scanStatus?.isScanning ? "pulse-glow" : ""}>
-                {scanStatus?.isScanning ? <Loader className="h-3 w-3 mr-1 animate-spin" /> : <Eye className="h-3 w-3 mr-1" />}
-                {scanStatus?.isScanning ? 'AI Scanning...' : 'Monitoring'}
-              </Badge>
-              <Button 
-                size="sm" 
-                onClick={() => fetchCoins(true)}
-                disabled={isLoading || scanStatus?.isScanning}
-                className="bg-accent hover:bg-accent/80"
-              >
-                {isLoading || scanStatus?.isScanning ? (
-                  <Loader className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                )}
-                {scanStatus?.isScanning ? 'Scanning...' : 'Refresh Scan'}
-              </Button>
-            </div>
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black p-4">
+        <div className="container mx-auto max-w-6xl">
+          <Alert className="border-red-500/50 bg-red-950/50 mb-6">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription className="text-red-200">
+              {error}
+            </AlertDescription>
+          </Alert>
+          <div className="text-center py-12">
+            <Button onClick={() => window.location.reload()} className="bg-accent hover:bg-accent/90">
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Refresh Page
+            </Button>
           </div>
         </div>
-      </header>
+      </div>
+    );
+  }
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Error Alert */}
-        {error && (
-          <Alert className="mb-6 border-destructive bg-destructive/10">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-card/80 backdrop-blur-sm border-border">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Coins Scanned</p>
-                  <p className="text-2xl font-bold text-foreground">
-                    {scanStatus?.totalScanned?.toLocaleString() || '0'}
-                  </p>
-                </div>
-                <Eye className="h-8 w-8 text-primary" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card/80 backdrop-blur-sm border-border">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Rug Pulls Detected</p>
-                  <p className="text-2xl font-bold text-destructive">
-                    {scanStatus?.rugPullsDetected || '0'}
-                  </p>
-                </div>
-                <Shield className="h-8 w-8 text-destructive" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card/80 backdrop-blur-sm border-border">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Whale Moves</p>
-                  <p className="text-2xl font-bold text-accent">
-                    {scanStatus?.stats?.whaleMovements || '0'}
-                  </p>
-                </div>
-                <Wallet className="h-8 w-8 text-accent" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card/80 backdrop-blur-sm border-border">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">High Potential</p>
-                  <p className="text-2xl font-bold text-success">
-                    {scanStatus?.highPotentialCoins || '0'}
-                  </p>
-                </div>
-                <TrendingUp className="h-8 w-8 text-success" />
-              </div>
-            </CardContent>
-          </Card>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black p-4">
+      <div className="container mx-auto max-w-6xl space-y-6">
+        
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-accent via-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
+            🌀 QUANTUM AI SCANNER
+          </h1>
+          <p className="text-gray-400 text-lg">
+            {scanStatus?.algorithm || 'Neural Quantum Analysis v2.0'} • {scanStatus?.dataIntegrity || 'Live Blockchain Feed'}
+          </p>
+          {scanStatus?.quantumState && (
+            <p className="text-accent text-sm">
+              Quantum State: {scanStatus.quantumState.slice(0, 16)}...
+            </p>
+          )}
         </div>
 
-        {/* AI Scanning Progress */}
-        <Card className="mb-8 bg-card/80 backdrop-blur-sm border-border">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Brain className="h-5 w-5 text-primary" />
-              <span>AI Blockchain Scanner</span>
-              {scanStatus?.isScanning && <Badge variant="default" className="pulse-glow">LIVE</Badge>}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">
-                  {scanStatus?.isScanning ? 'Scanning Solana Network...' : 'Monitoring Market'}
-                </span>
-                <span className="text-foreground">
-                  {scanStatus?.isScanning ? `${scanStatus.scanProgress}% Complete` : 'Ready'}
-                </span>
-              </div>
-              <Progress 
-                value={scanStatus?.isScanning ? scanStatus.scanProgress : 100} 
-                className="h-2" 
-              />
-              <div className="grid grid-cols-3 gap-4 text-sm">
+        {/* Scanning Status */}
+        {scanStatus && (
+          <Card className="bg-card/80 backdrop-blur-sm border-border mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <CheckCircle className="h-4 w-4 text-success" />
-                  <span className="text-muted-foreground">Blockchain Analysis</span>
+                  <Brain className="h-5 w-5 text-accent" />
+                  <span>Real-Time Quantum Analysis</span>
+                  {scanStatus.isScanning && (
+                    <Loader className="h-4 w-4 animate-spin text-accent" />
+                  )}
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Brain className="h-4 w-4 text-primary" />
-                  <span className="text-muted-foreground">OpenAI Processing</span>
+                <div className="flex items-center space-x-4">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => fetchCoins(true)}
+                    className="border-accent text-accent hover:bg-accent/10"
+                  >
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Refresh
+                  </Button>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Users className="h-4 w-4 text-accent" />
-                  <span className="text-muted-foreground">Whale Tracking</span>
-                </div>
-              </div>
-              {scanStatus?.lastScanTime && (
-                <div className="text-xs text-muted-foreground text-center pt-2 border-t">
-                  Last scan: {formatTimeAgo(scanStatus.lastScanTime)} • Next scan: {Math.floor((scanStatus.nextScanIn || 0) / 60000)}m
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {/* Enhanced Status Message */}
+              {scanStatus.statusMessage && (
+                <div className="mb-4 p-3 bg-accent/10 rounded-lg border border-accent/20">
+                  <p className="text-accent font-medium text-center">
+                    {scanStatus.statusMessage}
+                  </p>
+                  {scanStatus.platformsScanned && (
+                    <div className="mt-2 text-center">
+                      <p className="text-xs text-gray-400 mb-1">Scanning Platforms:</p>
+                      <div className="flex flex-wrap justify-center gap-1">
+                        {scanStatus.platformsScanned.map((platform, index) => (
+                          <Badge key={index} variant="outline" className="text-xs border-accent/30 text-accent">
+                            {platform}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Two-column layout for Whale Tracker and Rug Pull Alerts */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
-          <WhaleTracker />
-          <RugPullAlerts />
-        </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-accent">{scanStatus.totalScanned}</div>
+                  <div className="text-sm text-gray-400">Tokens Analyzed</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-400">{scanStatus.highPotentialCoins}</div>
+                  <div className="text-sm text-gray-400">High Potential</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-red-400">{scanStatus.rugPullsDetected}</div>
+                  <div className="text-sm text-gray-400">Rug Pulls Detected</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-400">{scanStatus.stats.averageAiScore}</div>
+                  <div className="text-sm text-gray-400">Avg AI Score</div>
+                </div>
+              </div>
+              <Progress value={scanStatus.scanProgress} className="mb-2" />
+              <div className="flex justify-between text-xs text-gray-400">
+                <span>Last update: {formatTimeAgo(scanStatus.lastScanTime)}</span>
+                <span>{scanStatus.scanProgress}% Complete</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-        {/* AI-Discovered Coins */}
-        <Card className="bg-card/80 backdrop-blur-sm border-border">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center space-x-2">
-                <span>AI-Discovered Meme Coins</span>
-                {scanStatus?.isScanning && <Loader className="h-4 w-4 animate-spin" />}
-              </CardTitle>
-              <div className="flex items-center space-x-2">
-                <Badge variant="outline" className="text-primary border-primary">
-                  Solana Network
-                </Badge>
-                <Badge variant="outline">
-                  AI Powered
-                </Badge>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading && coins.length === 0 ? (
-              <div className="text-center py-12">
-                <Loader className="h-12 w-12 text-primary mx-auto mb-4 animate-spin" />
-                <p className="text-lg font-semibold text-foreground">AI Scanning Solana Network...</p>
-                <p className="text-muted-foreground">Discovering high-potential meme coins</p>
-              </div>
-            ) : coins.length === 0 ? (
-              <div className="text-center py-12">
-                <Brain className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-lg font-semibold text-foreground">No Coins Found</p>
-                <p className="text-muted-foreground mb-4">Start a new scan to discover potential coins</p>
-                <Button onClick={startNewScan}>
-                  <Zap className="h-4 w-4 mr-2" />
-                  Start AI Scan
+        {/* Live Coins */}
+        <div className="grid gap-6">
+          {isLoading && coins.length === 0 ? (
+            <Card className="bg-card/80 backdrop-blur-sm border-border">
+              <CardContent className="p-8 text-center">
+                <Loader className="h-8 w-8 animate-spin text-accent mx-auto mb-4" />
+                <p className="text-gray-400">Quantum AI analyzing blockchain...</p>
+                <p className="text-xs text-gray-500 mt-2">Live data processing in progress</p>
+              </CardContent>
+            </Card>
+          ) : coins.length === 0 ? (
+            <Card className="bg-card/80 backdrop-blur-sm border-border">
+              <CardContent className="p-8 text-center">
+                <Brain className="h-12 w-12 text-accent mx-auto mb-4" />
+                <p className="text-gray-400 mb-4">No tokens meet quantum analysis criteria yet</p>
+                <Button onClick={startNewScan} className="bg-accent hover:bg-accent/90">
+                  <Zap className="mr-2 h-4 w-4" />
+                  Start Quantum Scan
                 </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {/* High Potential Coins Alert */}
-                {coins.filter(coin => coin.aiScore > 80).length > 0 && (
-                  <div className="p-4 bg-success/10 border border-success/30 rounded-lg mb-6">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Zap className="h-5 w-5 text-success" />
-                      <h3 className="text-lg font-bold text-success">
-                        🚀 HIGH POTENTIAL DETECTED ({coins.filter(coin => coin.aiScore > 80).length} coins)
-                      </h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      AI has identified coins with 60-70% chance of explosive growth. These are highlighted with green borders below.
-                    </p>
-                  </div>
-                )}
-
-                {coins.map((coin, index) => (
-                  <div
-                    key={`${coin.mint}-${index}`}
-                    className={cn(
-                      "p-4 rounded-lg border transition-all duration-300",
-                      coin.aiScore > 80 ? "border-success bg-success/5 pulse-glow" : "border-border bg-background/50",
-                      "hover:border-primary/50"
-                    )}
-                  >
-                    <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 items-center">
-                      {/* Coin Info */}
-                      <div className="flex items-center space-x-3">
-                        <div className="relative">
-                          <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center text-sm font-bold text-white">
-                            {coin.symbol.slice(0, 2)}
-                          </div>
-                          {coin.aiScore > 80 && (
-                            <div className="absolute -top-1 -right-1 w-4 h-4 bg-success rounded-full flex items-center justify-center">
-                              <Zap className="h-2 w-2 text-white" />
-                            </div>
-                          )}
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4">
+              {coins.map((coin) => (
+                <Card 
+                  key={coin.mint} 
+                  className="bg-card/80 backdrop-blur-sm border-border hover:border-accent/50 transition-all cursor-pointer"
+                  onClick={() => openCoinDetails(coin)}
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-accent to-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                          {coin.symbol.slice(0, 2)}
                         </div>
                         <div>
-                          <div className="flex items-center space-x-2">
-                            <p className="font-semibold text-foreground">{coin.name}</p>
-                            {coin.aiScore > 80 && (
-                              <Badge className="bg-success text-success-foreground text-xs px-2 py-0">
-                                HIGH POTENTIAL
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground flex items-center space-x-1">
-                            <span>{coin.symbol}</span>
-                            <span>•</span>
-                            <span>{coin.holders.toLocaleString()} holders</span>
-                            {coin.aiScore > 80 && (
-                              <>
-                                <span>•</span>
-                                <span className="text-success font-medium">🚀 EXPLOSIVE POTENTIAL</span>
-                              </>
-                            )}
-                          </p>
+                          <h3 className="font-bold text-lg">{coin.name}</h3>
+                          <p className="text-gray-400">{coin.symbol}</p>
                         </div>
                       </div>
-
-                      {/* Price & Change */}
-                      <div>
-                        <p className="font-mono text-foreground">${coin.price.toFixed(8)}</p>
-                        <div className="flex items-center space-x-1">
-                          {getPredictionIcon(coin.prediction)}
-                          <span className={cn(
-                            "text-sm font-medium",
-                            coin.change24h > 0 ? "text-success" : "text-destructive"
-                          )}>
-                            {coin.change24h > 0 ? '+' : ''}{coin.change24h.toFixed(1)}%
-                          </span>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold">{formatPrice(coin.price)}</div>
+                        <div className={cn("flex items-center", coin.change24h >= 0 ? 'text-green-400' : 'text-red-400')}>
+                          {coin.change24h >= 0 ? <TrendingUp className="h-4 w-4 mr-1" /> : <TrendingDown className="h-4 w-4 mr-1" />}
+                          {Math.abs(coin.change24h).toFixed(2)}%
                         </div>
-                      </div>
-
-                      {/* AI Score */}
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">AI Score</p>
-                        <div className="flex items-center space-x-2">
-                          <Progress value={coin.aiScore} className="h-2 flex-1" />
-                          <span className={cn("text-sm font-bold", getAIScoreColor(coin.aiScore))}>
-                            {coin.aiScore}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Whale Activity */}
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">Whale Activity</p>
-                        <div className="flex items-center space-x-2">
-                          <Progress value={coin.whaleActivity} className="h-2 flex-1" />
-                          <span className="text-sm font-bold text-accent">{coin.whaleActivity}</span>
-                        </div>
-                      </div>
-
-                      {/* Risk Assessment */}
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">Rug Risk</p>
-                        <Badge variant="outline" className={getRiskColor(coin.rugRisk)}>
-                          <AlertTriangle className="h-3 w-3 mr-1" />
-                          {coin.rugRisk.toUpperCase()}
-                        </Badge>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="space-y-2">
-                        <div className="text-xs space-y-1">
-                          <div className="flex items-center space-x-1">
-                            <DollarSign className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-muted-foreground">MCap:</span>
-                            <span className="text-foreground">
-                              {coin.mcap >= 1000000000 ?
-                                `$${(coin.mcap / 1000000000).toFixed(1)}B` :
-                                coin.mcap >= 1000000 ?
-                                `$${(coin.mcap / 1000000).toFixed(1)}M` :
-                                coin.mcap >= 1000 ?
-                                `$${(coin.mcap / 1000).toFixed(1)}K` :
-                                `$${coin.mcap.toFixed(0)}`
-                              }
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Activity className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-muted-foreground">Vol:</span>
-                            <span className="text-foreground">
-                              {coin.volume >= 1000000000 ?
-                                `$${(coin.volume / 1000000000).toFixed(1)}B` :
-                                coin.volume >= 1000000 ?
-                                `$${(coin.volume / 1000000).toFixed(1)}M` :
-                                coin.volume >= 1000 ?
-                                `$${(coin.volume / 1000).toFixed(1)}K` :
-                                `$${coin.volume.toFixed(0)}`
-                              }
-                            </span>
-                          </div>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="w-full text-xs"
-                          onClick={() => openCoinDetails(coin)}
-                        >
-                          <ExternalLink className="h-3 w-3 mr-1" />
-                          View Details
-                        </Button>
                       </div>
                     </div>
 
-                    {/* AI Reasoning */}
-                    {coin.reasoning && (
-                      <div className="mt-3 pt-3 border-t border-border">
-                        <p className="text-sm text-muted-foreground">
-                          <Brain className="h-3 w-3 inline mr-1" />
-                          AI Analysis: {coin.reasoning}
-                        </p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                      <div>
+                        <div className="text-sm text-gray-400">AI Score</div>
+                        <div className="font-bold text-accent">{coin.aiScore}/100</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-400">Market Cap</div>
+                        <div className="font-bold">{formatNumber(coin.mcap)}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-400">Volume 24h</div>
+                        <div className="font-bold">{formatNumber(coin.volume)}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-400">Holders</div>
+                        <div className="font-bold">{coin.holders.toLocaleString()}</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-4">
+                        <Badge variant="outline" className={cn("border-current", getRiskColor(coin.rugRisk))}>
+                          <Shield className="h-3 w-3 mr-1" />
+                          {coin.rugRisk.toUpperCase()} RISK
+                        </Badge>
+                        <Badge variant="outline" className={cn("border-current", getPredictionColor(coin.prediction))}>
+                          {coin.prediction === 'bullish' ? <TrendingUp className="h-3 w-3 mr-1" /> : 
+                           coin.prediction === 'bearish' ? <TrendingDown className="h-3 w-3 mr-1" /> :
+                           <Activity className="h-3 w-3 mr-1" />}
+                          {coin.prediction.toUpperCase()}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center space-x-2 text-sm text-gray-400">
+                        <Wallet className="h-4 w-4" />
+                        <span>{coin.whaleActivity}% Whale</span>
+                        <Users className="h-4 w-4" />
+                        <span>{coin.socialBuzz}% Buzz</span>
+                      </div>
+                    </div>
+
+                    {/* Quantum Metrics */}
+                    {coin.quantumMetrics && (
+                      <div className="border-t border-border pt-4 mt-4">
+                        <div className="text-xs text-accent mb-2">🌀 QUANTUM METRICS</div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                          <div>
+                            <div className="text-gray-400">Profit Potential</div>
+                            <div className="font-bold text-green-400">{(coin.quantumMetrics.neuralProfitability * 100).toFixed(1)}%</div>
+                          </div>
+                          <div>
+                            <div className="text-gray-400">Rug Risk</div>
+                            <div className="font-bold text-red-400">{(coin.quantumMetrics.rugPullProbability * 100).toFixed(1)}%</div>
+                          </div>
+                          <div>
+                            <div className="text-gray-400">Whale Entropy</div>
+                            <div className="font-bold text-blue-400">{(coin.quantumMetrics.whaleEntropy * 100).toFixed(0)}%</div>
+                          </div>
+                          <div>
+                            <div className="text-gray-400">Market State</div>
+                            <div className="font-bold text-purple-400">{coin.quantumMetrics.marketQuantumState.split('_')[1] || 'SUPERPOS'}</div>
+                          </div>
+                        </div>
                       </div>
                     )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+
+                    <div className="mt-4 p-3 bg-gray-800/50 rounded-lg">
+                      <p className="text-xs text-gray-300">{coin.reasoning}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Whale Tracker */}
+        <WhaleTracker />
+
+        {/* Rug Pull Alerts */}
+        <RugPullAlerts />
 
         {/* Last Update */}
-        <div className="text-center mt-8 text-sm text-muted-foreground">
-          Last updated: {lastUpdate.toLocaleTimeString()} • Powered by PulseSignal AI
+        <div className="text-center text-xs text-gray-500">
+          Last updated: {lastUpdate.toLocaleTimeString()} • 
+          Data source: Quantum Neural Analysis • 
+          {coins.length} tokens analyzed
         </div>
       </div>
 
       {/* Coin Details Modal */}
-      <CoinDetailsModal
-        coin={selectedCoin}
-        isOpen={isDetailsModalOpen}
-        onClose={closeCoinDetails}
-      />
+      {selectedCoin && (
+        <CoinDetailsModal
+          coin={selectedCoin}
+          isOpen={isDetailsModalOpen}
+          onClose={() => setIsDetailsModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

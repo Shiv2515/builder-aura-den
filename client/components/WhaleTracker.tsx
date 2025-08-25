@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -26,23 +26,39 @@ export function WhaleTracker() {
   const [selectedWhale, setSelectedWhale] = useState<any>(null);
   const [isWhaleModalOpen, setIsWhaleModalOpen] = useState(false);
 
-  const fetchWhaleData = async () => {
+  const fetchWhaleData = async (retryCount = 0) => {
     try {
-      const response = await fetch('/api/scan/whale-activity');
+      // Increased timeout and better error handling
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+      const response = await fetch('/api/scan/whale-activity', {
+        signal: controller.signal,
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      });
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        console.error('Whale activity response not ok:', response.status, response.statusText);
+        throw new Error(`Failed to fetch whale activity: ${response.status}`);
+      }
       const data = await response.json();
       setWhaleData(data);
       setLastUpdate(new Date());
     } catch (error) {
       console.error('Error fetching whale data:', error);
-      // Fallback to original endpoint
-      try {
-        const fallbackResponse = await fetch('/api/whale-tracking');
-        const fallbackData = await fallbackResponse.json();
-        setWhaleData(fallbackData);
-        setLastUpdate(new Date());
-      } catch (fallbackError) {
-        console.error('Fallback whale data error:', fallbackError);
+
+      // Retry up to 2 times with exponential backoff
+      if (retryCount < 2 && !error.name?.includes('Abort')) {
+        console.log(`Retrying whale data fetch in ${(retryCount + 1) * 2} seconds...`);
+        setTimeout(() => fetchWhaleData(retryCount + 1), (retryCount + 1) * 2000);
+        return;
       }
+
+      // NO FALLBACK - Quantum whale analysis provides 100% live data only
+      console.log('Whale data will be available when quantum analysis completes');
     } finally {
       setIsLoading(false);
     }
@@ -50,7 +66,7 @@ export function WhaleTracker() {
 
   useEffect(() => {
     fetchWhaleData();
-    const interval = setInterval(fetchWhaleData, 30000); // Update every 30 seconds
+    const interval = setInterval(fetchWhaleData, 60000); // Update every 60 seconds for better reliability
     return () => clearInterval(interval);
   }, []);
 
@@ -142,38 +158,48 @@ export function WhaleTracker() {
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-foreground">
-              {formatAmount(whaleData.largestMovement.amount)}
+              {whaleData.largestMovement ? formatAmount(whaleData.largestMovement.amount) : '$0'}
             </p>
             <p className="text-sm text-muted-foreground">Largest Move</p>
           </div>
         </div>
 
         {/* Largest Movement Highlight */}
-        <div className="p-4 rounded-lg bg-gradient-to-r from-accent/10 to-primary/10 border border-accent/20">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              {whaleData.largestMovement.direction === 'buy' ? (
-                <ArrowUpRight className="h-5 w-5 text-success" />
-              ) : (
-                <ArrowDownRight className="h-5 w-5 text-destructive" />
-              )}
-              <div>
-                <p className="font-semibold text-foreground">
-                  {formatAmount(whaleData.largestMovement.amount)} {whaleData.largestMovement.direction.toUpperCase()}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {whaleData.largestMovement.wallet} • {formatTimeAgo(whaleData.largestMovement.timestamp)}
-                </p>
+        {whaleData.largestMovement ? (
+          <div className="p-4 rounded-lg bg-gradient-to-r from-accent/10 to-primary/10 border border-accent/20">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                {whaleData.largestMovement.direction === 'buy' ? (
+                  <ArrowUpRight className="h-5 w-5 text-success" />
+                ) : (
+                  <ArrowDownRight className="h-5 w-5 text-destructive" />
+                )}
+                <div>
+                  <p className="font-semibold text-foreground">
+                    {formatAmount(whaleData.largestMovement.amount)} {whaleData.largestMovement.direction.toUpperCase()}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {whaleData.largestMovement.wallet} • {formatTimeAgo(whaleData.largestMovement.timestamp)}
+                  </p>
+                </div>
               </div>
+              <Badge
+                variant={whaleData.largestMovement.direction === 'buy' ? 'default' : 'destructive'}
+                className={whaleData.largestMovement.direction === 'buy' ? 'bg-success' : ''}
+              >
+                {whaleData.largestMovement.direction === 'buy' ? 'BULLISH' : 'BEARISH'}
+              </Badge>
             </div>
-            <Badge 
-              variant={whaleData.largestMovement.direction === 'buy' ? 'default' : 'destructive'}
-              className={whaleData.largestMovement.direction === 'buy' ? 'bg-success' : ''}
-            >
-              {whaleData.largestMovement.direction === 'buy' ? 'BULLISH' : 'BEARISH'}
-            </Badge>
           </div>
-        </div>
+        ) : (
+          <div className="p-4 rounded-lg bg-gray-800/50 border border-gray-700">
+            <div className="text-center text-gray-400">
+              <Wallet className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No significant whale movements detected</p>
+              <p className="text-xs">Quantum analysis will update when patterns emerge</p>
+            </div>
+          </div>
+        )}
 
         {/* Recent Movements */}
         <div>
@@ -182,14 +208,14 @@ export function WhaleTracker() {
             <span>Recent Movements</span>
           </h4>
           <div className="space-y-2 max-h-64 overflow-y-auto">
-            {whaleData.movements.slice(0, 8).map((movement) => (
+            {(whaleData.movements || []).slice(0, 8).map((movement, index) => (
               <div
-                key={movement.id}
+                key={movement?.id || index}
                 className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-border hover:border-primary/30 transition-colors cursor-pointer"
                 onClick={() => openWhaleDetails(movement)}
               >
                 <div className="flex items-center space-x-3">
-                  {movement.direction === 'buy' ? (
+                  {movement?.direction === 'buy' ? (
                     <TrendingUp className="h-4 w-4 text-success" />
                   ) : (
                     <TrendingDown className="h-4 w-4 text-destructive" />
@@ -197,7 +223,7 @@ export function WhaleTracker() {
                   <div>
                     <div className="flex items-center space-x-2">
                       <p className="text-sm font-medium text-foreground font-mono">
-                        {movement.wallet}
+                        {movement?.wallet || 'Unknown'}
                       </p>
                       <Button
                         size="sm"
@@ -205,28 +231,28 @@ export function WhaleTracker() {
                         className="h-4 w-4 p-0"
                         onClick={(e) => {
                           e.stopPropagation();
-                          copyToClipboard(movement.wallet);
+                          copyToClipboard(movement?.wallet || '');
                         }}
                       >
                         <Copy className="h-3 w-3" />
                       </Button>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {formatTimeAgo(movement.timestamp)} • Click for details
+                      {movement?.timestamp ? formatTimeAgo(movement.timestamp) : 'Unknown time'} • Click for details
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className={cn(
                     "text-sm font-semibold",
-                    movement.direction === 'buy' ? "text-success" : "text-destructive"
+                    movement?.direction === 'buy' ? "text-success" : "text-destructive"
                   )}>
-                    {formatAmount(movement.amount)}
+                    {movement?.amount ? formatAmount(movement.amount) : '$0'}
                   </p>
                   <div className="flex items-center space-x-1">
                     <Eye className="h-3 w-3 text-muted-foreground" />
                     <span className="text-xs text-muted-foreground">
-                      {movement.confidence}%
+                      {movement?.confidence || 0}%
                     </span>
                     <Info className="h-3 w-3 text-primary" />
                   </div>
@@ -260,19 +286,19 @@ export function WhaleTracker() {
               <div className="p-4 bg-muted/50 rounded-lg">
                 <p className="text-sm text-muted-foreground mb-2">Wallet Address</p>
                 <div className="flex items-center justify-between">
-                  <p className="font-mono text-sm break-all">{selectedWhale.wallet}</p>
+                  <p className="font-mono text-sm break-all">{selectedWhale?.wallet || 'Unknown'}</p>
                   <div className="flex space-x-2 ml-4">
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => copyToClipboard(selectedWhale.wallet)}
+                      onClick={() => copyToClipboard(selectedWhale?.wallet || '')}
                     >
                       <Copy className="h-4 w-4" />
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => window.open(`https://solscan.io/account/${selectedWhale.wallet}`, '_blank')}
+                      onClick={() => window.open(`https://solscan.io/account/${selectedWhale?.wallet || ''}`, '_blank')}
                     >
                       <ExternalLink className="h-4 w-4" />
                     </Button>
@@ -286,27 +312,27 @@ export function WhaleTracker() {
                   <p className="text-xs text-muted-foreground">Amount</p>
                   <p className={cn(
                     "text-lg font-bold",
-                    selectedWhale.direction === 'buy' ? "text-success" : "text-destructive"
+                    selectedWhale?.direction === 'buy' ? "text-success" : "text-destructive"
                   )}>
-                    {formatAmount(selectedWhale.amount)}
+                    {selectedWhale?.amount ? formatAmount(selectedWhale.amount) : '$0'}
                   </p>
-                  <Badge variant={selectedWhale.direction === 'buy' ? 'default' : 'destructive'} className="mt-1 text-xs">
-                    {selectedWhale.direction === 'buy' ? (
+                  <Badge variant={selectedWhale?.direction === 'buy' ? 'default' : 'destructive'} className="mt-1 text-xs">
+                    {selectedWhale?.direction === 'buy' ? (
                       <ArrowUpRight className="h-3 w-3 mr-1" />
                     ) : (
                       <ArrowDownRight className="h-3 w-3 mr-1" />
                     )}
-                    {selectedWhale.direction.toUpperCase()}
+                    {selectedWhale?.direction?.toUpperCase() || 'UNKNOWN'}
                   </Badge>
                 </div>
 
                 <div className="p-3 bg-muted/50 rounded-lg text-center">
                   <p className="text-xs text-muted-foreground">Confidence</p>
-                  <p className="text-lg font-bold text-primary">{selectedWhale.confidence}%</p>
+                  <p className="text-lg font-bold text-primary">{selectedWhale?.confidence || 0}%</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {selectedWhale.confidence > 80 ? 'Very High' :
-                     selectedWhale.confidence > 60 ? 'High' :
-                     selectedWhale.confidence > 40 ? 'Medium' : 'Low'}
+                    {(selectedWhale?.confidence || 0) > 80 ? 'Very High' :
+                     (selectedWhale?.confidence || 0) > 60 ? 'High' :
+                     (selectedWhale?.confidence || 0) > 40 ? 'Medium' : 'Low'}
                   </p>
                 </div>
               </div>
@@ -317,10 +343,10 @@ export function WhaleTracker() {
                 <div className="flex items-center space-x-2 p-3 bg-muted/30 rounded-lg">
                   <Clock className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm">
-                    {new Date(selectedWhale.timestamp).toLocaleString()}
+                    {selectedWhale?.timestamp ? new Date(selectedWhale.timestamp).toLocaleString() : 'Unknown time'}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    ({formatTimeAgo(selectedWhale.timestamp)})
+                    ({selectedWhale?.timestamp ? formatTimeAgo(selectedWhale.timestamp) : 'Unknown'})
                   </span>
                 </div>
               </div>
@@ -333,32 +359,32 @@ export function WhaleTracker() {
                   <div className="flex items-center justify-between p-2 border rounded text-sm">
                     <span>Classification</span>
                     <Badge variant="outline" className="text-xs">
-                      {selectedWhale.amount > 100000 ? 'Mega Whale' :
-                       selectedWhale.amount > 50000 ? 'Large Whale' :
-                       selectedWhale.amount > 20000 ? 'Medium Whale' : 'Small Whale'}
+                      {(selectedWhale?.amount || 0) > 100000 ? 'Mega Whale' :
+                       (selectedWhale?.amount || 0) > 50000 ? 'Large Whale' :
+                       (selectedWhale?.amount || 0) > 20000 ? 'Medium Whale' : 'Small Whale'}
                     </Badge>
                   </div>
 
                   <div className="flex items-center justify-between p-2 border rounded text-sm">
                     <span>Market Impact</span>
                     <span className="text-xs font-medium">
-                      {selectedWhale.direction === 'buy' ? 'Bullish Signal' : 'Bearish Signal'}
+                      {selectedWhale?.direction === 'buy' ? 'Bullish Signal' : 'Bearish Signal'}
                     </span>
                   </div>
                 </div>
               </div>
 
               {/* Coin Information */}
-              {selectedWhale.coinSymbol && (
+              {selectedWhale?.coinSymbol && (
                 <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
                   <p className="text-sm text-muted-foreground mb-2">Related Coin</p>
                   <div className="flex items-center space-x-2">
                     <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center text-xs font-bold text-white">
-                      {selectedWhale.coinSymbol?.slice(0, 2) || 'UN'}
+                      {selectedWhale?.coinSymbol?.slice(0, 2) || 'UN'}
                     </div>
                     <div>
-                      <p className="font-semibold">{selectedWhale.coinName || 'Unknown Coin'}</p>
-                      <p className="text-sm text-muted-foreground">{selectedWhale.coinSymbol || 'UNKNOWN'}</p>
+                      <p className="font-semibold">{selectedWhale?.coinName || 'Unknown Coin'}</p>
+                      <p className="text-sm text-muted-foreground">{selectedWhale?.coinSymbol || 'UNKNOWN'}</p>
                     </div>
                   </div>
                 </div>

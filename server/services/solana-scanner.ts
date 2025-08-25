@@ -6,7 +6,7 @@ import { contractAnalyzer } from './contract-analyzer';
 import { microTimingPredictor } from './micro-timing';
 import { socialSentimentAnalyzer } from './social-sentiment';
 
-const SOLANA_RPC_URL = 'https://api.mainnet-beta.solana.com';
+const SOLANA_RPC_URL = 'https://billowing-maximum-layer.solana-mainnet.quiknode.pro/ffd12f08ca809a65bf9998681e0177cfb60a2d11/';
 const connection = new Connection(SOLANA_RPC_URL, 'confirmed');
 
 const openai = new OpenAI({
@@ -718,8 +718,8 @@ class SolanaScanner {
           this.scannedTokens.set(token.mint, analysis);
           analyses.push(analysis);
           
-          // Add delay to avoid rate limits
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          // Add longer delay to avoid rate limits in production
+        await new Promise(resolve => setTimeout(resolve, 3000));
         } catch (error) {
           console.error(`Error analyzing token ${token.mint}:`, error);
         }
