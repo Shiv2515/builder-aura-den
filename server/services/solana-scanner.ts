@@ -681,6 +681,20 @@ class SolanaScanner {
         timingAnalysis
       );
 
+      // Store data for institutional tracking
+      await this.storeHistoricalData(tokenData, {
+        price,
+        change24h,
+        volume,
+        mcap,
+        aiScore: ensembleResult.finalScore,
+        rugRisk: ensembleResult.consensusRisk,
+        prediction: ensembleResult.consensusPrediction,
+        reasoning: enhancedReasoning,
+        socialMetrics,
+        liquidityData
+      });
+
       return {
         mint: tokenData.mint,
         name: tokenData.name,
