@@ -6,6 +6,7 @@ import { contractAnalyzer } from './contract-analyzer';
 import { microTimingPredictor } from './micro-timing';
 import { socialSentimentAnalyzer } from './social-sentiment';
 import { dataPersistence } from './data-persistence';
+import { webSocketService } from './websocket-server';
 
 const SOLANA_RPC_URL = 'https://api.mainnet-beta.solana.com';
 const connection = new Connection(SOLANA_RPC_URL, 'confirmed');
