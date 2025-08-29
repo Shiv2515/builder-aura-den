@@ -819,6 +819,67 @@ class SolanaScanner {
     return insights.join(' • ');
   }
 
+  private async storeHistoricalData(tokenData: TokenMetadata, analysisData: {
+    price: number;
+    change24h: number;
+    volume: number;
+    mcap: number;
+    aiScore: number;
+    rugRisk: 'low' | 'medium' | 'high';
+    prediction: 'bullish' | 'bearish' | 'neutral';
+    reasoning: string;
+    socialMetrics: any;
+    liquidityData: LiquidityPool | null;
+  }): Promise<void> {
+    try {
+      const now = new Date();
+
+      // Store/update token information
+      await dataPersistence.upsertToken({
+        mint_address: tokenData.mint,
+        symbol: tokenData.symbol,
+        name: tokenData.name,
+        decimals: tokenData.decimals,
+        total_supply: BigInt(tokenData.supply || '0'),
+        is_meme_coin: true
+      });
+
+      // Store current price data as OHLCV
+      await dataPersistence.storePriceData({
+        mint_address: tokenData.mint,
+        timestamp: now,
+        open_price: analysisData.price,
+        high_price: analysisData.price * (1 + Math.abs(analysisData.change24h) / 200), // Estimate
+        low_price: analysisData.price * (1 - Math.abs(analysisData.change24h) / 200), // Estimate
+        close_price: analysisData.price,
+        volume_24h: analysisData.volume,
+        market_cap: analysisData.mcap,
+        liquidity_usd: analysisData.liquidityData?.liquidity || 0,
+        holders_count: tokenData.holders,
+        source: 'pulsesignal_scanner'
+      });
+
+      // Store AI prediction for performance tracking
+      await dataPersistence.storeAIPrediction({
+        mint_address: tokenData.mint,
+        ai_score: analysisData.aiScore,
+        prediction_type: analysisData.prediction,
+        confidence_level: analysisData.aiScore, // Use AI score as confidence
+        time_horizon: '24h',
+        rug_risk: analysisData.rugRisk,
+        whale_activity_score: Math.floor((100 - analysisData.aiScore) * 0.7), // Inverse relationship
+        social_sentiment_score: analysisData.socialMetrics?.sentiment * 100 || 0,
+        model_version: 'ensemble_v1.0',
+        reasoning: analysisData.reasoning
+      });
+
+      console.log(`📊 Stored institutional data for ${tokenData.symbol} (${analysisData.prediction}: ${analysisData.aiScore}%)`);
+    } catch (error) {
+      console.error(`❌ Failed to store institutional data for ${tokenData.symbol}:`, error.message);
+      // Don't throw - continue with analysis even if storage fails
+    }
+  }
+
   isMemeTokenCandidate(metadata: any): boolean {
     const name = metadata.name?.toLowerCase() || '';
     const symbol = metadata.symbol?.toLowerCase() || '';
