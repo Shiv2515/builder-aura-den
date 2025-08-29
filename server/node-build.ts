@@ -27,10 +27,15 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(distPath, "index.html"));
 });
 
-app.listen(port, () => {
-  console.log(`🚀 Fusion Starter server running on port ${port}`);
+// Initialize WebSocket server
+webSocketService.initialize(httpServer);
+
+httpServer.listen(port, () => {
+  console.log(`🚀 PulseSignal AI server running on port ${port}`);
   console.log(`📱 Frontend: http://localhost:${port}`);
   console.log(`🔧 API: http://localhost:${port}/api`);
+  console.log(`📡 WebSocket: ws://localhost:${port}/ws`);
+  console.log(`💼 Institutional Analytics: ENABLED`);
 });
 
 // Graceful shutdown
