@@ -200,30 +200,12 @@ export function RugPullAlerts() {
     }
   };
 
-  // Simulate new alerts coming in
+  // Real-time alert monitoring (removed simulation)
   useEffect(() => {
+    // Set up periodic refresh for new real alerts only
     const interval = setInterval(() => {
-      if (Math.random() > 0.9) { // 10% chance every 30 seconds
-        const newAlert: RugPullAlert = {
-          id: Date.now().toString(),
-          coinName: `Coin${Math.floor(Math.random() * 1000)}`,
-          coinSymbol: `C${Math.floor(Math.random() * 1000)}`,
-          riskLevel: Math.random() > 0.7 ? 'critical' : 'high',
-          reasons: [
-            'Sudden liquidity decrease detected',
-            'Whale wallet activity suspicious',
-            'Contract modification detected'
-          ],
-          timestamp: Date.now(),
-          dismissed: false,
-          liquidityChange: -Math.floor(Math.random() * 80) - 20,
-          holderChange: -Math.floor(Math.random() * 50) - 10,
-          confidence: Math.floor(Math.random() * 30) + 70
-        };
-        
-        setAlerts(prev => [newAlert, ...prev.slice(0, 9)]); // Keep only 10 most recent
-      }
-    }, 30000);
+      fetchRugPullAlerts();
+    }, 120000); // Check for new real alerts every 2 minutes
 
     return () => clearInterval(interval);
   }, []);
