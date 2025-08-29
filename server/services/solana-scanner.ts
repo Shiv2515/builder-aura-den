@@ -293,23 +293,6 @@ class SolanaScanner {
     });
   }
 
-  private generateRandomMint(): string {
-    // Use real Solana token addresses for demonstration
-    const realSolanaTokens = [
-      'DUSTawucrTsGU8hcqRdHDCbuYhCPADMLM2VcCb8VnFnQ', // DUST
-      'J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn', // JitoSOL
-      '7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr', // POPCAT
-      'SHDWyBxihqiCj6YekG2GUr7wqKLeLAMK1gHZck9pL6y',  // SHDW
-      'BWXrrYFhT7bMHmNBFoQFWdsSgA3yKjxhp7g5g8dRwD9',  // BWX
-      'hntyVP6YFm1Hg25TN9WGLqM12b8TQmcknKrdu1oxWux',  // HNT
-      'Dn4noZ5jgGfkntzcQSUZ8czkreiZ1ForXYoV2H8Dm7S1', // UXD
-      'CKfatsPMUf8SkiURsDXs7eK6GWb4Jsd6UDbs7twMCWxo', // COPE
-      'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', // USDT
-      'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
-    ];
-
-    return realSolanaTokens[Math.floor(Math.random() * realSolanaTokens.length)];
-  }
 
   async fetchTokenMetadata(mint: string): Promise<any> {
     try {
