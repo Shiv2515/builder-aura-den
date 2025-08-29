@@ -68,6 +68,8 @@ export function createServer() {
   app.get("/api/analytics/token/:mint/history", validateSubscriptionTier, handleGetTokenHistory);
   app.get("/api/analytics/market", validateSubscriptionTier, handleGetMarketOverview);
   app.get("/api/analytics/realtime", validateSubscriptionTier, handleGetRealTimeMetrics);
+  app.get("/api/analytics/websocket", validateSubscriptionTier, handleGetWebSocketStats);
+  app.post("/api/analytics/alert", validateSubscriptionTier, handleSendMarketAlert);
 
   // Database health check endpoint
   app.get("/api/health/database", async (_req, res) => {
