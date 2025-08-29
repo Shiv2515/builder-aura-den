@@ -15,6 +15,21 @@ import {
   startAutoScanning
 } from "./routes/coin-scanner";
 
+// Import institutional analytics routes
+import {
+  handleGetPerformanceReport,
+  handleGetPredictionAccuracy,
+  handleGetRiskMetrics,
+  handleGetPortfolioPerformance,
+  handleGetTokenHistory,
+  handleGetMarketOverview,
+  handleGetRealTimeMetrics,
+  validateSubscriptionTier
+} from "./routes/analytics";
+
+// Import database connection
+import { db } from "./database/connection";
+
 export function createServer() {
   const app = express();
 
