@@ -491,3 +491,237 @@ export const handleSendMarketAlert: RequestHandler = async (req, res) => {
     });
   }
 };
+
+// ================== BACKTESTING ENGINE ==================
+
+export const handleRunBacktest: RequestHandler = async (req, res) => {
+  try {
+    const {
+      strategy,
+      start_date,
+      end_date,
+      initial_capital = 100000
+    } = req.body;
+
+    // Validate required fields
+    if (!strategy || !start_date || !end_date) {
+      return res.status(400).json({
+        error: 'Missing required fields: strategy, start_date, end_date'
+      });
+    }
+
+    // Validate date format and range
+    const startDate = new Date(start_date);
+    const endDate = new Date(end_date);
+    const now = new Date();
+
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      return res.status(400).json({
+        error: 'Invalid date format. Use YYYY-MM-DD format'
+      });
+    }
+
+    if (startDate >= endDate) {
+      return res.status(400).json({
+        error: 'Start date must be before end date'
+      });
+    }
+
+    if (endDate > now) {
+      return res.status(400).json({
+        error: 'End date cannot be in the future'
+      });
+    }
+
+    const maxBacktestDays = 365; // Limit backtest to 1 year
+    const durationDays = (endDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000);
+
+    if (durationDays > maxBacktestDays) {
+      return res.status(400).json({
+        error: `Backtest period cannot exceed ${maxBacktestDays} days`
+      });
+    }
+
+    console.log(`🔄 Starting backtest: ${strategy.name || 'Custom Strategy'}`);
+
+    // Run the backtest
+    const result = await backtestingEngine.runBacktest(
+      strategy as BacktestStrategy,
+      start_date,
+      end_date,
+      initial_capital
+    );
+
+    // Add execution metadata
+    const response = {
+      success: true,
+      backtest_id: `bt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      execution_time: new Date().toISOString(),
+      parameters: {
+        strategy_name: strategy.name,
+        start_date,
+        end_date,
+        initial_capital,
+        duration_days: Math.floor(durationDays)
+      },
+      results: result,
+      interpretation: {
+        performance_rating: getPerformanceRating(result.performance_metrics),
+        risk_assessment: getRiskAssessment(result.risk_metrics),
+        trade_quality: getTradeQuality(result.trade_statistics),
+        recommendations: generateRecommendations(result)
+      }
+    };
+
+    res.json(response);
+
+  } catch (error) {
+    console.error('❌ Backtest execution failed:', error);
+    res.status(500).json({
+      error: 'Backtest execution failed',
+      details: error.message,
+      suggestion: 'Try reducing the date range or adjusting strategy parameters'
+    });
+  }
+};
+
+export const handleGetStrategyTemplates: RequestHandler = async (req, res) => {
+  try {
+    const templates = backtestingEngine.getStrategyTemplates();
+
+    res.json({
+      success: true,
+      strategy_templates: templates,
+      usage_guide: {
+        entry_conditions: {
+          ai_score_min: 'Minimum AI prediction score (0-100)',
+          prediction_type: 'Required prediction type: bullish, bearish, or neutral',
+          confidence_min: 'Minimum confidence level (0-100)',
+          rug_risk_max: 'Maximum acceptable rug risk: low, medium, high',
+          volume_min: 'Minimum 24h trading volume in USD',
+          market_cap_min: 'Minimum market capitalization in USD',
+          market_cap_max: 'Maximum market capitalization in USD'
+        },
+        exit_conditions: {
+          take_profit_pct: 'Take profit at this percentage gain',
+          stop_loss_pct: 'Stop loss at this percentage loss',
+          max_hold_days: 'Maximum days to hold position',
+          trailing_stop_pct: 'Trailing stop loss percentage'
+        },
+        position_sizing: {
+          fixed_amount: 'Fixed dollar amount per position',
+          percentage: 'Percentage of portfolio per position',
+          kelly_criterion: 'Kelly criterion optimal sizing',
+          volatility_adjusted: 'Adjust size based on volatility'
+        }
+      },
+      custom_strategy_example: {
+        id: 'custom_strategy',
+        name: 'My Custom Strategy',
+        description: 'Description of the strategy approach',
+        entry_conditions: {
+          ai_score_min: 70,
+          prediction_type: 'bullish',
+          confidence_min: 65,
+          rug_risk_max: 'medium',
+          volume_min: 25000
+        },
+        exit_conditions: {
+          take_profit_pct: 25,
+          stop_loss_pct: 12,
+          max_hold_days: 10
+        },
+        position_sizing: {
+          type: 'percentage',
+          value: 4,
+          max_position_size: 8000
+        },
+        risk_management: {
+          max_positions: 12,
+          max_drawdown_limit: 20
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error getting strategy templates:', error);
+    res.status(500).json({
+      error: 'Failed to get strategy templates',
+      details: error.message
+    });
+  }
+};
+
+// ================== BACKTESTING UTILITY FUNCTIONS ==================
+
+function getPerformanceRating(metrics: any): string {
+  const { total_return, sharpe_ratio, max_drawdown } = metrics;
+
+  let score = 0;
+
+  // Return component
+  if (total_return > 50) score += 3;
+  else if (total_return > 20) score += 2;
+  else if (total_return > 0) score += 1;
+
+  // Risk-adjusted return component
+  if (sharpe_ratio > 2) score += 3;
+  else if (sharpe_ratio > 1) score += 2;
+  else if (sharpe_ratio > 0.5) score += 1;
+
+  // Drawdown component
+  if (max_drawdown < 10) score += 2;
+  else if (max_drawdown < 20) score += 1;
+
+  if (score >= 7) return 'Excellent';
+  if (score >= 5) return 'Good';
+  if (score >= 3) return 'Fair';
+  return 'Poor';
+}
+
+function getRiskAssessment(riskMetrics: any): string {
+  const { value_at_risk_95, max_drawdown } = riskMetrics;
+
+  if (value_at_risk_95 > 15 || max_drawdown > 25) return 'High Risk';
+  if (value_at_risk_95 > 8 || max_drawdown > 15) return 'Medium Risk';
+  return 'Low Risk';
+}
+
+function getTradeQuality(tradeStats: any): string {
+  const { win_rate, avg_winning_trade, avg_losing_trade } = tradeStats;
+
+  const profitFactor = Math.abs(avg_losing_trade) > 0 ?
+    (win_rate / 100 * avg_winning_trade) / ((1 - win_rate / 100) * Math.abs(avg_losing_trade)) : 0;
+
+  if (win_rate > 60 && profitFactor > 1.5) return 'High Quality';
+  if (win_rate > 45 && profitFactor > 1.2) return 'Good Quality';
+  if (win_rate > 35 && profitFactor > 1.0) return 'Fair Quality';
+  return 'Poor Quality';
+}
+
+function generateRecommendations(result: any): string[] {
+  const recommendations = [];
+  const { performance_metrics, risk_metrics, trade_statistics } = result;
+
+  if (performance_metrics.sharpe_ratio < 1) {
+    recommendations.push('Consider tightening entry criteria to improve risk-adjusted returns');
+  }
+
+  if (performance_metrics.max_drawdown > 20) {
+    recommendations.push('Implement stricter stop-loss levels to reduce maximum drawdown');
+  }
+
+  if (trade_statistics.win_rate < 50) {
+    recommendations.push('Review entry conditions - win rate is below 50%');
+  }
+
+  if (trade_statistics.avg_trade_duration_days > 14) {
+    recommendations.push('Consider shorter holding periods to improve capital efficiency');
+  }
+
+  if (performance_metrics.total_return > 30 && performance_metrics.sharpe_ratio > 1.5) {
+    recommendations.push('Excellent performance! Consider scaling up position sizes');
+  }
+
+  return recommendations.length > 0 ? recommendations : ['Strategy performance is within acceptable parameters'];
+}
