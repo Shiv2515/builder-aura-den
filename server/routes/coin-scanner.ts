@@ -1,12 +1,6 @@
 import { RequestHandler } from "express";
 import { solanaScanner } from "../services/solana-scanner";
 
-// Import getRealWhaleMovements from ai-analysis route
-async function getRealWhaleMovements() {
-  const { getRealWhaleMovements: getWhaleData } = await import('./ai-analysis');
-  return getWhaleData();
-}
-
 export const handleStartScan: RequestHandler = async (req, res) => {
   try {
     if (solanaScanner.getIsScanning()) {
