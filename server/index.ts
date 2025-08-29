@@ -73,6 +73,10 @@ export function createServer() {
   app.get("/api/analytics/websocket", validateSubscriptionTier, handleGetWebSocketStats);
   app.post("/api/analytics/alert", validateSubscriptionTier, handleSendMarketAlert);
 
+  // Backtesting Endpoints (Institutional Feature)
+  app.post("/api/backtest/run", validateSubscriptionTier, handleRunBacktest);
+  app.get("/api/backtest/strategies", validateSubscriptionTier, handleGetStrategyTemplates);
+
   // Database health check endpoint
   app.get("/api/health/database", async (_req, res) => {
     try {
