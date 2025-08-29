@@ -836,6 +836,7 @@ class SolanaScanner {
     liquidityData: LiquidityPool | null;
   }): Promise<void> {
     try {
+      console.log(`💾 Storing historical data for ${tokenData.symbol}...`);
       const now = new Date();
 
       // Store/update token information
