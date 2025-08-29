@@ -602,7 +602,7 @@ class SolanaScanner {
       return null;
 
     } catch (error) {
-      console.error(`�� Liquidity data error for ${mint}:`, error);
+      console.error(`❌ Liquidity data error for ${mint}:`, error);
       return null;
     }
   }
@@ -958,6 +958,18 @@ class SolanaScanner {
       this.isScanning = true;
       this.usedMints.clear(); // Clear previous mints to ensure fresh tokens
       console.log('🚀 Starting comprehensive coin scan...');
+
+      // 📡 Broadcast scanning started
+      try {
+        webSocketService.sendMarketAlert({
+          title: 'Scan Started',
+          message: 'AI coin scanning initiated - finding new opportunities',
+          type: 'info',
+          timestamp: Date.now()
+        });
+      } catch (wsError) {
+        console.warn('⚠️ WebSocket broadcast failed:', wsError.message);
+      }
 
       // Scan for new tokens
       const tokens = await this.scanNewTokens();
