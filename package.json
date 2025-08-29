@@ -28,15 +28,15 @@
     "db:health": "curl -s http://localhost:8080/api/health/database | jq"
   },
   "dependencies": {
-    "dotenv": "^17.2.1",
-    "express": "^5.1.0",
-    "zod": "^3.25.76",
     "@solana/spl-token": "0.4.13",
     "@solana/web3.js": "1.98.4",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
     "node-fetch": "3.3.2",
     "openai": "5.13.1",
-    "pg": "^8.12.0",
-    "ws": "^8.18.0"
+    "pg": "^8.16.3",
+    "ws": "^8.18.3",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@hookform/resolvers": "^5.2.1",
@@ -75,11 +75,11 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/node": "^24.2.1",
-    "@types/pg": "^8.11.8",
+    "@types/pg": "^8.15.5",
     "@types/react": "^18.3.23",
-    "@types/ws": "^8.5.13",
     "@types/react-dom": "^18.3.7",
     "@types/three": "^0.176.0",
+    "@types/ws": "^8.18.1",
     "@vitejs/plugin-react-swc": "^4.0.0",
     "autoprefixer": "^10.4.21",
     "class-variance-authority": "^0.7.1",
@@ -115,7 +115,14 @@
     "vitest": "^3.2.4"
   },
   "packageManager": "pnpm@10.14.0+sha512.ad27a79641b49c3e481a16a805baa71817a04bbe06a38d17e60e2eaee83f6a146c6a688125f5792e48dd5ba30e7da52a5cda4c3992b9ccf333f9ce223af84748",
-  "keywords": ["crypto", "ai", "solana", "meme-coins", "trading", "blockchain"],
+  "keywords": [
+    "crypto",
+    "ai",
+    "solana",
+    "meme-coins",
+    "trading",
+    "blockchain"
+  ],
   "author": "PulseSignal AI",
   "license": "MIT"
 }
