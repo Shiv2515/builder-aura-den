@@ -2,6 +2,7 @@ import { RequestHandler } from 'express';
 import { performanceTracker } from '../services/performance-tracking';
 import { dataPersistence } from '../services/data-persistence';
 import { webSocketService } from '../services/websocket-server';
+import { backtestingEngine, BacktestStrategy } from '../services/backtesting-engine';
 
 // ================== PERFORMANCE METRICS ==================
 
