@@ -26,6 +26,8 @@ import {
   handleGetRealTimeMetrics,
   handleGetWebSocketStats,
   handleSendMarketAlert,
+  handleRunBacktest,
+  handleGetStrategyTemplates,
   validateSubscriptionTier
 } from "./routes/analytics";
 
