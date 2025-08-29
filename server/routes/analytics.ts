@@ -370,11 +370,12 @@ export const validateSubscriptionTier: RequestHandler = (req, res, next) => {
 
 export const handleGetRealTimeMetrics: RequestHandler = async (req, res) => {
   try {
-    // This would be enhanced with WebSocket connections for real-time updates
+    // Enhanced with WebSocket connection statistics
     await performanceTracker.updateRealTimeMetrics();
-    
+
     const currentAccuracy = await dataPersistence.calculatePredictionAccuracy(1);
-    
+    const wsStats = webSocketService.getStats();
+
     res.json({
       success: true,
       real_time_metrics: {
@@ -384,20 +385,108 @@ export const handleGetRealTimeMetrics: RequestHandler = async (req, res) => {
         whale_movements_1h: await dataPersistence.getRecentWhaleMovements(1).then(movements => movements.length),
         last_updated: new Date().toISOString()
       },
-      
+
+      websocket_statistics: {
+        total_connections: wsStats.total_connections,
+        connections_by_tier: wsStats.connections_by_tier,
+        active_subscriptions: wsStats.active_subscriptions,
+        real_time_feeds: {
+          available: ['token_prices', 'ai_predictions', 'whale_movements', 'performance_metrics', 'market_alerts'],
+          update_frequency: {
+            token_prices: '10 seconds',
+            ai_predictions: '30 seconds',
+            whale_movements: '5 seconds',
+            performance_metrics: '60 seconds'
+          }
+        }
+      },
+
       status: {
         ai_models: 'Operational',
         data_feeds: 'Healthy',
         prediction_engine: 'Active',
-        risk_monitoring: 'Online'
+        risk_monitoring: 'Online',
+        websocket_server: wsStats.total_connections > 0 ? 'Active' : 'Standby'
       }
     });
 
   } catch (error) {
     console.error('❌ Error getting real-time metrics:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to get real-time metrics',
-      details: error.message 
+      details: error.message
+    });
+  }
+};
+
+// ================== WEBSOCKET MONITORING ==================
+
+export const handleGetWebSocketStats: RequestHandler = async (req, res) => {
+  try {
+    const stats = webSocketService.getStats();
+
+    res.json({
+      success: true,
+      websocket_statistics: stats,
+      connection_health: {
+        total_connections: stats.total_connections,
+        institutional_clients: stats.connections_by_tier.institutional,
+        professional_clients: stats.connections_by_tier.pro,
+        retail_clients: stats.connections_by_tier.retail,
+        most_popular_feed: Object.entries(stats.active_subscriptions)
+          .sort(([,a], [,b]) => b - a)[0]?.[0] || 'none'
+      },
+      server_status: {
+        uptime: process.uptime(),
+        memory_usage: process.memoryUsage(),
+        timestamp: new Date().toISOString()
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error getting WebSocket stats:', error);
+    res.status(500).json({
+      error: 'Failed to get WebSocket statistics',
+      details: error.message
+    });
+  }
+};
+
+// Send market alert to all connected clients
+export const handleSendMarketAlert: RequestHandler = async (req, res) => {
+  try {
+    const { title, message, severity = 'info', token_mint } = req.body;
+
+    if (!title || !message) {
+      return res.status(400).json({
+        error: 'Title and message are required'
+      });
+    }
+
+    webSocketService.sendMarketAlert({
+      title,
+      message,
+      severity,
+      token_mint
+    });
+
+    res.json({
+      success: true,
+      message: 'Market alert sent to all connected clients',
+      alert: {
+        title,
+        message,
+        severity,
+        token_mint,
+        timestamp: new Date().toISOString()
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error sending market alert:', error);
+    res.status(500).json({
+      error: 'Failed to send market alert',
+      details: error.message
     });
   }
 };
