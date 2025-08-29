@@ -519,17 +519,105 @@ class SolanaScanner {
 
   async getLiquidityData(mint: string): Promise<LiquidityPool | null> {
     try {
-      // Simulate liquidity data (in production would query DEX APIs)
-      return {
-        address: `${mint}_pool`,
-        tokenA: mint,
-        tokenB: 'SOL',
-        reserveA: Math.random() * 1000000,
-        reserveB: Math.random() * 100,
-        volume24h: Math.random() * 10000000,
-        liquidity: Math.random() * 5000000,
-      };
+      console.log(`💧 Fetching real liquidity data for ${mint}...`);
+
+      // Try DexScreener API for the most comprehensive liquidity data
+      try {
+        const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${mint}`);
+        if (response.ok) {
+          const data = await response.json();
+          const pairs = data.pairs || [];
+
+          // Find the pair with highest liquidity
+          let bestPair = null;
+          let highestLiquidity = 0;
+
+          for (const pair of pairs) {
+            const liquidityUsd = parseFloat(pair.liquidity?.usd || '0');
+            if (liquidityUsd > highestLiquidity) {
+              highestLiquidity = liquidityUsd;
+              bestPair = pair;
+            }
+          }
+
+          if (bestPair && highestLiquidity > 100) { // Minimum $100 liquidity
+            const volume24h = parseFloat(bestPair.volume?.h24 || '0');
+            const reserveA = parseFloat(bestPair.liquidity?.base || '0');
+            const reserveB = parseFloat(bestPair.liquidity?.quote || '0');
+
+            console.log(`📊 DexScreener liquidity for ${mint}: $${highestLiquidity.toLocaleString()}`);
+
+            return {
+              address: bestPair.pairAddress || `${mint}_pool`,
+              tokenA: mint,
+              tokenB: bestPair.quoteToken?.address || 'So11111111111111111111111111111111111111112', // SOL
+              reserveA: reserveA || highestLiquidity * 0.5, // Estimate if not provided
+              reserveB: reserveB || highestLiquidity * 0.5,
+              volume24h: volume24h,
+              liquidity: highestLiquidity,
+            };
+          }
+        }
+      } catch (error) {
+        console.log(`⚠️ DexScreener liquidity fetch failed for ${mint}:`, error.message);
+      }
+
+      // Try Jupiter API as fallback
+      try {
+        const priceResponse = await fetch(`https://price.jup.ag/v4/price?ids=${mint}`);
+        if (priceResponse.ok) {
+          const priceData = await priceResponse.json();
+          const tokenPrice = priceData.data?.[mint]?.price;
+
+          if (tokenPrice) {
+            // Estimate liquidity based on price availability
+            // If Jupiter has price data, there's likely some DEX liquidity
+            const estimatedLiquidity = parseFloat(tokenPrice) * 100000; // Conservative estimate
+            const volume = await this.getLiveVolume(mint);
+
+            console.log(`🔗 Jupiter-based liquidity estimate for ${mint}: $${estimatedLiquidity.toLocaleString()}`);
+
+            return {
+              address: `${mint}_jupiter_pool`,
+              tokenA: mint,
+              tokenB: 'So11111111111111111111111111111111111111112', // SOL
+              reserveA: estimatedLiquidity * 0.5,
+              reserveB: estimatedLiquidity * 0.5,
+              volume24h: volume,
+              liquidity: estimatedLiquidity,
+            };
+          }
+        }
+      } catch (error) {
+        console.log(`⚠️ Jupiter liquidity estimation failed for ${mint}:`, error.message);
+      }
+
+      // Final attempt: Check if token has any trading activity
+      const volume = await this.getLiveVolume(mint);
+      const price = await this.getLivePrice(mint);
+
+      if (volume > 1000 && price > 0) {
+        // Token has trading activity, estimate minimal liquidity
+        const minimalLiquidity = Math.max(volume * 0.1, 5000); // At least 10% of volume or $5K
+
+        console.log(`💦 Activity-based liquidity estimate for ${mint}: $${minimalLiquidity.toLocaleString()}`);
+
+        return {
+          address: `${mint}_estimated_pool`,
+          tokenA: mint,
+          tokenB: 'So11111111111111111111111111111111111111112',
+          reserveA: minimalLiquidity * 0.5,
+          reserveB: minimalLiquidity * 0.5,
+          volume24h: volume,
+          liquidity: minimalLiquidity,
+        };
+      }
+
+      console.log(`❌ No liquidity data found for ${mint}`);
+      return null;
+
     } catch (error) {
+      console.error(`❌ Liquidity data error for ${mint}:`, error);
       return null;
     }
   }
