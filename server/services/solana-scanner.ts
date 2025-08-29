@@ -335,7 +335,7 @@ class SolanaScanner {
         const data = await dexResponse.json();
         const pair = data.pairs?.[0];
         if (pair?.priceUsd) {
-          console.log(`📈 Got live price from DexScreener for ${mint}: $${pair.priceUsd}`);
+          console.log(`�� Got live price from DexScreener for ${mint}: $${pair.priceUsd}`);
           return parseFloat(pair.priceUsd);
         }
       }
@@ -992,10 +992,41 @@ class SolanaScanner {
 
       // Sort by AI score (highest potential first)
       const sortedAnalyses = analyses.sort((a, b) => b.aiScore - a.aiScore);
-      
+
       this.lastScanTime = Date.now();
       this.isScanning = false;
-      
+
+      // 📡 Broadcast scan completion with real metrics
+      try {
+        const allCoins = this.getAllScannedCoins();
+        const criticalRugRisks = allCoins.filter(coin => coin.rugRisk === 'high').length;
+        const highPotential = allCoins.filter(coin => coin.aiScore > 80).length;
+        const whaleMovements = allCoins.filter(coin => coin.whaleActivity > 70).length;
+
+        webSocketService.broadcastPerformanceMetrics({
+          totalScanned: allCoins.length,
+          rugPullsDetected: criticalRugRisks,
+          highPotentialCoins: highPotential,
+          whaleMovements,
+          averageAiScore: allCoins.length > 0 ?
+            Math.round(allCoins.reduce((sum, coin) => sum + coin.aiScore, 0) / allCoins.length) : 0,
+          lastScanTime: this.lastScanTime,
+          isScanning: false,
+          timestamp: Date.now()
+        });
+
+        webSocketService.sendMarketAlert({
+          title: 'Scan Complete',
+          message: `Found ${sortedAnalyses.length} new tokens analyzed. ${highPotential} high-potential coins detected.`,
+          type: 'success',
+          timestamp: Date.now()
+        });
+
+        console.log(`📡 Broadcasted scan completion metrics`);
+      } catch (wsError) {
+        console.warn('⚠️ WebSocket broadcast failed:', wsError.message);
+      }
+
       console.log(`✅ Scan complete! Found ${sortedAnalyses.length} analyzed coins`);
       return sortedAnalyses.slice(0, 5); // Return top 5
 
