@@ -682,18 +682,22 @@ class SolanaScanner {
       );
 
       // Store data for institutional tracking
-      await this.storeHistoricalData(tokenData, {
-        price,
-        change24h,
-        volume,
-        mcap,
-        aiScore: ensembleResult.finalScore,
-        rugRisk: ensembleResult.consensusRisk,
-        prediction: ensembleResult.consensusPrediction,
-        reasoning: enhancedReasoning,
-        socialMetrics,
-        liquidityData
-      });
+      try {
+        await this.storeHistoricalData(tokenData, {
+          price,
+          change24h,
+          volume,
+          mcap,
+          aiScore: ensembleResult.finalScore,
+          rugRisk: ensembleResult.consensusRisk,
+          prediction: ensembleResult.consensusPrediction,
+          reasoning: enhancedReasoning,
+          socialMetrics,
+          liquidityData
+        });
+      } catch (dbError) {
+        console.warn('⚠️ Database storage failed, continuing without persistence:', dbError.message);
+      }
 
       return {
         mint: tokenData.mint,
