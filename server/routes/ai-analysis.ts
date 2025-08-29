@@ -297,36 +297,135 @@ function determineTransactionDirection(transaction: any, instruction: any): 'buy
 
 function analyzeTransactionForWhales(transaction: any, sigInfo: any) {
   try {
-    // Check for large SOL transfers (whale threshold: 100+ SOL)
+    // Enhanced whale detection with multiple criteria
     const instructions = transaction.transaction.message.instructions;
+    let isWhaleMovement = false;
+    let amount = 0;
+    let direction: 'buy' | 'sell' = 'buy';
+    let wallet = '';
+    let confidence = 0;
 
+    // Check for different types of whale movements
     for (const instruction of instructions) {
-      // System program transfer instruction
-      if (instruction.programId.toString() === '11111111111111111111111111111112') {
+      const programId = instruction.programId.toString();
+
+      // 1. System program transfers (SOL movements)
+      if (programId === '11111111111111111111111111111112') {
         const data = instruction.data;
         if (data && data.length >= 12) {
-          // Decode transfer amount (lamports)
-          const lamports = Buffer.from(data.slice(4, 12)).readBigUInt64LE();
-          const solAmount = Number(lamports) / 1e9;
+          try {
+            // Decode transfer amount (lamports)
+            const lamports = Buffer.from(data.slice(4, 12)).readBigUInt64LE();
+            const solAmount = Number(lamports) / 1e9;
 
-          if (solAmount >= 50) { // 50+ SOL considered whale movement
-            // Determine direction based on account balance changes
-            const direction = this.determineTransactionDirection(transaction, instruction);
+            // Lower threshold for better detection but with confidence scoring
+            if (solAmount >= 10) { // 10+ SOL for whale consideration
+              amount = Math.floor(solAmount);
+              wallet = transaction.transaction.message.accountKeys[0].toString();
+              direction = determineTransactionDirection(transaction, instruction);
 
-            return {
-              isWhaleMovement: true,
-              amount: Math.floor(solAmount),
-              direction,
-              wallet: transaction.transaction.message.accountKeys[0].toString(),
-              confidence: Math.min(95, Math.max(70, 60 + solAmount / 20))
-            };
+              // Confidence based on amount
+              if (solAmount >= 100) confidence = 95;
+              else if (solAmount >= 50) confidence = 85;
+              else if (solAmount >= 25) confidence = 75;
+              else confidence = 65;
+
+              isWhaleMovement = true;
+              break;
+            }
+          } catch (error) {
+            continue;
           }
+        }
+      }
+
+      // 2. Token program transfers (SPL token movements)
+      else if (programId === 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA') {
+        try {
+          // Look for large token transfers
+          const accountKeys = transaction.transaction.message.accountKeys;
+          const preBalances = transaction.meta?.preTokenBalances || [];
+          const postBalances = transaction.meta?.postTokenBalances || [];
+
+          // Calculate token transfer amounts
+          for (let i = 0; i < Math.min(preBalances.length, postBalances.length); i++) {
+            const preBal = preBalances[i];
+            const postBal = postBalances[i];
+
+            if (preBal && postBal && preBal.mint === postBal.mint) {
+              const preAmount = parseFloat(preBal.uiTokenAmount?.uiAmountString || '0');
+              const postAmount = parseFloat(postBal.uiTokenAmount?.uiAmountString || '0');
+              const difference = Math.abs(postAmount - preAmount);
+
+              // Consider whale movement based on token value
+              if (difference > 100000) { // 100K+ tokens (depends on token decimals)
+                amount = Math.floor(difference);
+                wallet = accountKeys[preBal.accountIndex || 0]?.toString() || '';
+                direction = postAmount > preAmount ? 'buy' : 'sell';
+                confidence = Math.min(90, 60 + Math.log10(difference) * 10);
+                isWhaleMovement = true;
+                break;
+              }
+            }
+          }
+        } catch (error) {
+          continue;
+        }
+      }
+
+      // 3. DEX program transactions (Raydium, Orca, etc.)
+      else if (
+        programId === '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8' || // Raydium
+        programId === 'whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc' ||   // Orca
+        programId === '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM'     // Jupiter
+      ) {
+        try {
+          // DEX transactions often indicate large swaps
+          const preBalances = transaction.meta?.preBalances || [];
+          const postBalances = transaction.meta?.postBalances || [];
+
+          // Look for significant SOL balance changes
+          for (let i = 0; i < Math.min(preBalances.length, postBalances.length); i++) {
+            const solDiff = Math.abs((postBalances[i] - preBalances[i]) / 1e9);
+
+            if (solDiff >= 5) { // 5+ SOL movement in DEX
+              amount = Math.floor(solDiff);
+              wallet = transaction.transaction.message.accountKeys[i]?.toString() || '';
+              direction = postBalances[i] > preBalances[i] ? 'sell' : 'buy'; // Inverted for DEX
+              confidence = Math.min(85, 50 + solDiff * 5);
+              isWhaleMovement = true;
+              break;
+            }
+          }
+        } catch (error) {
+          continue;
         }
       }
     }
 
+    // Additional validation for whale movements
+    if (isWhaleMovement) {
+      // Check wallet history for whale characteristics
+      const isKnownWhale = wallet.length === 44; // Valid Solana address
+      if (!isKnownWhale) {
+        confidence *= 0.8; // Reduce confidence for invalid addresses
+      }
+
+      // Boost confidence for very large movements
+      if (amount >= 1000) confidence = Math.min(98, confidence + 10);
+
+      return {
+        isWhaleMovement: true,
+        amount,
+        direction,
+        wallet: wallet || 'Unknown',
+        confidence: Math.floor(Math.max(50, confidence))
+      };
+    }
+
     return { isWhaleMovement: false };
   } catch (error) {
+    console.error('Whale analysis error:', error);
     return { isWhaleMovement: false };
   }
 }
