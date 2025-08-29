@@ -116,84 +116,32 @@ export const handleAnalyzeCoin: RequestHandler = async (req, res) => {
 
 export const handleGetWhaleActivity: RequestHandler = async (req, res) => {
   try {
-    const allCoins = solanaScanner.getAllScannedCoins();
+    console.log('🐋 Fetching real whale activity from blockchain...');
 
-    // Generate whale activity - fallback to mock data if no coins yet
-    let whaleMovements;
-    if (allCoins.length === 0) {
-      // Generate mock whale movements with real-looking Solana addresses when no coins are scanned yet
-      const realWhaleAddresses = [
-        '5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1',
-        'GThUX1Atko4tqhN2NaiTazWSeFWMuiUiswPEFuqKRDNA',
-        'DjVE6JNiYqPL2QXyCUUh8rNjHrbz9hXHNYt99MQ59qw1',
-        '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM',
-        'CuieVDEDtLo7FypA9SbLM9saXFdb1dsshEkyErMqkRQq',
-      ];
+    // Get real whale movements from the ai-analysis route
+    try {
+      const whaleData = await getRealWhaleMovements();
 
-      whaleMovements = Array.from({ length: 5 }, (_, index) => ({
-        id: index + 1,
-        coinSymbol: `MEME${index + 1}`,
-        coinName: `MemeToken${index + 1}`,
-        wallet: realWhaleAddresses[index] || realWhaleAddresses[0],
-        amount: Math.floor(Math.random() * 100000) + 10000,
-        direction: Math.random() > 0.5 ? 'buy' : 'sell',
-        timestamp: Date.now() - Math.floor(Math.random() * 3600000),
-        confidence: Math.floor(Math.random() * 40) + 60
-      }));
-    } else {
-      const realWhaleAddresses = [
-        '5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1',
-        'GThUX1Atko4tqhN2NaiTazWSeFWMuiUiswPEFuqKRDNA',
-        'DjVE6JNiYqPL2QXyCUUh8rNjHrbz9hXHNYt99MQ59qw1',
-        '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM',
-        'CuieVDEDtLo7FypA9SbLM9saXFdb1dsshEkyErMqkRQq',
-        '36dn5tL2EucfFzznp6Ey4K1zcR1cq8Js7pPBhCqFJZwH',
-        'BrHwAL8VA1qKTzBH2P3uyFQT1kjF7jWQqXPKEHcX5GgK',
-        '4DoNfFBfF7UokCC2FQzriy7yHK6DY6NVdYpuekQ5pRgg',
-        'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr',
-        'EaVTyEJL3X3yvVHBEW3Wkw7Nv9M4q8zE2GqXCT5vW7bC'
-      ];
-
-      whaleMovements = allCoins.slice(0, 10).map((coin, index) => ({
-        id: index + 1,
-        coinSymbol: coin.symbol,
-        coinName: coin.name,
-        wallet: realWhaleAddresses[index % realWhaleAddresses.length],
-        amount: Math.floor(Math.random() * 100000) + 10000,
-        direction: coin.whaleActivity > 60 ? 'buy' : Math.random() > 0.5 ? 'buy' : 'sell',
-        timestamp: Date.now() - Math.floor(Math.random() * 3600000),
-        confidence: coin.aiScore
-      }));
+      if (whaleData && whaleData.movements && whaleData.movements.length > 0) {
+        console.log(`✅ Found ${whaleData.movements.length} real whale movements`);
+        res.json(whaleData);
+        return;
+      }
+    } catch (error) {
+      console.error('Real whale data fetch failed:', error);
     }
 
-    const totalWhales = Math.floor(Math.random() * 50) + 100;
-    const activeWhales24h = Math.floor(totalWhales * 0.3);
-
-    const largestMovement = whaleMovements.length > 0 ?
-      whaleMovements.reduce((largest, current) =>
-        current.amount > largest.amount ? current : largest
-      ) : whaleMovements[0] || {
-        amount: 50000,
-        direction: 'buy',
-        timestamp: Date.now(),
-        wallet: 'ABC...xyz',
-        coinName: 'Unknown',
-        coinSymbol: 'UNK'
-      };
-
+    // If no real whale data available, return empty state
+    console.log('⚠️ No real whale movements detected currently');
     res.json({
-      totalWhales,
-      activeWhales24h,
-      largestMovement: {
-        amount: largestMovement.amount,
-        direction: largestMovement.direction,
-        timestamp: largestMovement.timestamp,
-        wallet: largestMovement.wallet,
-        coin: `${largestMovement.coinName} (${largestMovement.coinSymbol})`
-      },
-      movements: whaleMovements,
-      lastUpdate: Date.now()
+      totalWhales: 0,
+      activeWhales24h: 0,
+      largestMovement: null,
+      movements: [],
+      lastUpdate: Date.now(),
+      message: 'No whale movements detected in current scan period'
     });
+
   } catch (error) {
     console.error('Error getting whale activity:', error);
     res.status(500).json({ error: 'Failed to get whale activity' });
