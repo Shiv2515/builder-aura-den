@@ -602,7 +602,7 @@ class SolanaScanner {
       return null;
 
     } catch (error) {
-      console.error(`❌ Liquidity data error for ${mint}:`, error);
+      console.error(`�� Liquidity data error for ${mint}:`, error);
       return null;
     }
   }
@@ -700,7 +700,7 @@ class SolanaScanner {
         console.warn('⚠️ Database storage failed, continuing without persistence:', dbError.message);
       }
 
-      return {
+      const analysisResult = {
         mint: tokenData.mint,
         name: tokenData.name,
         symbol: tokenData.symbol,
@@ -722,6 +722,36 @@ class SolanaScanner {
         contractAnalysis,
         timingAnalysis
       };
+
+      // 📡 Broadcast real-time coin analysis update
+      try {
+        webSocketService.broadcastTokenPrice({
+          mint: tokenData.mint,
+          symbol: tokenData.symbol,
+          price,
+          change24h,
+          volume,
+          mcap,
+          timestamp: Date.now()
+        });
+
+        webSocketService.broadcastAIPrediction({
+          mint: tokenData.mint,
+          symbol: tokenData.symbol,
+          aiScore: ensembleResult.finalScore,
+          prediction: ensembleResult.consensusPrediction,
+          rugRisk: ensembleResult.consensusRisk,
+          whaleActivity: 100 - ensembleResult.advancedMetrics.whaleManipulation,
+          reasoning: enhancedReasoning,
+          timestamp: Date.now()
+        });
+
+        console.log(`📡 Broadcasted live update for ${tokenData.symbol}`);
+      } catch (wsError) {
+        console.warn(`⚠️ WebSocket broadcast failed for ${tokenData.symbol}:`, wsError.message);
+      }
+
+      return analysisResult;
 
     } catch (error) {
       console.error('Advanced AI Analysis error:', error);
