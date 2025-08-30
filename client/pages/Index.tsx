@@ -209,9 +209,9 @@ export default function Index() {
 
         // Fallback to backup API if real API fails
         try {
-          let fallbackUrl = `/api/backup-coins?${Date.now()}`;
+          let fallbackUrl = `/.netlify/functions/backup-coins?${Date.now()}`;
           if (window.location.hostname.includes('fly.dev') || window.location.hostname.includes('localhost')) {
-            fallbackUrl = `https://pulsesignal-ai.netlify.app/api/backup-coins?${Date.now()}`;
+            fallbackUrl = `https://pulsesignal-ai.netlify.app/.netlify/functions/backup-coins?${Date.now()}`;
           }
 
           const response = await fetch(fallbackUrl);
@@ -241,9 +241,9 @@ export default function Index() {
 
   const startNewScan = async () => {
     try {
-      let apiUrl = '/api/scan/start?' + Date.now();
+      let apiUrl = '/.netlify/functions/scan-start?' + Date.now();
       if (window.location.hostname.includes('fly.dev') || window.location.hostname.includes('localhost')) {
-        apiUrl = 'https://pulsesignal-ai.netlify.app/api/scan/start?' + Date.now();
+        apiUrl = 'https://pulsesignal-ai.netlify.app/.netlify/functions/scan-start?' + Date.now();
       }
 
       const response = await fetch(apiUrl, {
