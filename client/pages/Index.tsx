@@ -132,18 +132,58 @@ export default function Index() {
 
         console.log(`✅ Loaded ${data.coins?.length || 0} coins from ${data.dataSource}`);
 
-        // Update scan status with live data
+        // Identify rug pull risks based on real data
+        const rugPullCoins = data.coins?.filter((coin: any) => {
+          // Same logic as RugPullAlerts component
+          let riskScore = 0;
+
+          if (coin.rugRisk === 'high') riskScore += 40;
+          else if (coin.rugRisk === 'medium') riskScore += 20;
+
+          if (coin.liquidity < 10000) riskScore += 30;
+          else if (coin.liquidity < 50000) riskScore += 20;
+
+          if (coin.liquidity > 0 && (coin.volume / coin.liquidity) > 20) riskScore += 25;
+          if (coin.txns24h && coin.txns24h < 10) riskScore += 15;
+          if (coin.change24h < -50) riskScore += 20;
+          if (coin.change24h < -80) riskScore += 35;
+
+          if (coin.createdAt) {
+            const age = Date.now() - coin.createdAt;
+            const ageInDays = age / (1000 * 60 * 60 * 24);
+            if (ageInDays < 1) riskScore += 25;
+            else if (ageInDays < 7) riskScore += 15;
+          }
+
+          if (coin.aiScore < 30) riskScore += 20;
+          if (coin.holders && coin.holders < 100) riskScore += 20;
+
+          return riskScore >= 50; // Same threshold as rug pull alerts
+        }) || [];
+
+        const rugPullMints = new Set(rugPullCoins.map((coin: any) => coin.mint));
+
+        // High potential coins EXCLUDE rug pull risks
+        const safeHighPotentialCoins = data.coins?.filter((coin: any) =>
+          coin.aiScore > 70 &&
+          !rugPullMints.has(coin.mint) &&
+          coin.rugRisk === 'low' &&
+          coin.liquidity > 50000 && // Decent liquidity
+          coin.change24h > -30 // Not crashing severely
+        ) || [];
+
+        // Update scan status with coordinated data
         setScanStatus({
           isScanning: true,
           lastScanTime: Date.now(),
           totalScanned: data.coins?.length || 0,
-          rugPullsDetected: Math.floor(Math.random() * 3),
-          highPotentialCoins: data.coins?.filter((c: any) => c.aiScore > 70).length || 0,
+          rugPullsDetected: rugPullCoins.length,
+          highPotentialCoins: safeHighPotentialCoins.length,
           scanProgress: 100,
           nextScanIn: 30000,
           stats: {
             averageAiScore: data.coins?.reduce((sum: number, coin: any) => sum + coin.aiScore, 0) / (data.coins?.length || 1) || 0,
-            bullishCoins: data.coins?.filter((c: any) => c.prediction === 'bullish').length || 0,
+            bullishCoins: data.coins?.filter((c: any) => c.prediction === 'bullish' && !rugPullMints.has(c.mint)).length || 0,
             bearishCoins: data.coins?.filter((c: any) => c.prediction === 'bearish').length || 0,
             whaleMovements: Math.floor(Math.random() * 10) + 1
           }
