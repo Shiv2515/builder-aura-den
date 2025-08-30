@@ -195,7 +195,7 @@ export default async (req: Request, context: Context) => {
             url: pair.url
           };
         })
-        .filter(coin => coin.aiScore >= 60) // High-scoring coins
+        .filter(coin => coin.aiScore >= 40) // Moderate to high-scoring coins
         .sort((a, b) => {
           // Sort by AI score first, then by volume
           if (b.aiScore !== a.aiScore) return b.aiScore - a.aiScore;
