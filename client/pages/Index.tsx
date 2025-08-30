@@ -111,6 +111,9 @@ export default function Index() {
           console.log('🔄 Using Netlify real API from dev server');
         }
 
+        console.log('🔍 Calling API URL:', apiUrl);
+        console.log('🔍 Current hostname:', window.location.hostname);
+
         const response = await fetch(apiUrl); // Cache busting
         console.log(`🔍 API Response Status: ${response.status}`);
         console.log(`🔍 API Response Headers:`, Object.fromEntries(response.headers.entries()));
