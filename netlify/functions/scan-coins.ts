@@ -207,13 +207,13 @@ export default async (req: Request, context: Context) => {
           if (excludePatterns.some(pattern => nameSymbolLower.includes(pattern))) return false;
 
           return (
-            volume24h > 10 &&  // Much lower volume threshold for new/small memes
-            Math.abs(priceChange24h) < 50000 && // Allow extreme meme volatility
+            volume24h > 1 &&  // Even lower volume threshold for new/small memes
+            Math.abs(priceChange24h) < 100000 && // Allow extreme meme volatility
             name && symbol && // Has basic info
             pair.priceUsd && parseFloat(pair.priceUsd) > 0 && // Has a price
-            parseFloat(pair.priceUsd) < 1000 && // Allow very high priced tokens
+            parseFloat(pair.priceUsd) < 10000 && // Allow very high priced tokens
             // Very permissive market cap filter
-            (!pair.marketCap || pair.marketCap < 10000000000) // Under $10B market cap
+            (!pair.marketCap || pair.marketCap < 50000000000) // Under $50B market cap
           );
         })
         .map(pair => {
