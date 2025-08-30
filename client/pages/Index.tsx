@@ -307,9 +307,9 @@ export default function Index() {
                   {scanStatus?.isScanning ? `${scanStatus.scanProgress || 0}% Complete` : 'Ready'}
                 </span>
               </div>
-              <Progress 
-                value={scanStatus?.isScanning ? scanStatus.scanProgress : 100} 
-                className="h-2" 
+              <Progress
+                value={scanStatus?.isScanning ? (scanStatus.scanProgress || 0) : 100}
+                className="h-2"
               />
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div className="flex items-center space-x-2">
