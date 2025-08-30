@@ -48,11 +48,30 @@ export function RugPullAlerts() {
       setIsLoading(true);
       setError(null);
 
-      // Get current coins first
-      const coinsResponse = await fetch('/api/scan/coins');
-      if (!coinsResponse.ok) throw new Error('Failed to fetch coins');
+      // Try to get data from different API endpoints
+      let coinsData;
+      try {
+        // Try the main API first
+        let apiUrl = '/api/scan/coins?' + Date.now();
+        if (window.location.hostname.includes('fly.dev') || window.location.hostname.includes('localhost')) {
+          apiUrl = 'https://pulsesignal-ai.netlify.app/api/scan/coins?' + Date.now();
+        }
 
-      const coinsData = await coinsResponse.json();
+        const coinsResponse = await fetch(apiUrl);
+        if (!coinsResponse.ok) throw new Error('Primary API failed');
+        coinsData = await coinsResponse.json();
+      } catch (primaryError) {
+        // Fallback to backup API
+        let backupUrl = '/api/backup-coins?' + Date.now();
+        if (window.location.hostname.includes('fly.dev') || window.location.hostname.includes('localhost')) {
+          backupUrl = 'https://pulsesignal-ai.netlify.app/api/backup-coins?' + Date.now();
+        }
+
+        const backupResponse = await fetch(backupUrl);
+        if (!backupResponse.ok) throw new Error('Both APIs failed');
+        coinsData = await backupResponse.json();
+      }
+
       const coins = coinsData.coins || [];
 
       if (coins.length === 0) {
@@ -60,35 +79,13 @@ export function RugPullAlerts() {
         return;
       }
 
-      // Analyze each coin for rug pull risks
+      // Analyze existing coin data for rug pull risks
       const rugPullAlerts: RugPullAlert[] = [];
 
-      // Only create alerts from detailed contract analysis - no quick fallback alerts
-
-      // Then try detailed contract analysis for top risk coins
-      for (const coin of coins.slice(0, 5)) {
-        try {
-          const contractResponse = await fetch(`/api/scan/contract/${coin.mint}`);
-          if (contractResponse.ok) {
-            const contractAnalysis = await contractResponse.json();
-
-            // Generate alert if high risk detected
-            if (contractAnalysis.riskFactors?.rugPullProbability > 60) {
-              const alert = createAlertFromAnalysis(coin, contractAnalysis);
-              if (alert) {
-                // Replace quick alert with detailed one if it exists
-                const existingIndex = rugPullAlerts.findIndex(a => a.id === coin.mint);
-                if (existingIndex >= 0) {
-                  rugPullAlerts[existingIndex] = alert;
-                } else {
-                  rugPullAlerts.push(alert);
-                }
-              }
-            }
-          }
-        } catch (error) {
-          console.warn(`Contract analysis failed for ${coin.symbol}:`, error);
-          // No fallback alerts - only real contract analysis
+      for (const coin of coins) {
+        const alert = createAlertFromCoinData(coin);
+        if (alert) {
+          rugPullAlerts.push(alert);
         }
       }
 
