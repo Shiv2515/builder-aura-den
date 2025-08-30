@@ -210,7 +210,7 @@ export default function Index() {
         });
 
         if (!data.success) {
-          console.error(`�� API Unsuccessful:`, data);
+          console.error(`❌ API Unsuccessful:`, data);
           throw new Error(data.error || 'API returned unsuccessful response');
         }
 
@@ -303,6 +303,9 @@ export default function Index() {
             console.log(`⚠️ Fallback: Using backup data (${data.coins.length} coins) - some addresses may be simulated`);
             // Clear any previous errors since we have data
             setError(null);
+
+            // Update scan status with real data
+            updateScanStatusFromCoins(data.coins);
           } else {
             throw new Error('No coins available from backup API');
           }
