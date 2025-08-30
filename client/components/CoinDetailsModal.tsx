@@ -44,6 +44,19 @@ interface CoinData {
   liquidity: number;
   createdAt: number;
   reasoning: string;
+  // Real contract data
+  pairAddress: string;
+  dexId: string;
+  url: string;
+  txns24h: number;
+  buys24h?: number;
+  sells24h?: number;
+  solscanUrl?: string;
+  dexScreenerUrl?: string;
+  jupiterUrl?: string;
+  verified?: boolean;
+  network: string;
+  isMemePattern?: boolean;
   ensembleAnalysis?: any;
   contractAnalysis?: any;
   timingAnalysis?: any;
