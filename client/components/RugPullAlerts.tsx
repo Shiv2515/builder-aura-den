@@ -323,8 +323,8 @@ export function RugPullAlerts() {
             <p className="text-lg font-semibold text-foreground">All Clear!</p>
             <p className="text-muted-foreground">
               {alerts.length === 0
-                ? "No tokens analyzed yet"
-                : "No active rug pull threats detected"
+                ? "No rug pull threats detected"
+                : filter === 'all' ? "No active rug pull threats detected" : `No ${filter} risk alerts`
               }
             </p>
           </div>
