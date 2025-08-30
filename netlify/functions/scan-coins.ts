@@ -132,7 +132,7 @@ export default async (req: Request, context: Context) => {
     console.log('🔄 Fetching live Solana token data from DexScreener...');
     
     // Fetch trending Solana pairs from DexScreener
-    const trendingUrl = 'https://api.dexscreener.com/latest/dex/tokens/So11111111111111111111111111111112';
+    const trendingUrl = 'https://api.dexscreener.com/latest/dex/pairs/solana';
     
     try {
       const response = await fetch(trendingUrl);
