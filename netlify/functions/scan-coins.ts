@@ -201,8 +201,8 @@ export default async (req: Request, context: Context) => {
           const excludedTokens = ['SOL', 'WSOL', 'USDC', 'USDT'];
           if (excludedTokens.includes(symbol)) return false;
 
-          // Exclude tokens that are clearly not memes (DeFi protocols, utilities)
-          const excludePatterns = ['swap', 'pool', 'vault', 'strategy', 'protocol', 'finance', 'defi', 'yield', 'farm'];
+          // Only exclude obvious major DeFi protocols, keep most tokens
+          const excludePatterns = ['uniswap', 'compound', 'aave', 'curve'];
           const nameSymbolLower = (name + ' ' + symbol).toLowerCase();
           if (excludePatterns.some(pattern => nameSymbolLower.includes(pattern))) return false;
 
