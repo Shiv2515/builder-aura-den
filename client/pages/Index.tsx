@@ -238,8 +238,85 @@ export default function Index() {
           }
 
         } catch (fallbackError) {
-          console.error('❌ All APIs failed:', fallbackError);
-          setError('Unable to connect to coin data APIs. Please check your connection.');
+          console.error('❌ Backup API failed, trying direct DexScreener:', fallbackError);
+
+          // Try direct DexScreener API call as final fallback
+          try {
+            console.log('🔄 Calling DexScreener API directly...');
+            const directResponse = await fetch('https://api.dexscreener.com/latest/dex/search/?q=solana');
+
+            if (!directResponse.ok) {
+              throw new Error(`DexScreener API error: ${directResponse.status}`);
+            }
+
+            const directData = await directResponse.json();
+            const pairs = directData.pairs || [];
+
+            // Filter and process the same way as the Netlify function
+            const solanaMemeCoins = pairs
+              .filter((pair: any) => {
+                if (pair.chainId !== 'solana') return false;
+
+                const volume24h = pair.volume?.h24 || 0;
+                const priceChange24h = pair.priceChange?.h24 || 0;
+                const name = pair.baseToken.name || '';
+                const symbol = pair.baseToken.symbol || '';
+
+                const excludedTokens = ['SOL', 'WSOL', 'USDC', 'USDT'];
+                if (excludedTokens.includes(symbol)) return false;
+
+                const excludePatterns = ['swap', 'pool', 'vault', 'strategy', 'protocol', 'finance', 'defi', 'yield', 'farm'];
+                const nameSymbolLower = (name + ' ' + symbol).toLowerCase();
+                if (excludePatterns.some((pattern: string) => nameSymbolLower.includes(pattern))) return false;
+
+                return (
+                  volume24h > 10 &&
+                  Math.abs(priceChange24h) < 50000 &&
+                  name && symbol &&
+                  pair.priceUsd && parseFloat(pair.priceUsd) > 0 &&
+                  parseFloat(pair.priceUsd) < 1000 &&
+                  (!pair.marketCap || pair.marketCap < 10000000000)
+                );
+              })
+              .map((pair: any) => ({
+                mint: pair.baseToken.address,
+                name: pair.baseToken.name || pair.baseToken.symbol,
+                symbol: pair.baseToken.symbol,
+                price: parseFloat(pair.priceUsd || '0'),
+                change24h: pair.priceChange?.h24 || 0,
+                volume: pair.volume?.h24 || 0,
+                mcap: pair.marketCap || pair.fdv || 0,
+                liquidity: pair.liquidity?.usd || 0,
+                txns24h: (pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0),
+                createdAt: pair.pairCreatedAt || Date.now(),
+                pairAddress: pair.pairAddress,
+                dexId: pair.dexId,
+                url: pair.url,
+                aiScore: Math.min(100, 30 + Math.floor((pair.volume?.h24 || 0) / 10000) + (Math.abs(pair.priceChange?.h24 || 0) > 20 ? 20 : 0)),
+                rugRisk: 'medium' as 'low' | 'medium' | 'high',
+                whaleActivity: Math.min(100, Math.floor((pair.volume?.h24 || 0) / 1000)),
+                socialBuzz: Math.min(100, Math.floor(((pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0)) / 10) + 30),
+                prediction: (pair.priceChange?.h24 || 0) > 5 ? 'bullish' : (pair.priceChange?.h24 || 0) < -5 ? 'bearish' : 'neutral' as 'bullish' | 'bearish' | 'neutral',
+                holders: Math.floor(((pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0)) * 2.5) + 50,
+                reasoning: `🔗 DIRECT API - Real Solana token from DexScreener | Vol: $${(pair.volume?.h24 || 0).toLocaleString()} | ${(pair.priceChange?.h24 || 0).toFixed(1)}%`
+              }))
+              .filter((coin: any) => coin.aiScore >= 15)
+              .sort((a: any, b: any) => b.volume - a.volume)
+              .slice(0, 30);
+
+            if (solanaMemeCoins.length > 0) {
+              setCoins(solanaMemeCoins);
+              setLastUpdate(new Date());
+              console.log(`✅ Direct API: Loaded ${solanaMemeCoins.length} real Solana coins`);
+              setError(null); // Clear any previous errors
+            } else {
+              throw new Error('No suitable Solana coins found in DexScreener data');
+            }
+
+          } catch (directApiError) {
+            console.error('❌ Direct DexScreener API also failed:', directApiError);
+            setError('Unable to connect to any coin data sources. Please check your internet connection.');
+          }
         }
       }
 
