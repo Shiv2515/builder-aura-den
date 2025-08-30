@@ -191,57 +191,64 @@ export function WhaleTracker() {
             <span>Recent Movements</span>
           </h4>
           <div className="space-y-2 max-h-64 overflow-y-auto">
-            {whaleData.movements.slice(0, 8).map((movement) => (
-              <div
-                key={movement.id}
-                className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-border hover:border-primary/30 transition-colors cursor-pointer"
-                onClick={() => openWhaleDetails(movement)}
-              >
-                <div className="flex items-center space-x-3">
-                  {movement.direction === 'buy' ? (
-                    <TrendingUp className="h-4 w-4 text-success" />
-                  ) : (
-                    <TrendingDown className="h-4 w-4 text-destructive" />
-                  )}
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <p className="text-sm font-medium text-foreground font-mono">
-                        {movement.wallet}
+            {whaleData.movements && whaleData.movements.length > 0 ? (
+              whaleData.movements.slice(0, 8).map((movement) => (
+                <div
+                  key={movement.id}
+                  className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-border hover:border-primary/30 transition-colors cursor-pointer"
+                  onClick={() => openWhaleDetails(movement)}
+                >
+                  <div className="flex items-center space-x-3">
+                    {movement.direction === 'buy' ? (
+                      <TrendingUp className="h-4 w-4 text-success" />
+                    ) : (
+                      <TrendingDown className="h-4 w-4 text-destructive" />
+                    )}
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm font-medium text-foreground font-mono">
+                          {movement.wallet}
+                        </p>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-4 w-4 p-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            copyToClipboard(movement.wallet);
+                          }}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {formatTimeAgo(movement.timestamp)} • Click for details
                       </p>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-4 w-4 p-0"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          copyToClipboard(movement.wallet);
-                        }}
-                      >
-                        <Copy className="h-3 w-3" />
-                      </Button>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {formatTimeAgo(movement.timestamp)} • Click for details
+                  </div>
+                  <div className="text-right">
+                    <p className={cn(
+                      "text-sm font-semibold",
+                      movement.direction === 'buy' ? "text-success" : "text-destructive"
+                    )}>
+                      {formatAmount(movement.amount)}
                     </p>
+                    <div className="flex items-center space-x-1">
+                      <Eye className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">
+                        {movement.confidence}%
+                      </span>
+                      <Info className="h-3 w-3 text-primary" />
+                    </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className={cn(
-                    "text-sm font-semibold",
-                    movement.direction === 'buy' ? "text-success" : "text-destructive"
-                  )}>
-                    {formatAmount(movement.amount)}
-                  </p>
-                  <div className="flex items-center space-x-1">
-                    <Eye className="h-3 w-3 text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground">
-                      {movement.confidence}%
-                    </span>
-                    <Info className="h-3 w-3 text-primary" />
-                  </div>
-                </div>
+              ))
+            ) : (
+              <div className="p-4 text-center text-muted-foreground">
+                <p className="text-sm">No recent whale movements detected</p>
+                <p className="text-xs mt-1">Scanning for activity...</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
 
