@@ -72,9 +72,9 @@ export default function Index() {
 
   const fetchScanStatus = async () => {
     try {
-      let apiUrl = '/api/scan/status?' + Date.now();
+      let apiUrl = '/.netlify/functions/scan-status?' + Date.now();
       if (window.location.hostname.includes('fly.dev') || window.location.hostname.includes('localhost')) {
-        apiUrl = 'https://pulsesignal-ai.netlify.app/api/scan/status?' + Date.now();
+        apiUrl = 'https://pulsesignal-ai.netlify.app/.netlify/functions/scan-status?' + Date.now();
       }
 
       const response = await fetch(apiUrl); // Cache busting
