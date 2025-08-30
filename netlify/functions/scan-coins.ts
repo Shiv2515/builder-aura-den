@@ -194,14 +194,13 @@ export default async (req: Request, context: Context) => {
           if (excludePatterns.some(pattern => nameSymbolLower.includes(pattern))) return false;
 
           return (
-            volume24h > 100 &&  // Very low volume threshold to catch new memes
-            Math.abs(priceChange24h) < 10000 && // Allow extreme volatility for memes
-            txns24h > 1 &&  // Minimal transaction requirement
+            volume24h > 10 &&  // Much lower volume threshold for new/small memes
+            Math.abs(priceChange24h) < 50000 && // Allow extreme meme volatility
             name && symbol && // Has basic info
             pair.priceUsd && parseFloat(pair.priceUsd) > 0 && // Has a price
-            parseFloat(pair.priceUsd) < 100 && // Allow higher priced memes
-            // Market cap filter for meme coins - more permissive
-            (!pair.marketCap || pair.marketCap < 1000000000) // Under $1B market cap
+            parseFloat(pair.priceUsd) < 1000 && // Allow very high priced tokens
+            // Very permissive market cap filter
+            (!pair.marketCap || pair.marketCap < 10000000000) // Under $10B market cap
           );
         })
         .map(pair => {
