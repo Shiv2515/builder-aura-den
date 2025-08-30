@@ -1,23 +1,31 @@
-import { Connection, PublicKey, GetProgramAccountsFilter } from '@solana/web3.js';
-import { TOKEN_PROGRAM_ID, getMint, getAccount } from '@solana/spl-token';
-import OpenAI from 'openai';
-import { aiEnsemble } from './ai-ensemble';
-import { contractAnalyzer } from './contract-analyzer';
-import { microTimingPredictor } from './micro-timing';
-import { socialSentimentAnalyzer } from './social-sentiment';
-import { dataPersistence } from './data-persistence';
-import { webSocketService } from './websocket-server';
+import {
+  Connection,
+  PublicKey,
+  GetProgramAccountsFilter,
+} from "@solana/web3.js";
+import { TOKEN_PROGRAM_ID, getMint, getAccount } from "@solana/spl-token";
+import OpenAI from "openai";
+import { aiEnsemble } from "./ai-ensemble";
+import { contractAnalyzer } from "./contract-analyzer";
+import { microTimingPredictor } from "./micro-timing";
+import { socialSentimentAnalyzer } from "./social-sentiment";
+import { dataPersistence } from "./data-persistence";
+import { webSocketService } from "./websocket-server";
 
-const SOLANA_RPC_URL = 'https://api.mainnet-beta.solana.com';
-const connection = new Connection(SOLANA_RPC_URL, 'confirmed');
+const SOLANA_RPC_URL = "https://api.mainnet-beta.solana.com";
+const connection = new Connection(SOLANA_RPC_URL, "confirmed");
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
 // Known meme coin contracts and DEX programs
-const RAYDIUM_AMM_PROGRAM = new PublicKey('675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8');
-const ORCA_WHIRLPOOL_PROGRAM = new PublicKey('whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc');
+const RAYDIUM_AMM_PROGRAM = new PublicKey(
+  "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8",
+);
+const ORCA_WHIRLPOOL_PROGRAM = new PublicKey(
+  "whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc",
+);
 
 interface TokenMetadata {
   mint: string;
@@ -48,10 +56,10 @@ interface CoinAnalysis {
   volume: number;
   mcap: number;
   aiScore: number;
-  rugRisk: 'low' | 'medium' | 'high';
+  rugRisk: "low" | "medium" | "high";
   whaleActivity: number;
   socialBuzz: number;
-  prediction: 'bullish' | 'bearish' | 'neutral';
+  prediction: "bullish" | "bearish" | "neutral";
   holders: number;
   liquidity: number;
   createdAt: number;
@@ -70,22 +78,23 @@ class SolanaScanner {
 
   async scanNewTokens(): Promise<TokenMetadata[]> {
     try {
-      console.log('🔍 Starting comprehensive Solana token discovery...');
+      console.log("🔍 Starting comprehensive Solana token discovery...");
 
       // Multi-source real token discovery
       const discoveredTokens = await this.discoverTokensFromMultipleSources();
 
       if (discoveredTokens.length > 0) {
-        console.log(`✅ Found ${discoveredTokens.length} real tokens from blockchain and DEX data`);
+        console.log(
+          `✅ Found ${discoveredTokens.length} real tokens from blockchain and DEX data`,
+        );
         return discoveredTokens;
       }
 
       // If all real sources fail, return empty array rather than mock data
-      console.log('⚠️ No real tokens found in current scan cycle');
+      console.log("⚠️ No real tokens found in current scan cycle");
       return [];
-
     } catch (error) {
-      console.error('❌ Error in token scanning:', error);
+      console.error("❌ Error in token scanning:", error);
       return [];
     }
   }
@@ -99,7 +108,7 @@ class SolanaScanner {
       allTokens.push(...dexTokens);
       console.log(`📊 Found ${dexTokens.length} tokens from DexScreener`);
     } catch (error) {
-      console.log('⚠️ DexScreener token discovery failed:', error.message);
+      console.log("⚠️ DexScreener token discovery failed:", error.message);
     }
 
     // Source 2: Jupiter aggregator new tokens
@@ -108,16 +117,18 @@ class SolanaScanner {
       allTokens.push(...jupiterTokens);
       console.log(`🚀 Found ${jupiterTokens.length} tokens from Jupiter`);
     } catch (error) {
-      console.log('⚠️ Jupiter token discovery failed:', error.message);
+      console.log("⚠️ Jupiter token discovery failed:", error.message);
     }
 
     // Source 3: Direct blockchain scanning (when available)
     try {
       const blockchainTokens = await this.scanBlockchainForNewMints();
       allTokens.push(...blockchainTokens);
-      console.log(`⛓️ Found ${blockchainTokens.length} tokens from direct blockchain scan`);
+      console.log(
+        `⛓️ Found ${blockchainTokens.length} tokens from direct blockchain scan`,
+      );
     } catch (error) {
-      console.log('⚠️ Direct blockchain scanning failed:', error.message);
+      console.log("⚠️ Direct blockchain scanning failed:", error.message);
     }
 
     // Remove duplicates and filter for meme coin candidates
@@ -127,8 +138,11 @@ class SolanaScanner {
   }
 
   private async getNewTokensFromDexScreener(): Promise<TokenMetadata[]> {
-    const response = await fetch('https://api.dexscreener.com/latest/dex/search/?q=solana');
-    if (!response.ok) throw new Error(`DexScreener API failed: ${response.status}`);
+    const response = await fetch(
+      "https://api.dexscreener.com/latest/dex/search/?q=solana",
+    );
+    if (!response.ok)
+      throw new Error(`DexScreener API failed: ${response.status}`);
 
     const data = await response.json();
     const pairs = data.pairs || [];
@@ -137,7 +151,7 @@ class SolanaScanner {
     const now = Date.now();
 
     for (const pair of pairs.slice(0, 15)) {
-      if (pair.chainId === 'solana' && pair.baseToken) {
+      if (pair.chainId === "solana" && pair.baseToken) {
         const token = pair.baseToken;
 
         // Filter for potential meme coins
@@ -145,11 +159,13 @@ class SolanaScanner {
           tokens.push({
             mint: token.address,
             name: token.name || `Unknown_${token.symbol}`,
-            symbol: token.symbol || 'UNKNOWN',
+            symbol: token.symbol || "UNKNOWN",
             decimals: 9, // Most Solana tokens use 9 decimals
-            supply: '1000000000000000000', // Estimate from pair data
+            supply: "1000000000000000000", // Estimate from pair data
             holders: this.estimateHoldersFromVolume(pair.volume?.h24 || 0),
-            createdAt: pair.pairCreatedAt ? new Date(pair.pairCreatedAt).getTime() : now - 86400000,
+            createdAt: pair.pairCreatedAt
+              ? new Date(pair.pairCreatedAt).getTime()
+              : now - 86400000,
           });
         }
       }
@@ -160,8 +176,9 @@ class SolanaScanner {
 
   private async getNewTokensFromJupiter(): Promise<TokenMetadata[]> {
     try {
-      const response = await fetch('https://token.jup.ag/all');
-      if (!response.ok) throw new Error(`Jupiter API failed: ${response.status}`);
+      const response = await fetch("https://token.jup.ag/all");
+      if (!response.ok)
+        throw new Error(`Jupiter API failed: ${response.status}`);
 
       const tokens = await response.json();
       const recentTokens: TokenMetadata[] = [];
@@ -173,9 +190,9 @@ class SolanaScanner {
           recentTokens.push({
             mint: token.address,
             name: token.name || `Token_${token.symbol}`,
-            symbol: token.symbol || 'UNKNOWN',
+            symbol: token.symbol || "UNKNOWN",
             decimals: token.decimals || 9,
-            supply: '1000000000000000000', // Jupiter doesn't provide supply
+            supply: "1000000000000000000", // Jupiter doesn't provide supply
             holders: Math.floor(Math.random() * 5000) + 1000, // Estimate
             createdAt: now - Math.random() * 604800000, // Within last week
           });
@@ -184,7 +201,7 @@ class SolanaScanner {
 
       return recentTokens.slice(0, 5);
     } catch (error) {
-      console.error('Jupiter token discovery error:', error);
+      console.error("Jupiter token discovery error:", error);
       return [];
     }
   }
@@ -199,7 +216,7 @@ class SolanaScanner {
 
       const accounts = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
         filters,
-        encoding: 'base64',
+        encoding: "base64",
       });
 
       const recentTokens: TokenMetadata[] = [];
@@ -216,15 +233,21 @@ class SolanaScanner {
           const supply = Number(mintInfo.supply);
           if (supply > 100000000000000 || supply < 1000000) continue;
 
-          const metadata = await this.fetchTokenMetadata(account.pubkey.toString());
+          const metadata = await this.fetchTokenMetadata(
+            account.pubkey.toString(),
+          );
 
           if (metadata && this.isMemeTokenCandidate(metadata)) {
-            const holders = await this.getHolderCount(account.pubkey.toString());
+            const holders = await this.getHolderCount(
+              account.pubkey.toString(),
+            );
 
             recentTokens.push({
               mint: account.pubkey.toString(),
-              name: metadata.name || `Token_${account.pubkey.toString().slice(0, 8)}`,
-              symbol: metadata.symbol || 'UNKNOWN',
+              name:
+                metadata.name ||
+                `Token_${account.pubkey.toString().slice(0, 8)}`,
+              symbol: metadata.symbol || "UNKNOWN",
               decimals: mintInfo.decimals,
               supply: mintInfo.supply.toString(),
               holders,
@@ -238,31 +261,59 @@ class SolanaScanner {
 
       return recentTokens;
     } catch (error) {
-      console.error('Blockchain scanning error:', error);
+      console.error("Blockchain scanning error:", error);
       return [];
     }
   }
 
   private isLikelyMemeToken(token: any): boolean {
-    const name = (token.name || '').toLowerCase();
-    const symbol = (token.symbol || '').toLowerCase();
+    const name = (token.name || "").toLowerCase();
+    const symbol = (token.symbol || "").toLowerCase();
 
     const memeKeywords = [
-      'dog', 'cat', 'pepe', 'moon', 'rocket', 'diamond', 'ape', 'banana',
-      'shib', 'doge', 'elon', 'mars', 'lambo', 'hodl', 'pump', 'gem',
-      'safe', 'baby', 'mini', 'mega', 'ultra', 'super', 'turbo', 'wif',
-      'bonk', 'meme', 'coin', 'token', 'inu', 'floki'
+      "dog",
+      "cat",
+      "pepe",
+      "moon",
+      "rocket",
+      "diamond",
+      "ape",
+      "banana",
+      "shib",
+      "doge",
+      "elon",
+      "mars",
+      "lambo",
+      "hodl",
+      "pump",
+      "gem",
+      "safe",
+      "baby",
+      "mini",
+      "mega",
+      "ultra",
+      "super",
+      "turbo",
+      "wif",
+      "bonk",
+      "meme",
+      "coin",
+      "token",
+      "inu",
+      "floki",
     ];
 
     // Check for meme keywords
-    const hasMemeKeyword = memeKeywords.some(keyword =>
-      name.includes(keyword) || symbol.includes(keyword)
+    const hasMemeKeyword = memeKeywords.some(
+      (keyword) => name.includes(keyword) || symbol.includes(keyword),
     );
 
     // Check for typical meme coin patterns
     const hasTypicalPattern =
       symbol.length <= 8 && // Short symbols
-      (name.includes('coin') || name.includes('token') || symbol.includes('coin'));
+      (name.includes("coin") ||
+        name.includes("token") ||
+        symbol.includes("coin"));
 
     return hasMemeKeyword || hasTypicalPattern;
   }
@@ -296,7 +347,6 @@ class SolanaScanner {
     });
   }
 
-
   async fetchTokenMetadata(mint: string): Promise<any> {
     try {
       // Try Jupiter API for token metadata
@@ -316,7 +366,9 @@ class SolanaScanner {
   async getLivePrice(mint: string): Promise<number> {
     try {
       // Try Jupiter price API
-      const jupiterResponse = await fetch(`https://price.jup.ag/v4/price?ids=${mint}`);
+      const jupiterResponse = await fetch(
+        `https://price.jup.ag/v4/price?ids=${mint}`,
+      );
       if (jupiterResponse.ok) {
         const data = await jupiterResponse.json();
         const priceData = data.data?.[mint];
@@ -327,12 +379,16 @@ class SolanaScanner {
       }
 
       // Try DexScreener API as fallback
-      const dexResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${mint}`);
+      const dexResponse = await fetch(
+        `https://api.dexscreener.com/latest/dex/tokens/${mint}`,
+      );
       if (dexResponse.ok) {
         const data = await dexResponse.json();
         const pair = data.pairs?.[0];
         if (pair?.priceUsd) {
-          console.log(`📈 Got live price from DexScreener for ${mint}: $${pair.priceUsd}`);
+          console.log(
+            `📈 Got live price from DexScreener for ${mint}: $${pair.priceUsd}`,
+          );
           return parseFloat(pair.priceUsd);
         }
       }
@@ -348,7 +404,9 @@ class SolanaScanner {
   async getLiveMarketCap(mint: string): Promise<number> {
     try {
       // Try DexScreener API for market cap data
-      const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${mint}`);
+      const response = await fetch(
+        `https://api.dexscreener.com/latest/dex/tokens/${mint}`,
+      );
       if (response.ok) {
         const data = await response.json();
         const pair = data.pairs?.[0];
@@ -367,7 +425,10 @@ class SolanaScanner {
       console.log(`❌ No live market cap found for ${mint}`);
       return 0;
     } catch (error) {
-      console.log(`⚠️ Error fetching live market cap for ${mint}:`, error.message);
+      console.log(
+        `⚠️ Error fetching live market cap for ${mint}:`,
+        error.message,
+      );
       return 0;
     }
   }
@@ -375,12 +436,16 @@ class SolanaScanner {
   async getLiveVolume(mint: string): Promise<number> {
     try {
       // Try DexScreener API for volume data
-      const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${mint}`);
+      const response = await fetch(
+        `https://api.dexscreener.com/latest/dex/tokens/${mint}`,
+      );
       if (response.ok) {
         const data = await response.json();
         const pair = data.pairs?.[0];
         if (pair?.volume?.h24) {
-          console.log(`📊 Got live 24h volume for ${mint}: $${pair.volume.h24}`);
+          console.log(
+            `📊 Got live 24h volume for ${mint}: $${pair.volume.h24}`,
+          );
           return parseFloat(pair.volume.h24);
         }
       }
@@ -401,15 +466,17 @@ class SolanaScanner {
 
       // Approach 1: DexScreener API (most reliable for active tokens)
       try {
-        const dexResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${mint}`);
+        const dexResponse = await fetch(
+          `https://api.dexscreener.com/latest/dex/tokens/${mint}`,
+        );
         if (dexResponse.ok) {
           const data = await dexResponse.json();
           const pair = data.pairs?.[0];
           if (pair?.info?.websites?.length > 0) {
             // Estimate holders based on pair data - active tokens with websites tend to have more holders
-            const volume = parseFloat(pair.volume?.h24 || '0');
-            const fdv = parseFloat(pair.fdv || '0');
-            const marketCap = parseFloat(pair.marketCap || '0');
+            const volume = parseFloat(pair.volume?.h24 || "0");
+            const fdv = parseFloat(pair.fdv || "0");
+            const marketCap = parseFloat(pair.marketCap || "0");
 
             if (volume > 0 && (fdv > 0 || marketCap > 0)) {
               // Data-driven holder estimation
@@ -417,11 +484,14 @@ class SolanaScanner {
               let holderEstimate = Math.floor(Math.sqrt(volume) * 10); // Base on volume activity
 
               // Adjust based on market cap
-              if (mcap > 10000000) holderEstimate *= 5; // Large cap = more holders
+              if (mcap > 10000000)
+                holderEstimate *= 5; // Large cap = more holders
               else if (mcap > 1000000) holderEstimate *= 3;
               else if (mcap > 100000) holderEstimate *= 1.5;
 
-              console.log(`📊 DexScreener estimate for ${mint}: ${holderEstimate} holders`);
+              console.log(
+                `📊 DexScreener estimate for ${mint}: ${holderEstimate} holders`,
+              );
               return Math.max(10, Math.min(50000, holderEstimate));
             }
           }
@@ -469,7 +539,6 @@ class SolanaScanner {
 
         console.log(`⛓️ RPC holder count for ${mint}: ${holderCount} holders`);
         return Math.max(holderCount, 1); // At least 1 holder (creator)
-
       } catch (error) {
         console.log(`⚠️ RPC holder count failed for ${mint}:`, error.message);
       }
@@ -481,8 +550,12 @@ class SolanaScanner {
 
         if (price > 0 && volume > 0) {
           // Estimate based on price and volume activity
-          const estimate = Math.floor(Math.sqrt(volume / Math.max(price, 0.00001)) * 5);
-          console.log(`��� Price-based estimate for ${mint}: ${estimate} holders`);
+          const estimate = Math.floor(
+            Math.sqrt(volume / Math.max(price, 0.00001)) * 5,
+          );
+          console.log(
+            `��� Price-based estimate for ${mint}: ${estimate} holders`,
+          );
           return Math.max(10, Math.min(10000, estimate));
         }
       } catch (error) {
@@ -492,7 +565,6 @@ class SolanaScanner {
       // No fallback - return 0 if no real data available
       console.log(`❌ No real holder data available for ${mint}`);
       return 0;
-
     } catch (error) {
       console.error(`❌ All holder count methods failed for ${mint}:`, error);
       return 0; // No fallback data
@@ -505,7 +577,9 @@ class SolanaScanner {
 
       // Try DexScreener API for the most comprehensive liquidity data
       try {
-        const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${mint}`);
+        const response = await fetch(
+          `https://api.dexscreener.com/latest/dex/tokens/${mint}`,
+        );
         if (response.ok) {
           const data = await response.json();
           const pairs = data.pairs || [];
@@ -515,24 +589,29 @@ class SolanaScanner {
           let highestLiquidity = 0;
 
           for (const pair of pairs) {
-            const liquidityUsd = parseFloat(pair.liquidity?.usd || '0');
+            const liquidityUsd = parseFloat(pair.liquidity?.usd || "0");
             if (liquidityUsd > highestLiquidity) {
               highestLiquidity = liquidityUsd;
               bestPair = pair;
             }
           }
 
-          if (bestPair && highestLiquidity > 100) { // Minimum $100 liquidity
-            const volume24h = parseFloat(bestPair.volume?.h24 || '0');
-            const reserveA = parseFloat(bestPair.liquidity?.base || '0');
-            const reserveB = parseFloat(bestPair.liquidity?.quote || '0');
+          if (bestPair && highestLiquidity > 100) {
+            // Minimum $100 liquidity
+            const volume24h = parseFloat(bestPair.volume?.h24 || "0");
+            const reserveA = parseFloat(bestPair.liquidity?.base || "0");
+            const reserveB = parseFloat(bestPair.liquidity?.quote || "0");
 
-            console.log(`📊 DexScreener liquidity for ${mint}: $${highestLiquidity.toLocaleString()}`);
+            console.log(
+              `📊 DexScreener liquidity for ${mint}: $${highestLiquidity.toLocaleString()}`,
+            );
 
             return {
               address: bestPair.pairAddress || `${mint}_pool`,
               tokenA: mint,
-              tokenB: bestPair.quoteToken?.address || 'So11111111111111111111111111111111111111112', // SOL
+              tokenB:
+                bestPair.quoteToken?.address ||
+                "So11111111111111111111111111111111111111112", // SOL
               reserveA: reserveA || highestLiquidity * 0.5, // Estimate if not provided
               reserveB: reserveB || highestLiquidity * 0.5,
               volume24h: volume24h,
@@ -541,12 +620,17 @@ class SolanaScanner {
           }
         }
       } catch (error) {
-        console.log(`⚠️ DexScreener liquidity fetch failed for ${mint}:`, error.message);
+        console.log(
+          `⚠️ DexScreener liquidity fetch failed for ${mint}:`,
+          error.message,
+        );
       }
 
       // Try Jupiter API as fallback
       try {
-        const priceResponse = await fetch(`https://price.jup.ag/v4/price?ids=${mint}`);
+        const priceResponse = await fetch(
+          `https://price.jup.ag/v4/price?ids=${mint}`,
+        );
         if (priceResponse.ok) {
           const priceData = await priceResponse.json();
           const tokenPrice = priceData.data?.[mint]?.price;
@@ -557,12 +641,14 @@ class SolanaScanner {
             const estimatedLiquidity = parseFloat(tokenPrice) * 100000; // Conservative estimate
             const volume = await this.getLiveVolume(mint);
 
-            console.log(`🔗 Jupiter-based liquidity estimate for ${mint}: $${estimatedLiquidity.toLocaleString()}`);
+            console.log(
+              `🔗 Jupiter-based liquidity estimate for ${mint}: $${estimatedLiquidity.toLocaleString()}`,
+            );
 
             return {
               address: `${mint}_jupiter_pool`,
               tokenA: mint,
-              tokenB: 'So11111111111111111111111111111111111111112', // SOL
+              tokenB: "So11111111111111111111111111111111111111112", // SOL
               reserveA: estimatedLiquidity * 0.5,
               reserveB: estimatedLiquidity * 0.5,
               volume24h: volume,
@@ -571,7 +657,10 @@ class SolanaScanner {
           }
         }
       } catch (error) {
-        console.log(`⚠️ Jupiter liquidity estimation failed for ${mint}:`, error.message);
+        console.log(
+          `⚠️ Jupiter liquidity estimation failed for ${mint}:`,
+          error.message,
+        );
       }
 
       // Final attempt: Check if token has any trading activity
@@ -585,16 +674,20 @@ class SolanaScanner {
 
       console.log(`❌ No liquidity data found for ${mint}`);
       return null;
-
     } catch (error) {
       console.error(`❌ Liquidity data error for ${mint}:`, error);
       return null;
     }
   }
 
-  async analyzeWithAI(tokenData: TokenMetadata, liquidityData: LiquidityPool | null): Promise<CoinAnalysis> {
+  async analyzeWithAI(
+    tokenData: TokenMetadata,
+    liquidityData: LiquidityPool | null,
+  ): Promise<CoinAnalysis> {
     try {
-      console.log(`🚀 Running advanced AI ensemble analysis for ${tokenData.symbol}...`);
+      console.log(
+        `🚀 Running advanced AI ensemble analysis for ${tokenData.symbol}...`,
+      );
 
       // Try to get live market data first
       let price = await this.getLivePrice(tokenData.mint);
@@ -604,10 +697,13 @@ class SolanaScanner {
       // Calculate missing price from market cap if possible
       if ((!price || price === 0) && mcap > 0) {
         try {
-          const circulatingSupply = Number(tokenData.supply) / Math.pow(10, tokenData.decimals);
+          const circulatingSupply =
+            Number(tokenData.supply) / Math.pow(10, tokenData.decimals);
           if (circulatingSupply > 0) {
             price = mcap / circulatingSupply;
-            console.log(`💰 Calculated price for ${tokenData.symbol}: $${price.toFixed(8)} from market cap`);
+            console.log(
+              `💰 Calculated price for ${tokenData.symbol}: $${price.toFixed(8)} from market cap`,
+            );
           }
         } catch (error) {
           console.warn(`⚠️ Could not calculate price for ${tokenData.symbol}`);
@@ -618,22 +714,33 @@ class SolanaScanner {
       const hasPrice = price > 0;
       const hasMarketCap = mcap > 0;
       const hasVolume = volume > 0;
-      const validDataCount = [hasPrice, hasMarketCap, hasVolume].filter(Boolean).length;
+      const validDataCount = [hasPrice, hasMarketCap, hasVolume].filter(
+        Boolean,
+      ).length;
 
       if (validDataCount < 2) {
-        throw new Error(`Insufficient live data for ${tokenData.symbol}: only ${validDataCount}/3 metrics available`);
+        throw new Error(
+          `Insufficient live data for ${tokenData.symbol}: only ${validDataCount}/3 metrics available`,
+        );
       }
 
-      console.log(`✅ ${tokenData.symbol} has ${validDataCount}/3 live metrics - proceeding with analysis`);
+      console.log(
+        `✅ ${tokenData.symbol} has ${validDataCount}/3 live metrics - proceeding with analysis`,
+      );
 
       const change24h = (Math.random() - 0.5) * 200; // -100% to +100%
 
       // Try Social Sentiment Analysis (fallback on error)
       let socialMetrics;
       try {
-        socialMetrics = await socialSentimentAnalyzer.analyzeSocialSentiment(tokenData.symbol, tokenData.name);
+        socialMetrics = await socialSentimentAnalyzer.analyzeSocialSentiment(
+          tokenData.symbol,
+          tokenData.name,
+        );
       } catch (socialError) {
-        console.warn(`⚠️ Social analysis failed for ${tokenData.symbol}, using minimal data`);
+        console.warn(
+          `⚠️ Social analysis failed for ${tokenData.symbol}, using minimal data`,
+        );
         socialMetrics = {
           twitterMentions: 0,
           redditPosts: 0,
@@ -641,7 +748,7 @@ class SolanaScanner {
           engagementScore: 0,
           viralityScore: 0,
           communityHealth: 0,
-          influencerBuzz: 0
+          influencerBuzz: 0,
         };
       }
 
@@ -657,28 +764,45 @@ class SolanaScanner {
           volume24h: volume,
           liquidity: liquidityData?.liquidity || 0,
           createdAt: tokenData.createdAt,
-          socialMetrics
+          socialMetrics,
         });
       } catch (aiError) {
-        console.warn(`⚠️ AI analysis failed for ${tokenData.symbol}, using basic scoring`);
+        console.warn(
+          `⚠️ AI analysis failed for ${tokenData.symbol}, using basic scoring`,
+        );
         // Basic scoring based on real metrics only
-        const basicScore = this.calculateBasicScore(tokenData, liquidityData, volume, mcap);
+        const basicScore = this.calculateBasicScore(
+          tokenData,
+          liquidityData,
+          volume,
+          mcap,
+        );
         ensembleResult = {
           finalScore: basicScore,
-          consensusRisk: basicScore > 60 ? 'low' : basicScore > 40 ? 'medium' : 'high',
-          consensusPrediction: basicScore > 65 ? 'bullish' : basicScore < 35 ? 'bearish' : 'neutral',
+          consensusRisk:
+            basicScore > 60 ? "low" : basicScore > 40 ? "medium" : "high",
+          consensusPrediction:
+            basicScore > 65
+              ? "bullish"
+              : basicScore < 35
+                ? "bearish"
+                : "neutral",
           modelAgreement: 70,
           advancedMetrics: {
             rugPullProbability: basicScore > 60 ? 20 : 50,
             whaleManipulation: Math.max(0, 100 - tokenData.holders / 100),
             communityStrength: Math.min(100, tokenData.holders / 50),
-            liquidityHealth: liquidityData ? Math.min(100, liquidityData.liquidity / 10000) : 0
-          }
+            liquidityHealth: liquidityData
+              ? Math.min(100, liquidityData.liquidity / 10000)
+              : 0,
+          },
         };
       }
 
       // Run Smart Contract Analysis
-      const contractAnalysis = await contractAnalyzer.analyzeContract(tokenData.mint);
+      const contractAnalysis = await contractAnalyzer.analyzeContract(
+        tokenData.mint,
+      );
 
       // Run Micro-Timing Analysis
       const timingAnalysis = await microTimingPredictor.analyzeMicroTiming({
@@ -689,14 +813,14 @@ class SolanaScanner {
         liquidity: liquidityData?.liquidity || 0,
         whaleActivity: ensembleResult.advancedMetrics.whaleManipulation,
         socialBuzz: ensembleResult.advancedMetrics.communityStrength,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
 
       // Enhanced reasoning with all AI insights
       const enhancedReasoning = this.generateEnhancedReasoning(
         ensembleResult,
         contractAnalysis,
-        timingAnalysis
+        timingAnalysis,
       );
 
       // Try to store data for institutional tracking (optional)
@@ -711,10 +835,13 @@ class SolanaScanner {
           prediction: ensembleResult.consensusPrediction,
           reasoning: enhancedReasoning,
           socialMetrics,
-          liquidityData
+          liquidityData,
         });
       } catch (dbError) {
-        console.warn('⚠️ Database storage failed (optional), continuing:', dbError.message);
+        console.warn(
+          "⚠️ Database storage failed (optional), continuing:",
+          dbError.message,
+        );
       }
 
       const analysisResult = {
@@ -728,7 +855,9 @@ class SolanaScanner {
         aiScore: ensembleResult.finalScore,
         rugRisk: ensembleResult.consensusRisk,
         whaleActivity: 100 - ensembleResult.advancedMetrics.whaleManipulation,
-        socialBuzz: Math.floor((socialMetrics.sentiment * 50) + (socialMetrics.viralityScore * 0.5)),
+        socialBuzz: Math.floor(
+          socialMetrics.sentiment * 50 + socialMetrics.viralityScore * 0.5,
+        ),
         prediction: ensembleResult.consensusPrediction,
         holders: tokenData.holders,
         liquidity: liquidityData?.liquidity || 0,
@@ -737,7 +866,7 @@ class SolanaScanner {
         // Enhanced properties
         ensembleAnalysis: ensembleResult,
         contractAnalysis,
-        timingAnalysis
+        timingAnalysis,
       };
 
       // 📡 Send high-value coin alerts via WebSocket
@@ -746,24 +875,35 @@ class SolanaScanner {
           webSocketService.sendMarketAlert({
             title: `High Potential Coin Detected`,
             message: `${tokenData.symbol} scored ${ensembleResult.finalScore}% with ${ensembleResult.consensusPrediction} prediction`,
-            severity: 'info',
-            token_mint: tokenData.mint
+            severity: "info",
+            token_mint: tokenData.mint,
           });
-          console.log(`📡 Sent market alert for high-potential ${tokenData.symbol}`);
+          console.log(
+            `📡 Sent market alert for high-potential ${tokenData.symbol}`,
+          );
         }
       } catch (wsError) {
-        console.warn(`⚠️ WebSocket alert failed for ${tokenData.symbol}:`, wsError.message);
+        console.warn(
+          `⚠️ WebSocket alert failed for ${tokenData.symbol}:`,
+          wsError.message,
+        );
       }
 
       return analysisResult;
-
     } catch (error) {
-      console.error('Advanced AI Analysis error:', error);
+      console.error("Advanced AI Analysis error:", error);
 
       // Use basic analysis if AI fails
-      console.warn(`⚠️ All AI analysis failed for ${tokenData.symbol}, using basic metrics analysis`);
+      console.warn(
+        `⚠️ All AI analysis failed for ${tokenData.symbol}, using basic metrics analysis`,
+      );
 
-      const basicScore = this.calculateBasicScore(tokenData, liquidityData, volume, mcap);
+      const basicScore = this.calculateBasicScore(
+        tokenData,
+        liquidityData,
+        volume,
+        mcap,
+      );
 
       return {
         mint: tokenData.mint,
@@ -774,62 +914,79 @@ class SolanaScanner {
         volume: volume || 0,
         mcap: mcap || 0,
         aiScore: basicScore,
-        rugRisk: basicScore > 60 ? 'low' : basicScore > 40 ? 'medium' : 'high',
-        whaleActivity: Math.min(100, (volume || 0) / Math.max(mcap || 1000, 1000) * 1000),
+        rugRisk: basicScore > 60 ? "low" : basicScore > 40 ? "medium" : "high",
+        whaleActivity: Math.min(
+          100,
+          ((volume || 0) / Math.max(mcap || 1000, 1000)) * 1000,
+        ),
         socialBuzz: Math.min(100, tokenData.holders / 100),
-        prediction: basicScore > 65 ? 'bullish' : basicScore < 35 ? 'bearish' : 'neutral',
+        prediction:
+          basicScore > 65 ? "bullish" : basicScore < 35 ? "bearish" : "neutral",
         holders: tokenData.holders,
         liquidity: liquidityData?.liquidity || 0,
         createdAt: tokenData.createdAt,
-        reasoning: `Live analysis: ${price > 0 ? `Price $${price.toFixed(6)}` : 'Price calculated'}, Volume $${(volume || 0).toLocaleString()}, ${tokenData.holders} holders, Market Cap $${(mcap || 0).toLocaleString()}`
+        reasoning: `Live analysis: ${price > 0 ? `Price $${price.toFixed(6)}` : "Price calculated"}, Volume $${(volume || 0).toLocaleString()}, ${tokenData.holders} holders, Market Cap $${(mcap || 0).toLocaleString()}`,
       };
     }
   }
 
-  private generateEnhancedReasoning(ensembleResult: any, contractAnalysis: any, timingAnalysis: any): string {
+  private generateEnhancedReasoning(
+    ensembleResult: any,
+    contractAnalysis: any,
+    timingAnalysis: any,
+  ): string {
     const insights = [];
 
     // AI Ensemble insights
-    insights.push(`Multi-AI score: ${ensembleResult.finalScore}/100 (${ensembleResult.modelAgreement}% consensus)`);
+    insights.push(
+      `Multi-AI score: ${ensembleResult.finalScore}/100 (${ensembleResult.modelAgreement}% consensus)`,
+    );
 
     // Contract security insights
     if (contractAnalysis.securityScore > 70) {
       insights.push(`Secure contract (${contractAnalysis.securityScore}/100)`);
     } else {
-      insights.push(`Contract risks detected (${contractAnalysis.securityScore}/100)`);
+      insights.push(
+        `Contract risks detected (${contractAnalysis.securityScore}/100)`,
+      );
     }
 
     // Timing insights
     const signal = timingAnalysis.currentSignal;
-    insights.push(`Current signal: ${signal.signalType.toUpperCase()} (${signal.confidence}% confidence)`);
+    insights.push(
+      `Current signal: ${signal.signalType.toUpperCase()} (${signal.confidence}% confidence)`,
+    );
 
     // Risk insights
     if (ensembleResult.advancedMetrics.rugPullProbability < 20) {
-      insights.push('Low rug pull risk');
+      insights.push("Low rug pull risk");
     } else if (ensembleResult.advancedMetrics.rugPullProbability > 60) {
-      insights.push('HIGH RUG PULL RISK');
+      insights.push("HIGH RUG PULL RISK");
     }
 
     // Whale activity insights
     if (ensembleResult.advancedMetrics.whaleManipulation > 70) {
-      insights.push('High whale manipulation risk');
+      insights.push("High whale manipulation risk");
     }
 
-    return insights.join(' • ');
+    return insights.join(" • ");
   }
 
-  private async storeHistoricalData(tokenData: TokenMetadata, analysisData: {
-    price: number;
-    change24h: number;
-    volume: number;
-    mcap: number;
-    aiScore: number;
-    rugRisk: 'low' | 'medium' | 'high';
-    prediction: 'bullish' | 'bearish' | 'neutral';
-    reasoning: string;
-    socialMetrics: any;
-    liquidityData: LiquidityPool | null;
-  }): Promise<void> {
+  private async storeHistoricalData(
+    tokenData: TokenMetadata,
+    analysisData: {
+      price: number;
+      change24h: number;
+      volume: number;
+      mcap: number;
+      aiScore: number;
+      rugRisk: "low" | "medium" | "high";
+      prediction: "bullish" | "bearish" | "neutral";
+      reasoning: string;
+      socialMetrics: any;
+      liquidityData: LiquidityPool | null;
+    },
+  ): Promise<void> {
     try {
       console.log(`💾 Storing historical data for ${tokenData.symbol}...`);
       const now = new Date();
@@ -840,8 +997,8 @@ class SolanaScanner {
         symbol: tokenData.symbol,
         name: tokenData.name,
         decimals: tokenData.decimals,
-        total_supply: BigInt(tokenData.supply || '0'),
-        is_meme_coin: true
+        total_supply: BigInt(tokenData.supply || "0"),
+        is_meme_coin: true,
       });
 
       // Store current price data as OHLCV
@@ -849,14 +1006,16 @@ class SolanaScanner {
         mint_address: tokenData.mint,
         timestamp: now,
         open_price: analysisData.price,
-        high_price: analysisData.price * (1 + Math.abs(analysisData.change24h) / 200), // Estimate
-        low_price: analysisData.price * (1 - Math.abs(analysisData.change24h) / 200), // Estimate
+        high_price:
+          analysisData.price * (1 + Math.abs(analysisData.change24h) / 200), // Estimate
+        low_price:
+          analysisData.price * (1 - Math.abs(analysisData.change24h) / 200), // Estimate
         close_price: analysisData.price,
         volume_24h: analysisData.volume,
         market_cap: analysisData.mcap,
         liquidity_usd: analysisData.liquidityData?.liquidity || 0,
         holders_count: tokenData.holders,
-        source: 'pulsesignal_scanner'
+        source: "pulsesignal_scanner",
       });
 
       // Store AI prediction for performance tracking
@@ -865,22 +1024,33 @@ class SolanaScanner {
         ai_score: analysisData.aiScore,
         prediction_type: analysisData.prediction,
         confidence_level: analysisData.aiScore, // Use AI score as confidence
-        time_horizon: '24h',
+        time_horizon: "24h",
         rug_risk: analysisData.rugRisk,
         whale_activity_score: Math.floor((100 - analysisData.aiScore) * 0.7), // Inverse relationship
-        social_sentiment_score: analysisData.socialMetrics?.sentiment * 100 || 0,
-        model_version: 'ensemble_v1.0',
-        reasoning: analysisData.reasoning
+        social_sentiment_score:
+          analysisData.socialMetrics?.sentiment * 100 || 0,
+        model_version: "ensemble_v1.0",
+        reasoning: analysisData.reasoning,
       });
 
-      console.log(`📊 Stored institutional data for ${tokenData.symbol} (${analysisData.prediction}: ${analysisData.aiScore}%)`);
+      console.log(
+        `📊 Stored institutional data for ${tokenData.symbol} (${analysisData.prediction}: ${analysisData.aiScore}%)`,
+      );
     } catch (error) {
-      console.error(`❌ Failed to store institutional data for ${tokenData.symbol}:`, error.message);
+      console.error(
+        `❌ Failed to store institutional data for ${tokenData.symbol}:`,
+        error.message,
+      );
       // Don't throw - continue with analysis even if storage fails
     }
   }
 
-  calculateBasicScore(tokenData: TokenMetadata, liquidityData: LiquidityPool | null, volume: number, mcap: number): number {
+  calculateBasicScore(
+    tokenData: TokenMetadata,
+    liquidityData: LiquidityPool | null,
+    volume: number,
+    mcap: number,
+  ): number {
     let score = 50; // Base score
 
     // Holder count impact
@@ -916,7 +1086,13 @@ class SolanaScanner {
     return Math.max(10, Math.min(90, score));
   }
 
-  calculateRugRisk(tokenData: TokenMetadata, liquidityData: LiquidityPool | null, aiScore: number, volume: number, mcap: number): 'low' | 'medium' | 'high' {
+  calculateRugRisk(
+    tokenData: TokenMetadata,
+    liquidityData: LiquidityPool | null,
+    aiScore: number,
+    volume: number,
+    mcap: number,
+  ): "low" | "medium" | "high" {
     let riskScore = 0;
 
     // Holder count risk (fewer holders = higher risk)
@@ -951,51 +1127,102 @@ class SolanaScanner {
     else if (ageInHours < 24) riskScore += 5;
 
     // Symbol/name patterns that indicate potential scams
-    const name = tokenData.name?.toLowerCase() || '';
-    const symbol = tokenData.symbol?.toLowerCase() || '';
-    const scamPatterns = ['safe', 'moon', 'rocket', 'gem', 'baby', 'mini', 'doge', 'elon'];
-    if (scamPatterns.some(pattern => name.includes(pattern) || symbol.includes(pattern))) {
+    const name = tokenData.name?.toLowerCase() || "";
+    const symbol = tokenData.symbol?.toLowerCase() || "";
+    const scamPatterns = [
+      "safe",
+      "moon",
+      "rocket",
+      "gem",
+      "baby",
+      "mini",
+      "doge",
+      "elon",
+    ];
+    if (
+      scamPatterns.some(
+        (pattern) => name.includes(pattern) || symbol.includes(pattern),
+      )
+    ) {
       riskScore += 10;
     }
 
     // Determine final risk level
-    if (riskScore >= 70) return 'high';
-    if (riskScore >= 40) return 'medium';
-    return 'low';
+    if (riskScore >= 70) return "high";
+    if (riskScore >= 40) return "medium";
+    return "low";
   }
 
   isMemeTokenCandidate(metadata: any): boolean {
-    const name = metadata.name?.toLowerCase() || '';
-    const symbol = metadata.symbol?.toLowerCase() || '';
+    const name = metadata.name?.toLowerCase() || "";
+    const symbol = metadata.symbol?.toLowerCase() || "";
 
     // Primary meme coin indicators
     const memeKeywords = [
-      'dog', 'cat', 'pepe', 'moon', 'rocket', 'diamond', 'ape', 'banana',
-      'shib', 'doge', 'elon', 'mars', 'lambo', 'hodl', 'pump', 'gem',
-      'safe', 'baby', 'mini', 'mega', 'ultra', 'super', 'turbo', 'wif',
-      'bonk', 'solana', 'sol', 'meme', 'token', 'coin', 'inu', 'floki'
+      "dog",
+      "cat",
+      "pepe",
+      "moon",
+      "rocket",
+      "diamond",
+      "ape",
+      "banana",
+      "shib",
+      "doge",
+      "elon",
+      "mars",
+      "lambo",
+      "hodl",
+      "pump",
+      "gem",
+      "safe",
+      "baby",
+      "mini",
+      "mega",
+      "ultra",
+      "super",
+      "turbo",
+      "wif",
+      "bonk",
+      "solana",
+      "sol",
+      "meme",
+      "token",
+      "coin",
+      "inu",
+      "floki",
     ];
 
     // Check for direct meme keywords
-    const hasMemeKeyword = memeKeywords.some(keyword =>
-      name.includes(keyword) || symbol.includes(keyword)
+    const hasMemeKeyword = memeKeywords.some(
+      (keyword) => name.includes(keyword) || symbol.includes(keyword),
     );
 
     // Check for meme coin patterns
     const hasMemePatter =
       // Typical meme naming patterns
-      (/\b(safe|baby|mini|mega|ultra|super|turbo)\w+/i.test(name)) ||
-      (/\w+(inu|doge|shib|pepe|floki|coin|token)\b/i.test(name)) ||
+      /\b(safe|baby|mini|mega|ultra|super|turbo)\w+/i.test(name) ||
+      /\w+(inu|doge|shib|pepe|floki|coin|token)\b/i.test(name) ||
       // Symbol patterns
       (symbol.length <= 6 && /[0-9]/.test(symbol)) || // Short symbols with numbers
-      (symbol.includes('doge') || symbol.includes('shib') || symbol.includes('pepe'));
+      symbol.includes("doge") ||
+      symbol.includes("shib") ||
+      symbol.includes("pepe");
 
     // Check against known legitimate project patterns (exclude these)
     const isLegitProject =
-      name.includes('usd') || name.includes('usdc') || name.includes('usdt') ||
-      name.includes('btc') || name.includes('eth') || name.includes('sol') ||
-      name.includes('ray') || name.includes('serum') || name.includes('orca') ||
-      symbol === 'sol' || symbol === 'ray' || symbol === 'srm';
+      name.includes("usd") ||
+      name.includes("usdc") ||
+      name.includes("usdt") ||
+      name.includes("btc") ||
+      name.includes("eth") ||
+      name.includes("sol") ||
+      name.includes("ray") ||
+      name.includes("serum") ||
+      name.includes("orca") ||
+      symbol === "sol" ||
+      symbol === "ray" ||
+      symbol === "srm";
 
     // Return true if it matches meme patterns but isn't a known legitimate token
     return (hasMemeKeyword || hasMemePatter) && !isLegitProject;
@@ -1005,17 +1232,17 @@ class SolanaScanner {
     try {
       this.isScanning = true;
       this.usedMints.clear(); // Clear previous mints to ensure fresh tokens
-      console.log('🚀 Starting comprehensive coin scan - LIVE DATA ONLY...');
+      console.log("🚀 Starting comprehensive coin scan - LIVE DATA ONLY...");
 
       // 📡 Broadcast scanning started
       try {
         webSocketService.sendMarketAlert({
-          title: 'Scan Started',
-          message: 'AI coin scanning initiated - live data only',
-          severity: 'info'
+          title: "Scan Started",
+          message: "AI coin scanning initiated - live data only",
+          severity: "info",
         });
       } catch (wsError) {
-        console.warn('⚠️ WebSocket broadcast failed:', wsError.message);
+        console.warn("⚠️ WebSocket broadcast failed:", wsError.message);
       }
 
       // Scan for new tokens
@@ -1041,11 +1268,13 @@ class SolanaScanner {
           analyses.push(analysis);
 
           // Add delay to avoid rate limits
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 1000));
         } catch (error) {
-        console.log(`⏭️ Skipping ${token.symbol} - insufficient data: ${error.message}`);
-        // Skip tokens without sufficient live data
-      }
+          console.log(
+            `⏭️ Skipping ${token.symbol} - insufficient data: ${error.message}`,
+          );
+          // Skip tokens without sufficient live data
+        }
       }
 
       // Sort by AI score (highest potential first)
@@ -1057,25 +1286,30 @@ class SolanaScanner {
       // 📡 Broadcast scan completion with real metrics
       try {
         const allCoins = this.getAllScannedCoins();
-        const criticalRugRisks = allCoins.filter(coin => coin.rugRisk === 'high').length;
-        const highPotential = allCoins.filter(coin => coin.aiScore > 80).length;
+        const criticalRugRisks = allCoins.filter(
+          (coin) => coin.rugRisk === "high",
+        ).length;
+        const highPotential = allCoins.filter(
+          (coin) => coin.aiScore > 80,
+        ).length;
 
         webSocketService.sendMarketAlert({
-          title: 'Scan Complete',
+          title: "Scan Complete",
           message: `Found ${sortedAnalyses.length} tokens with live data. ${highPotential} high-potential coins detected.`,
-          severity: 'info'
+          severity: "info",
         });
 
         console.log(`📡 Broadcasted scan completion metrics`);
       } catch (wsError) {
-        console.warn('⚠️ WebSocket broadcast failed:', wsError.message);
+        console.warn("⚠️ WebSocket broadcast failed:", wsError.message);
       }
 
-      console.log(`✅ Scan complete! Found ${sortedAnalyses.length} tokens with live data only`);
+      console.log(
+        `✅ Scan complete! Found ${sortedAnalyses.length} tokens with live data only`,
+      );
       return sortedAnalyses.slice(0, 5); // Return top 5
-
     } catch (error) {
-      console.error('❌ Error in getTopCoins:', error);
+      console.error("❌ Error in getTopCoins:", error);
       this.isScanning = false;
       return [];
     }
@@ -1092,8 +1326,9 @@ class SolanaScanner {
   getAllScannedCoins(): CoinAnalysis[] {
     const allCoins = Array.from(this.scannedTokens.values());
     // Filter out duplicates by mint address and sort by AI score
-    const uniqueCoins = allCoins.filter((coin, index, self) =>
-      index === self.findIndex(c => c.mint === coin.mint)
+    const uniqueCoins = allCoins.filter(
+      (coin, index, self) =>
+        index === self.findIndex((c) => c.mint === coin.mint),
     );
     return uniqueCoins.sort((a, b) => b.aiScore - a.aiScore);
   }
