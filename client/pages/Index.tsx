@@ -622,12 +622,18 @@ export default function Index() {
                             <span>{coin.symbol}</span>
                             <span>•</span>
                             <span>{coin.holders.toLocaleString()} holders</span>
-                            {coin.aiScore > 80 && (
+                            {/* Only show explosive potential for truly safe coins */}
+                            {(coin.aiScore > 70 && coin.rugRisk === 'low' && coin.liquidity > 50000 && coin.change24h > -30) ? (
                               <>
                                 <span>•</span>
-                                <span className="text-success font-medium">🚀 EXPLOSIVE POTENTIAL</span>
+                                <span className="text-success font-medium">🚀 SAFE HIGH POTENTIAL</span>
                               </>
-                            )}
+                            ) : (coin.rugRisk === 'high' || coin.liquidity < 10000 || coin.change24h < -50) ? (
+                              <>
+                                <span>•</span>
+                                <span className="text-destructive font-medium">⚠️ RUG PULL RISK</span>
+                              </>
+                            ) : null}
                           </p>
                         </div>
                       </div>
