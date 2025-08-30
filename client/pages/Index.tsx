@@ -310,8 +310,12 @@ export default function Index() {
       }
 
     } catch (err) {
-      setError('Failed to load coin data. Please refresh the page.');
       console.error('Error fetching coins:', err);
+      // Use fallback data instead of showing blocking error
+      const fallbackCoins = generateFallbackCoins();
+      setCoins(fallbackCoins);
+      setLastUpdate(new Date());
+      setError('⚠️ Connection issues detected - using offline mode');
     } finally {
       setIsLoading(false);
     }
