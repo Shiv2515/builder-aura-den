@@ -85,17 +85,28 @@ export default function Index() {
     try {
       setIsLoading(true);
       setError(null);
-      
-      const response = await fetch(`/api/scan/coins${forceRefresh ? '?forceRefresh=true' : ''}`);
-      if (!response.ok) throw new Error('Failed to fetch coins');
-      
-      const data = await response.json();
+
+      // Try main API first
+      let response = await fetch(`/api/scan/coins${forceRefresh ? '?forceRefresh=true' : ''}`);
+      let data;
+
+      if (!response.ok || !(data = await response.json()).success || !data.coins || data.coins.length === 0) {
+        console.log('Main API returned no data, trying backup...');
+
+        // Fallback to backup API
+        response = await fetch('/api/backup-coins');
+        if (!response.ok) throw new Error('Both APIs failed');
+        data = await response.json();
+      }
+
       setCoins(data.coins || []);
       setLastUpdate(new Date());
-      
+
       if (data.scanStatus) {
         setScanStatus(data.scanStatus);
       }
+
+      console.log(`✅ Loaded ${data.coins?.length || 0} coins from ${data.dataSource}`);
     } catch (err) {
       setError('Failed to load coin data. Starting new scan...');
       console.error('Error fetching coins:', err);
