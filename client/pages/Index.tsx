@@ -181,7 +181,12 @@ export default function Index() {
 
   const startNewScan = async () => {
     try {
-      const response = await fetch('/api/scan/start?' + Date.now(), {
+      let apiUrl = '/api/scan/start?' + Date.now();
+      if (window.location.hostname.includes('fly.dev') || window.location.hostname.includes('localhost')) {
+        apiUrl = 'https://pulsesignal-ai.netlify.app/api/scan/start?' + Date.now();
+      }
+
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
