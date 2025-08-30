@@ -104,9 +104,9 @@ export default function Index() {
 
       try {
         // Try real scan API first for authentic contract addresses
-        let apiUrl = '/api/scan/coins?' + Date.now();
+        let apiUrl = '/.netlify/functions/scan-coins?' + Date.now();
         if (window.location.hostname.includes('fly.dev') || window.location.hostname.includes('localhost')) {
-          apiUrl = 'https://pulsesignal-ai.netlify.app/api/scan/coins?' + Date.now();
+          apiUrl = 'https://pulsesignal-ai.netlify.app/.netlify/functions/scan-coins?' + Date.now();
           console.log('🔄 Using Netlify real API from dev server');
         }
 
