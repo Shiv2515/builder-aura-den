@@ -149,31 +149,40 @@ export function WhaleTracker() {
         </div>
 
         {/* Largest Movement Highlight */}
-        <div className="p-4 rounded-lg bg-gradient-to-r from-accent/10 to-primary/10 border border-accent/20">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              {whaleData.largestMovement.direction === 'buy' ? (
-                <ArrowUpRight className="h-5 w-5 text-success" />
-              ) : (
-                <ArrowDownRight className="h-5 w-5 text-destructive" />
-              )}
-              <div>
-                <p className="font-semibold text-foreground">
-                  {formatAmount(whaleData.largestMovement.amount)} {whaleData.largestMovement.direction.toUpperCase()}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {whaleData.largestMovement.wallet} • {formatTimeAgo(whaleData.largestMovement.timestamp)}
-                </p>
+        {whaleData.largestMovement ? (
+          <div className="p-4 rounded-lg bg-gradient-to-r from-accent/10 to-primary/10 border border-accent/20">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                {whaleData.largestMovement.direction === 'buy' ? (
+                  <ArrowUpRight className="h-5 w-5 text-success" />
+                ) : (
+                  <ArrowDownRight className="h-5 w-5 text-destructive" />
+                )}
+                <div>
+                  <p className="font-semibold text-foreground">
+                    {formatAmount(whaleData.largestMovement.amount)} {whaleData.largestMovement.direction.toUpperCase()}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {whaleData.largestMovement.wallet} • {formatTimeAgo(whaleData.largestMovement.timestamp)}
+                  </p>
+                </div>
               </div>
+              <Badge
+                variant={whaleData.largestMovement.direction === 'buy' ? 'default' : 'destructive'}
+                className={whaleData.largestMovement.direction === 'buy' ? 'bg-success' : ''}
+              >
+                {whaleData.largestMovement.direction === 'buy' ? 'BULLISH' : 'BEARISH'}
+              </Badge>
             </div>
-            <Badge 
-              variant={whaleData.largestMovement.direction === 'buy' ? 'default' : 'destructive'}
-              className={whaleData.largestMovement.direction === 'buy' ? 'bg-success' : ''}
-            >
-              {whaleData.largestMovement.direction === 'buy' ? 'BULLISH' : 'BEARISH'}
-            </Badge>
           </div>
-        </div>
+        ) : (
+          <div className="p-4 rounded-lg bg-muted/20 border border-border">
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">No significant whale movements detected yet</p>
+              <p className="text-xs text-muted-foreground mt-1">Monitoring for large transactions...</p>
+            </div>
+          </div>
+        )}
 
         {/* Recent Movements */}
         <div>
