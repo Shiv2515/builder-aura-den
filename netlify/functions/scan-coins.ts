@@ -259,14 +259,14 @@ export default async (req: Request, context: Context) => {
             verified: pair.baseToken.name && pair.baseToken.symbol && pair.pairCreatedAt ? true : false
           };
         })
-        .filter(coin => coin.aiScore >= 25) // Very low threshold to catch emerging memes
+        .filter(coin => coin.aiScore >= 15) // Ultra low threshold to catch all potential memes
         .sort((a, b) => {
           // Prioritize meme patterns, then AI score, then volume
           if (a.isMemePattern !== b.isMemePattern) return b.isMemePattern ? 1 : -1;
           if (b.aiScore !== a.aiScore) return b.aiScore - a.aiScore;
           return b.volume - a.volume;
         })
-        .slice(0, 20); // Top 20 Solana meme coins
+        .slice(0, 50); // Top 50 Solana meme coins
 
       console.log(`🎭 Filtered to ${solanaMemeCoins.length} Solana meme coins`);
 
