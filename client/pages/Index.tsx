@@ -537,20 +537,39 @@ export default function Index() {
               </div>
             ) : (
               <div className="space-y-4">
-                {/* High Potential Coins Alert */}
-                {coins.filter(coin => coin.aiScore > 80).length > 0 && (
-                  <div className="p-4 bg-success/10 border border-success/30 rounded-lg mb-6">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Zap className="h-5 w-5 text-success" />
-                      <h3 className="text-lg font-bold text-success">
-                        🚀 HIGH POTENTIAL DETECTED ({coins.filter(coin => coin.aiScore > 80).length} coins)
-                      </h3>
+                {/* Calculate safe high potential coins (excluding rug pull risks) */}
+                {(() => {
+                  const safeHighPotentialCoins = coins.filter(coin => {
+                    // Check if coin would trigger rug pull alert
+                    let riskScore = 0;
+                    if (coin.rugRisk === 'high') riskScore += 40;
+                    else if (coin.rugRisk === 'medium') riskScore += 20;
+                    if (coin.liquidity < 10000) riskScore += 30;
+                    if (coin.liquidity > 0 && (coin.volume / coin.liquidity) > 20) riskScore += 25;
+                    if (coin.change24h < -50) riskScore += 20;
+
+                    // Only show as high potential if: high AI score AND not rug pull risk
+                    return coin.aiScore > 70 &&
+                           riskScore < 50 &&
+                           coin.rugRisk === 'low' &&
+                           coin.liquidity > 50000 &&
+                           coin.change24h > -30;
+                  });
+
+                  return safeHighPotentialCoins.length > 0 && (
+                    <div className="p-4 bg-success/10 border border-success/30 rounded-lg mb-6">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <Zap className="h-5 w-5 text-success" />
+                        <h3 className="text-lg font-bold text-success">
+                          🚀 SAFE HIGH POTENTIAL DETECTED ({safeHighPotentialCoins.length} coins)
+                        </h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        AI has identified low-risk coins with high growth potential. These have good liquidity and pass rug pull screening.
+                      </p>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      AI has identified coins with 60-70% chance of explosive growth. These are highlighted with green borders below.
-                    </p>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {coins.map((coin, index) => (
                   <div
