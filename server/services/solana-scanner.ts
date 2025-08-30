@@ -774,7 +774,14 @@ class SolanaScanner {
       if (liquidityData?.liquidity && liquidityData.liquidity > 100000) aiScore += 15;
       if (volume > 50000) aiScore += 10;
       if (mcap > 1000000) aiScore += 10;
-      aiScore = Math.min(85, aiScore); // Cap fallback scores
+
+      // Add rug pull risk factors
+      if (tokenData.holders < 100) aiScore -= 25; // Very few holders = high risk
+      if (liquidityData?.liquidity && liquidityData.liquidity < 20000) aiScore -= 20; // Low liquidity = high risk
+      if (volume < 1000) aiScore -= 15; // No trading volume = red flag
+      if (mcap < 50000) aiScore -= 10; // Tiny market cap = suspicious
+
+      aiScore = Math.max(10, Math.min(85, aiScore)); // Cap between 10-85 for fallback scores
 
       // Calculate 24h change based on available data or set neutral
       const ageInHours = (Date.now() - tokenData.createdAt) / 3600000;
