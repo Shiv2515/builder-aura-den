@@ -210,7 +210,7 @@ export default function Index() {
         });
 
         if (!data.success) {
-          console.error(`❌ API Unsuccessful:`, data);
+          console.error(`�� API Unsuccessful:`, data);
           throw new Error(data.error || 'API returned unsuccessful response');
         }
 
@@ -379,6 +379,9 @@ export default function Index() {
               setLastUpdate(new Date());
               console.log(`✅ Direct API: Loaded ${solanaMemeCoins.length} real Solana coins`);
               setError(null); // Clear any previous errors
+
+              // Update scan status with real data
+              updateScanStatusFromCoins(solanaMemeCoins);
             } else {
               throw new Error('No suitable Solana coins found in DexScreener data');
             }
