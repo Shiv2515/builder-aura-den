@@ -139,12 +139,7 @@ export default async (req: Request, context: Context) => {
 
       return new Response(JSON.stringify(response_data), {
         status: 200,
-        headers: { 
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type'
-        }
+        headers
       });
       
     } catch (apiError) {
@@ -166,24 +161,19 @@ export default async (req: Request, context: Context) => {
         dataSource: "Error"
       }), {
         status: 200,
-        headers: { 
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type'
-        }
+        headers
       });
     }
     
   } catch (error) {
     console.error('💥 Scan status error:', error);
-    return new Response(JSON.stringify({ 
+    return new Response(JSON.stringify({
       error: 'Failed to get scan status',
       details: error.message,
       isScanning: false
-    }), { 
+    }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      headers
     });
   }
 };
