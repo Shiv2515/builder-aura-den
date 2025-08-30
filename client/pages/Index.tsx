@@ -187,6 +187,9 @@ export default function Index() {
         console.log(`✅ Loaded ${data.coins?.length || 0} coins from ${data.dataSource}`);
         console.log(`🔍 Coins state will be updated with:`, data.coins?.length, 'coins');
 
+        // Update scan status with real data from coins
+        updateScanStatusFromCoins(data.coins || []);
+
         // Identify rug pull risks based on real data
         const rugPullCoins = data.coins?.filter((coin: any) => {
           // Same logic as RugPullAlerts component
