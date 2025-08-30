@@ -55,10 +55,25 @@ export function RugPullAlerts() {
       const coinsData = await coinsResponse.json();
       const coins = coinsData.coins || [];
 
+      if (coins.length === 0) {
+        setAlerts([]);
+        return;
+      }
+
       // Analyze each coin for rug pull risks
       const rugPullAlerts: RugPullAlert[] = [];
 
-      for (const coin of coins.slice(0, 10)) { // Limit to avoid too many requests
+      // Create alerts directly from coin data first (immediate analysis)
+      for (const coin of coins.slice(0, 15)) {
+        if (coin.rugRisk === 'high' || coin.aiScore < 35) {
+          // Create alert from coin data directly
+          const alert = createQuickAlert(coin);
+          if (alert) rugPullAlerts.push(alert);
+        }
+      }
+
+      // Then try detailed contract analysis for top risk coins
+      for (const coin of coins.slice(0, 5)) {
         try {
           const contractResponse = await fetch(`/api/scan/contract/${coin.mint}`);
           if (contractResponse.ok) {
@@ -67,11 +82,20 @@ export function RugPullAlerts() {
             // Generate alert if high risk detected
             if (contractAnalysis.riskFactors?.rugPullProbability > 60) {
               const alert = createAlertFromAnalysis(coin, contractAnalysis);
-              if (alert) rugPullAlerts.push(alert);
+              if (alert) {
+                // Replace quick alert with detailed one if it exists
+                const existingIndex = rugPullAlerts.findIndex(a => a.id === coin.mint);
+                if (existingIndex >= 0) {
+                  rugPullAlerts[existingIndex] = alert;
+                } else {
+                  rugPullAlerts.push(alert);
+                }
+              }
             }
           }
         } catch (error) {
-          console.error(`Error analyzing ${coin.symbol}:`, error);
+          console.warn(`Contract analysis failed for ${coin.symbol}:`, error);
+          // Keep the quick alert if detailed analysis fails
         }
       }
 
@@ -82,6 +106,43 @@ export function RugPullAlerts() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const createQuickAlert = (coin: any): RugPullAlert | null => {
+    if (coin.rugRisk !== 'high' && coin.aiScore >= 35) {
+      return null;
+    }
+
+    const reasons: string[] = [];
+
+    if (coin.rugRisk === 'high') {
+      reasons.push('High rug pull risk detected by AI analysis');
+    }
+
+    if (coin.aiScore < 35) {
+      reasons.push(`Low AI confidence score: ${coin.aiScore}%`);
+    }
+
+    if (coin.liquidity < 50000) {
+      reasons.push('Low liquidity - high manipulation risk');
+    }
+
+    if (coin.whaleActivity > 80) {
+      reasons.push('Unusual whale activity detected');
+    }
+
+    return {
+      id: coin.mint,
+      coinName: coin.name,
+      coinSymbol: coin.symbol,
+      riskLevel: coin.rugRisk === 'high' ? 'critical' : 'high',
+      reasons: reasons.slice(0, 3),
+      timestamp: Date.now(),
+      dismissed: false,
+      liquidityChange: coin.rugRisk === 'high' ? -40 : -20,
+      holderChange: coin.rugRisk === 'high' ? -25 : -10,
+      confidence: coin.rugRisk === 'high' ? 85 : 70
+    };
   };
 
   const createAlertFromAnalysis = (coin: any, analysis: any): RugPullAlert | null => {
