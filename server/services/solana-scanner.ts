@@ -910,6 +910,54 @@ class SolanaScanner {
     }
   }
 
+  calculateRugRisk(tokenData: TokenMetadata, liquidityData: LiquidityPool | null, aiScore: number, volume: number, mcap: number): 'low' | 'medium' | 'high' {
+    let riskScore = 0;
+
+    // Holder count risk (fewer holders = higher risk)
+    if (tokenData.holders < 50) riskScore += 30;
+    else if (tokenData.holders < 200) riskScore += 20;
+    else if (tokenData.holders < 500) riskScore += 10;
+
+    // Liquidity risk (lower liquidity = higher risk)
+    const liquidity = liquidityData?.liquidity || 0;
+    if (liquidity < 10000) riskScore += 25;
+    else if (liquidity < 50000) riskScore += 15;
+    else if (liquidity < 100000) riskScore += 5;
+
+    // Volume risk (no trading = red flag)
+    if (volume < 100) riskScore += 20;
+    else if (volume < 1000) riskScore += 15;
+    else if (volume < 5000) riskScore += 10;
+
+    // Market cap risk (tiny mcap = suspicious)
+    if (mcap < 10000) riskScore += 20;
+    else if (mcap < 50000) riskScore += 10;
+    else if (mcap < 100000) riskScore += 5;
+
+    // AI score factor
+    if (aiScore < 30) riskScore += 15;
+    else if (aiScore < 50) riskScore += 10;
+
+    // Token age risk (brand new tokens are riskier)
+    const ageInHours = (Date.now() - tokenData.createdAt) / 3600000;
+    if (ageInHours < 1) riskScore += 15;
+    else if (ageInHours < 6) riskScore += 10;
+    else if (ageInHours < 24) riskScore += 5;
+
+    // Symbol/name patterns that indicate potential scams
+    const name = tokenData.name?.toLowerCase() || '';
+    const symbol = tokenData.symbol?.toLowerCase() || '';
+    const scamPatterns = ['safe', 'moon', 'rocket', 'gem', 'baby', 'mini', 'doge', 'elon'];
+    if (scamPatterns.some(pattern => name.includes(pattern) || symbol.includes(pattern))) {
+      riskScore += 10;
+    }
+
+    // Determine final risk level
+    if (riskScore >= 70) return 'high';
+    if (riskScore >= 40) return 'medium';
+    return 'low';
+  }
+
   isMemeTokenCandidate(metadata: any): boolean {
     const name = metadata.name?.toLowerCase() || '';
     const symbol = metadata.symbol?.toLowerCase() || '';
