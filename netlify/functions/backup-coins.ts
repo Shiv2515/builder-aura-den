@@ -36,25 +36,60 @@ export default async (req: Request, context: Context) => {
         const memeNames = ['SolPepe', 'SolBonk', 'SolShib', 'SolMoon', 'SolApe', 'SolCat', 'SolDoge', 'SolRocket'];
         const memeSymbols = ['SPEPE', 'SBONK', 'SSHIB', 'SMOON', 'SAPE', 'SCAT', 'SDOGE', 'SRKT'];
 
+        // Generate realistic-looking Solana addresses
+        const generateSolanaAddress = () => {
+          const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz123456789';
+          let result = '';
+          for (let i = 0; i < 44; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+          }
+          return result;
+        };
+
+        const tokenAddress = generateSolanaAddress();
+        const pairAddress = generateSolanaAddress();
+
         return {
-          mint: `solana_meme_${index}_${Date.now()}`,
+          // Contract information (backup data - clearly marked)
+          mint: tokenAddress,
           name: memeNames[index] || `Sol${coin.item.name}`,
           symbol: memeSymbols[index] || `S${coin.item.symbol.toUpperCase().slice(0, 4)}`,
           price: randomPrice,
           change24h: randomChange,
           volume: randomVolume,
-          mcap: randomVolume * (Math.random() * 50 + 10), // Lower market caps for memes
+          mcap: randomVolume * (Math.random() * 50 + 10),
+          liquidity: randomVolume * 0.15,
+
+          // Transaction data
+          txns24h: Math.floor(randomVolume / 1000) + 10,
+          buys24h: Math.floor((randomVolume / 1000) * 0.6) + 5,
+          sells24h: Math.floor((randomVolume / 1000) * 0.4) + 5,
+
+          // Contract addresses
+          pairAddress: pairAddress,
+          dexId: 'raydium',
+          url: `https://dexscreener.com/solana/${pairAddress}`,
+
+          // Calculated metrics
           aiScore,
           rugRisk: aiScore > 65 ? 'low' : aiScore > 50 ? 'medium' : 'high',
           whaleActivity: Math.floor(Math.random() * 80) + 10,
-          socialBuzz: Math.floor(Math.random() * 40) + 60, // Higher social buzz for memes
+          socialBuzz: Math.floor(Math.random() * 40) + 60,
           prediction: randomChange > 10 ? 'bullish' : randomChange < -10 ? 'bearish' : 'neutral',
-          holders: Math.floor(Math.random() * 5000) + 200, // Lower holder counts
-          liquidity: randomVolume * 0.15,
-          createdAt: Date.now() - Math.random() * 86400000 * 60, // Random within last 2 months
-          reasoning: `🎭 Solana meme coin trending (#${index + 1}), Community-driven with ${aiScore}% meme potential`,
+          holders: Math.floor(randomVolume / 2000) + 200, // Based on volume
+          createdAt: Date.now() - Math.random() * 86400000 * 60,
+          reasoning: `🎭 BACKUP DATA - Solana meme trending (#${index + 1}), Community-driven with ${aiScore}% potential`,
+
+          // Blockchain links
+          solscanUrl: `https://solscan.io/token/${tokenAddress}`,
+          dexScreenerUrl: `https://dexscreener.com/solana/${pairAddress}`,
+          jupiterUrl: `https://jup.ag/swap/SOL-${tokenAddress}`,
+
+          // Metadata
           network: 'Solana',
-          isMemePattern: true
+          isMemePattern: true,
+          verified: false, // Mark backup data as unverified
+          lastUpdated: new Date().toISOString()
         };
       });
 
