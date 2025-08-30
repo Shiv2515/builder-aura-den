@@ -245,8 +245,8 @@ export function WhaleTracker() {
               ))
             ) : (
               <div className="p-4 text-center text-muted-foreground">
-                <p className="text-sm">No recent whale movements detected</p>
-                <p className="text-xs mt-1">Scanning for activity...</p>
+                <p className="text-sm">No real whale movements available</p>
+                <p className="text-xs mt-1">Live blockchain monitoring required for whale tracking</p>
               </div>
             )}
           </div>
