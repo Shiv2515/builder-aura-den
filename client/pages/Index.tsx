@@ -154,7 +154,12 @@ export default function Index() {
 
         // Try original API as fallback
         try {
-          const response = await fetch(`/api/scan/coins?${Date.now()}`);
+          let fallbackUrl = `/api/scan/coins?${Date.now()}`;
+          if (window.location.hostname.includes('fly.dev') || window.location.hostname.includes('localhost')) {
+            fallbackUrl = `https://pulsesignal-ai.netlify.app/api/scan/coins?${Date.now()}`;
+          }
+
+          const response = await fetch(fallbackUrl);
           const data = await response.json();
 
           if (data.success && data.coins && data.coins.length > 0) {
