@@ -298,7 +298,32 @@ export default function Index() {
         {error && (
           <Alert className="mb-6 border-destructive bg-destructive/10">
             <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>
+              {error}
+              <div className="mt-2 space-x-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setError(null);
+                    window.location.reload();
+                  }}
+                >
+                  <RefreshCw className="h-3 w-3 mr-1" />
+                  Hard Refresh
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setError(null);
+                    fetchCoins(true);
+                  }}
+                >
+                  Try Again
+                </Button>
+              </div>
+            </AlertDescription>
           </Alert>
         )}
 
