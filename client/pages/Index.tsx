@@ -121,6 +121,7 @@ export default function Index() {
         if (!response.ok) {
           const errorText = await response.text();
           console.error(`❌ API Error Response:`, errorText);
+          console.error(`❌ Full response object:`, response);
           throw new Error(`API responded with status: ${response.status} - ${errorText}`);
         }
 
