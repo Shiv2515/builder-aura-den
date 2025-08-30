@@ -600,11 +600,16 @@ export default function Index() {
                         <div>
                           <div className="flex items-center space-x-2">
                             <p className="font-semibold text-foreground">{coin.name}</p>
-                            {coin.aiScore > 80 && (
+                            {/* Show appropriate badge based on safety assessment */}
+                            {(coin.aiScore > 70 && coin.rugRisk === 'low' && coin.liquidity > 50000 && coin.change24h > -30) ? (
                               <Badge className="bg-success text-success-foreground text-xs px-2 py-0">
-                                HIGH POTENTIAL
+                                SAFE HIGH POTENTIAL
                               </Badge>
-                            )}
+                            ) : (coin.rugRisk === 'high' || coin.liquidity < 10000 || coin.change24h < -50) ? (
+                              <Badge className="bg-destructive text-destructive-foreground text-xs px-2 py-0">
+                                ⚠️ RUG RISK
+                              </Badge>
+                            ) : null}
                           </div>
                           <p className="text-sm text-muted-foreground flex items-center space-x-1">
                             <span>{coin.symbol}</span>
