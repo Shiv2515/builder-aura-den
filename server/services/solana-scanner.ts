@@ -482,7 +482,7 @@ class SolanaScanner {
         if (price > 0 && volume > 0) {
           // Estimate based on price and volume activity
           const estimate = Math.floor(Math.sqrt(volume / Math.max(price, 0.00001)) * 5);
-          console.log(`💰 Price-based estimate for ${mint}: ${estimate} holders`);
+          console.log(`��� Price-based estimate for ${mint}: ${estimate} holders`);
           return Math.max(10, Math.min(10000, estimate));
         }
       } catch (error) {
@@ -601,18 +601,30 @@ class SolanaScanner {
       let mcap = await this.getLiveMarketCap(tokenData.mint);
       let volume = await this.getLiveVolume(tokenData.mint);
 
-      // Only proceed if we have real live data
-      if (!price || price === 0) {
-        throw new Error(`No live price data available for ${tokenData.symbol}`);
+      // Calculate missing price from market cap if possible
+      if ((!price || price === 0) && mcap > 0) {
+        try {
+          const circulatingSupply = Number(tokenData.supply) / Math.pow(10, tokenData.decimals);
+          if (circulatingSupply > 0) {
+            price = mcap / circulatingSupply;
+            console.log(`💰 Calculated price for ${tokenData.symbol}: $${price.toFixed(8)} from market cap`);
+          }
+        } catch (error) {
+          console.warn(`⚠️ Could not calculate price for ${tokenData.symbol}`);
+        }
       }
 
-      if (!mcap || mcap === 0) {
-        throw new Error(`No live market cap data available for ${tokenData.symbol}`);
+      // Require at least 2 out of 3 key metrics (price, mcap, volume)
+      const hasPrice = price > 0;
+      const hasMarketCap = mcap > 0;
+      const hasVolume = volume > 0;
+      const validDataCount = [hasPrice, hasMarketCap, hasVolume].filter(Boolean).length;
+
+      if (validDataCount < 2) {
+        throw new Error(`Insufficient live data for ${tokenData.symbol}: only ${validDataCount}/3 metrics available`);
       }
 
-      if (!volume || volume === 0) {
-        throw new Error(`No live volume data available for ${tokenData.symbol}`);
-      }
+      console.log(`✅ ${tokenData.symbol} has ${validDataCount}/3 live metrics - proceeding with analysis`);
 
       const change24h = (Math.random() - 0.5) * 200; // -100% to +100%
 
@@ -757,19 +769,19 @@ class SolanaScanner {
         mint: tokenData.mint,
         name: tokenData.name,
         symbol: tokenData.symbol,
-        price,
+        price: price || 0,
         change24h,
-        volume,
-        mcap,
+        volume: volume || 0,
+        mcap: mcap || 0,
         aiScore: basicScore,
         rugRisk: basicScore > 60 ? 'low' : basicScore > 40 ? 'medium' : 'high',
-        whaleActivity: Math.min(100, (volume / Math.max(mcap, 1000)) * 1000),
+        whaleActivity: Math.min(100, (volume || 0) / Math.max(mcap || 1000, 1000) * 1000),
         socialBuzz: Math.min(100, tokenData.holders / 100),
         prediction: basicScore > 65 ? 'bullish' : basicScore < 35 ? 'bearish' : 'neutral',
         holders: tokenData.holders,
         liquidity: liquidityData?.liquidity || 0,
         createdAt: tokenData.createdAt,
-        reasoning: `Basic analysis: Live price $${price.toFixed(6)}, Volume $${volume.toLocaleString()}, ${tokenData.holders} holders, Market Cap $${mcap.toLocaleString()}`
+        reasoning: `Live analysis: ${price > 0 ? `Price $${price.toFixed(6)}` : 'Price calculated'}, Volume $${(volume || 0).toLocaleString()}, ${tokenData.holders} holders, Market Cap $${(mcap || 0).toLocaleString()}`
       };
     }
   }
@@ -1020,11 +1032,8 @@ class SolanaScanner {
 
           const liquidityData = await this.getLiquidityData(token.mint);
 
-          // Skip tokens without real liquidity data
-          if (!liquidityData || liquidityData.liquidity === 0) {
-            console.log(`⏭️ Skipping ${token.symbol} - no real liquidity data`);
-            continue;
-          }
+          // Continue if we have some real data (don't require liquidity)
+          // Liquidity is helpful but not essential if we have price/volume/market cap data"
 
           const analysis = await this.analyzeWithAI(token, liquidityData);
 
@@ -1034,9 +1043,9 @@ class SolanaScanner {
           // Add delay to avoid rate limits
           await new Promise(resolve => setTimeout(resolve, 1000));
         } catch (error) {
-          console.log(`⏭️ Skipping ${token.symbol} - no live data: ${error.message}`);
-          // Skip tokens without live data
-        }
+        console.log(`⏭️ Skipping ${token.symbol} - insufficient data: ${error.message}`);
+        // Skip tokens without sufficient live data
+      }
       }
 
       // Sort by AI score (highest potential first)
