@@ -374,11 +374,11 @@ export default function Index() {
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Status Alert - Less prominent for network issues */}
+        {/* Error Alert */}
         {error && (
-          <Alert className="mb-6 border-warning bg-warning/10">
-            <AlertTriangle className="h-4 w-4 text-warning" />
-            <AlertDescription className="text-warning-foreground">
+          <Alert className="mb-6 border-destructive bg-destructive/10">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
               {error}
               <div className="mt-2 space-x-2">
                 <Button
@@ -388,18 +388,19 @@ export default function Index() {
                     setError(null);
                     fetchCoins(true);
                   }}
-                  className="border-warning/50 text-warning hover:bg-warning/20"
                 >
                   <RefreshCw className="h-3 w-3 mr-1" />
-                  Retry Connection
+                  Retry
                 </Button>
                 <Button
                   size="sm"
-                  variant="ghost"
-                  onClick={() => setError(null)}
-                  className="text-warning hover:bg-warning/20"
+                  variant="outline"
+                  onClick={() => {
+                    setError(null);
+                    window.location.reload();
+                  }}
                 >
-                  Dismiss
+                  Refresh Page
                 </Button>
               </div>
             </AlertDescription>
