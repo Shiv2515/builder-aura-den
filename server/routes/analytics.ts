@@ -247,7 +247,8 @@ export const handleGetWhaleActivity: RequestHandler = async (req, res) => {
         market_sentiment: buyVolume > sellVolume ? 'Bullish' : 'Bearish',
         activity_level: whaleMovements.length > 20 ? 'High' : 
                        whaleMovements.length > 10 ? 'Medium' : 'Low',
-        whale_concentration: this.calculateWhaleConcentration(whaleMovements)
+        whale_concentration: whaleMovements.length > 0 ?
+          whaleMovements.reduce((sum, w) => sum + w.amount_usd, 0) / whaleMovements.length : 0
       }
     });
 
@@ -296,10 +297,10 @@ export const handleGetMarketOverview: RequestHandler = async (req, res) => {
       },
       
       market_conditions: {
-        overall_trend: this.determineMarketTrend(marketAnalysis),
+        overall_trend: marketAnalysis ? 'Bullish' : 'Neutral',
         volatility_level: 'Medium', // Would calculate from actual data
         risk_appetite: marketAnalysis.sector_performance.meme_coins > 10 ? 'High' : 'Low',
-        recommended_strategy: this.getRecommendedStrategy(marketAnalysis)
+        recommended_strategy: marketAnalysis?.sector_performance?.meme_coins > 15 ? 'Aggressive' : 'Conservative'
       },
 
       timeframe_days: days,
