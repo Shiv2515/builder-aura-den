@@ -260,7 +260,7 @@ export default async (req: Request, context: Context) => {
             verified: pair.baseToken.name && pair.baseToken.symbol && pair.pairCreatedAt ? true : false
           };
         })
-        .filter(coin => coin.aiScore >= 35) // Lower threshold for meme coins
+        .filter(coin => coin.aiScore >= 25) // Very low threshold to catch emerging memes
         .sort((a, b) => {
           // Prioritize meme patterns, then AI score, then volume
           if (a.isMemePattern !== b.isMemePattern) return b.isMemePattern ? 1 : -1;
