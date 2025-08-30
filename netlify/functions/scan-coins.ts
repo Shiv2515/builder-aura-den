@@ -45,34 +45,60 @@ interface DexScreenerPair {
   pairCreatedAt?: number;
 }
 
-function calculateAIScore(pair: DexScreenerPair): number {
-  let score = 50; // Base score
-  
-  // Volume indicators (0-30 points)
-  if (pair.volume.h24 > 100000) score += 15;
-  else if (pair.volume.h24 > 50000) score += 10;
-  else if (pair.volume.h24 > 10000) score += 5;
-  
-  // Price change momentum (0-25 points)
-  const priceChange24h = pair.priceChange.h24 || 0;
-  if (priceChange24h > 50) score += 20;
-  else if (priceChange24h > 20) score += 15;
+function isMemeTokenPattern(name: string, symbol: string): boolean {
+  const memeKeywords = [
+    // Animal memes
+    'doge', 'shib', 'pepe', 'bonk', 'floki', 'shiba', 'inu', 'cat', 'frog', 'hamster', 'monkey', 'ape', 'bear', 'bull', 'wolf', 'tiger', 'lion',
+    // Internet/meme culture
+    'moon', 'rocket', 'diamond', 'hands', 'hodl', 'lambo', 'chad', 'wojak', 'feels', 'kek', 'meme', 'degen', 'yolo', 'fomo', 'ngmi', 'gmi',
+    // Common meme patterns
+    'baby', 'mini', 'safe', 'mega', 'ultra', 'super', 'turbo', 'hyper', 'max', 'king', 'queen', 'lord', 'master', 'chief',
+    // Solana ecosystem memes
+    'sol', 'samo', 'ninja', 'solape', 'sollama', 'soldog', 'solcat', 'solmoon',
+    // Recent popular memes
+    'gigachad', 'sigma', 'based', 'cope', 'seethe', 'dilate', 'rent', 'free', 'cope', 'sneed'
+  ];
+
+  const nameSymbolLower = (name + ' ' + symbol).toLowerCase();
+  return memeKeywords.some(keyword => nameSymbolLower.includes(keyword)) ||
+         /\d+/.test(symbol) || // Often have numbers
+         symbol.length <= 4 && /[A-Z]{2,4}/.test(symbol); // Short, caps symbols
+}
+
+function calculateMemeScore(pair: DexScreenerPair): number {
+  let score = 30; // Lower base score for meme focus
+
+  // Meme token pattern bonus (0-25 points)
+  if (isMemeTokenPattern(pair.baseToken.name || '', pair.baseToken.symbol || '')) {
+    score += 25;
+  }
+
+  // Volume indicators for memes (0-20 points) - Lower thresholds
+  if (pair.volume.h24 > 50000) score += 15;
+  else if (pair.volume.h24 > 10000) score += 12;
+  else if (pair.volume.h24 > 5000) score += 8;
+  else if (pair.volume.h24 > 1000) score += 5;
+
+  // Price change momentum - memes are volatile (0-25 points)
+  const priceChange24h = Math.abs(pair.priceChange.h24 || 0);
+  if (priceChange24h > 100) score += 25; // Extreme volatility
+  else if (priceChange24h > 50) score += 20;
+  else if (priceChange24h > 25) score += 15;
   else if (priceChange24h > 10) score += 10;
-  else if (priceChange24h > 0) score += 5;
-  
-  // Transaction activity (0-20 points)
+
+  // Transaction activity (0-15 points)
   const totalTxns = (pair.txns.h24?.buys || 0) + (pair.txns.h24?.sells || 0);
-  if (totalTxns > 1000) score += 15;
-  else if (totalTxns > 500) score += 10;
-  else if (totalTxns > 100) score += 5;
-  
-  // Liquidity check (0-15 points)
-  if (pair.liquidity?.usd && pair.liquidity.usd > 100000) score += 10;
-  else if (pair.liquidity?.usd && pair.liquidity.usd > 50000) score += 5;
-  
-  // Market cap considerations (0-10 points)
-  if (pair.marketCap && pair.marketCap > 1000000) score += 5;
-  
+  if (totalTxns > 500) score += 15;
+  else if (totalTxns > 200) score += 10;
+  else if (totalTxns > 50) score += 5;
+
+  // Market cap sweet spot for memes (0-15 points)
+  if (pair.marketCap) {
+    if (pair.marketCap < 10000000 && pair.marketCap > 100000) score += 15; // $100K - $10M sweet spot
+    else if (pair.marketCap < 50000000) score += 10; // Under $50M
+    else if (pair.marketCap < 100000000) score += 5; // Under $100M
+  }
+
   return Math.min(Math.max(score, 0), 100);
 }
 
