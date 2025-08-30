@@ -170,7 +170,13 @@ export default async (req: Request, context: Context) => {
       const pairs: DexScreenerPair[] = data.pairs || [];
       
       console.log(`📊 Found ${pairs.length} pairs from DexScreener`);
-      
+
+      // Debug: Check a few pairs to see their structure
+      if (pairs.length > 0) {
+        console.log('Sample pair data:', JSON.stringify(pairs[0], null, 2));
+        console.log('Sample chain IDs:', pairs.slice(0, 5).map(p => p.chainId));
+      }
+
       // Filter and process Solana meme coins specifically
       const solanaMemeCoins = pairs
         .filter(pair => {
