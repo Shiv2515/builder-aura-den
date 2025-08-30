@@ -181,7 +181,10 @@ export default async (req: Request, context: Context) => {
       const solanaMemeCoins = pairs
         .filter(pair => {
           // Filter for Solana chain only
-          if (pair.chainId !== 'solana') return false;
+          if (pair.chainId !== 'solana') {
+            console.log(`Skipping non-Solana pair: ${pair.chainId}`);
+            return false;
+          }
 
           // Basic requirements
           const volume24h = pair.volume?.h24 || 0;
@@ -190,16 +193,33 @@ export default async (req: Request, context: Context) => {
           const name = pair.baseToken.name || '';
           const symbol = pair.baseToken.symbol || '';
 
+          // Debug failing filters
+          if (volume24h <= 100) {
+            console.log(`Low volume: ${symbol} - ${volume24h}`);
+          }
+          if (!name || !symbol) {
+            console.log(`Missing name/symbol: ${name}/${symbol}`);
+          }
+          if (!pair.priceUsd || parseFloat(pair.priceUsd) <= 0) {
+            console.log(`Invalid price: ${symbol} - ${pair.priceUsd}`);
+          }
+
           // Exclude major tokens and stablecoins
           const excludedTokens = ['SOL', 'WSOL', 'USDC', 'USDT', 'RAY', 'ORCA', 'SRM', 'FTT', 'STEP', 'COPE', 'MAPS', 'MEDIA'];
-          if (excludedTokens.includes(symbol)) return false;
+          if (excludedTokens.includes(symbol)) {
+            console.log(`Excluded major token: ${symbol}`);
+            return false;
+          }
 
           // Exclude tokens that are clearly not memes (DeFi protocols, utilities)
           const excludePatterns = ['swap', 'pool', 'vault', 'strategy', 'protocol', 'finance', 'defi', 'yield', 'farm'];
           const nameSymbolLower = (name + ' ' + symbol).toLowerCase();
-          if (excludePatterns.some(pattern => nameSymbolLower.includes(pattern))) return false;
+          if (excludePatterns.some(pattern => nameSymbolLower.includes(pattern))) {
+            console.log(`Excluded DeFi pattern: ${symbol}`);
+            return false;
+          }
 
-          return (
+          const passes = (
             volume24h > 100 &&  // Very low volume threshold to catch new memes
             Math.abs(priceChange24h) < 10000 && // Allow extreme volatility for memes
             txns24h > 1 &&  // Minimal transaction requirement
@@ -209,6 +229,12 @@ export default async (req: Request, context: Context) => {
             // Market cap filter for meme coins - more permissive
             (!pair.marketCap || pair.marketCap < 1000000000) // Under $1B market cap
           );
+
+          if (passes) {
+            console.log(`✅ Token passed filter: ${symbol} - Volume: ${volume24h}, Price: ${pair.priceUsd}`);
+          }
+
+          return passes;
         })
         .map(pair => {
           const memeScore = calculateMemeScore(pair);
