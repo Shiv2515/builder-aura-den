@@ -190,7 +190,7 @@ export default function Index() {
         setLastUpdate(new Date());
 
         console.log(`✅ Loaded ${data.coins?.length || 0} coins from ${data.dataSource}`);
-        console.log(`���� Coins state will be updated with:`, data.coins?.length, 'coins');
+        console.log(`🔍 Coins state will be updated with:`, data.coins?.length, 'coins');
 
         // Update scan status with real data from coins
         updateScanStatusFromCoins(data.coins || []);
@@ -314,12 +314,12 @@ export default function Index() {
                 if (excludePatterns.some((pattern: string) => nameSymbolLower.includes(pattern))) return false;
 
                 return (
-                  volume24h > 10 &&
-                  Math.abs(priceChange24h) < 50000 &&
+                  volume24h > 1 &&  // Much lower volume threshold
+                  Math.abs(priceChange24h) < 100000 && // More permissive price change
                   name && symbol &&
                   pair.priceUsd && parseFloat(pair.priceUsd) > 0 &&
-                  parseFloat(pair.priceUsd) < 1000 &&
-                  (!pair.marketCap || pair.marketCap < 10000000000)
+                  parseFloat(pair.priceUsd) < 10000 && // Higher price cap
+                  (!pair.marketCap || pair.marketCap < 50000000000) // Higher market cap limit
                 );
               })
               .map((pair: any) => ({
