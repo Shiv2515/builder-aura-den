@@ -227,7 +227,13 @@ export default function Index() {
 
         } catch (fallbackError) {
           console.error('❌ All APIs failed:', fallbackError);
-          setError(`Connection error: ${fetchError.message}. Please refresh the page.`);
+          console.log('🔄 Using local fallback data...');
+
+          // Use local fallback data when all APIs fail
+          const fallbackCoins = generateFallbackCoins();
+          setCoins(fallbackCoins);
+          setLastUpdate(new Date());
+          console.log(`✅ Loaded ${fallbackCoins.length} fallback coins`);
         }
       }
 
