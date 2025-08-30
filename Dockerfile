@@ -18,7 +18,7 @@ ENV OPENAI_API_KEY=sk-proj-tlgLTcYAith4BMKqKoU9nxddpV3AMSKgVSaRzJoa-7Nc7pHJI-xA-
 ENV SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
 
 # Build the application
-RUN pnpm run build
+RUN npm run build
 
 # Production stage
 FROM node:18-alpine AS runner
@@ -31,8 +31,7 @@ COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/.env ./
 
 # Install only production dependencies
-RUN npm install -g pnpm
-RUN pnpm install --prod --frozen-lockfile
+RUN npm ci --only=production
 
 # Set environment variables
 ENV NODE_ENV=production
