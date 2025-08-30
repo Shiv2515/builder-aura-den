@@ -616,10 +616,10 @@ class SolanaScanner {
 
       const change24h = (Math.random() - 0.5) * 200; // -100% to +100%
 
-      // Run Social Sentiment Analysis
+      // Try Social Sentiment Analysis (required for live data)
       const socialMetrics = await socialSentimentAnalyzer.analyzeSocialSentiment(tokenData.symbol, tokenData.name);
 
-      // Run AI Ensemble Analysis with social data
+      // Try AI Ensemble Analysis with social data (required for live data)
       const ensembleResult = await aiEnsemble.getEnsembleAnalysis({
         mint: tokenData.mint,
         name: tokenData.name,
