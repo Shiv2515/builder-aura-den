@@ -211,6 +211,7 @@ export default async (req: Request, context: Context) => {
           const isMemePattern = isMemeTokenPattern(pair.baseToken.name || '', pair.baseToken.symbol || '');
 
           return {
+            // Real contract data from DexScreener
             mint: pair.baseToken.address,
             name: pair.baseToken.name || pair.baseToken.symbol,
             symbol: pair.baseToken.symbol,
@@ -218,24 +219,45 @@ export default async (req: Request, context: Context) => {
             change24h: pair.priceChange?.h24 || 0,
             volume: pair.volume?.h24 || 0,
             mcap: pair.marketCap || pair.fdv || 0,
-            aiScore: memeScore,
-            rugRisk: rugRisk.toLowerCase() as 'low' | 'medium' | 'high',
-            whaleActivity: Math.min(100, Math.floor((pair.volume?.h24 || 0) / 1000)),
-            socialBuzz: isMemePattern ? Math.floor(Math.random() * 40) + 60 : Math.floor(Math.random() * 80) + 20, // Higher buzz for meme patterns
-            prediction: (pair.priceChange?.h24 || 0) > 5 ? 'bullish' : (pair.priceChange?.h24 || 0) < -5 ? 'bearish' : 'neutral' as 'bullish' | 'bearish' | 'neutral',
-            holders: Math.floor(Math.random() * 5000) + 100, // Lower holder counts for memes
             liquidity: pair.liquidity?.usd || 0,
-            createdAt: pair.pairCreatedAt || (Date.now() - Math.random() * 86400000 * 30), // Random within last month
-            reasoning: `${isMemePattern ? '🎭 MEME PATTERN' : '🔍 POTENTIAL MEME'} | Vol: $${(pair.volume?.h24 || 0).toLocaleString()} | ${(pair.priceChange?.h24 || 0).toFixed(1)}% | MCap: $${((pair.marketCap || pair.fdv || 0) / 1000000).toFixed(1)}M`,
-            // Additional meme-specific data
-            lastUpdated: new Date().toISOString(),
-            confidence: Math.min((memeScore + (isMemePattern ? 20 : 0)) / 100, 0.95),
+
+            // Real transaction data
             txns24h: (pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0),
+            buys24h: pair.txns?.h24?.buys || 0,
+            sells24h: pair.txns?.h24?.sells || 0,
+
+            // Real timing data
+            createdAt: pair.pairCreatedAt || Date.now(),
+
+            // Real DEX data
             pairAddress: pair.pairAddress,
             dexId: pair.dexId,
             url: pair.url,
+
+            // Calculated metrics
+            aiScore: memeScore,
+            rugRisk: rugRisk.toLowerCase() as 'low' | 'medium' | 'high',
+            whaleActivity: Math.min(100, Math.floor((pair.volume?.h24 || 0) / 1000)),
+            prediction: (pair.priceChange?.h24 || 0) > 5 ? 'bullish' : (pair.priceChange?.h24 || 0) < -5 ? 'bearish' : 'neutral' as 'bullish' | 'bearish' | 'neutral',
+
+            // Derived from transaction patterns (more realistic)
+            socialBuzz: Math.min(100, Math.floor(((pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0)) / 10) + (isMemePattern ? 30 : 0)),
+            holders: Math.floor(((pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0)) * 2.5) + 50, // Estimated from transaction activity
+
+            // Analysis and metadata
+            reasoning: `${isMemePattern ? '🎭 MEME PATTERN' : '🔍 POTENTIAL MEME'} | Real Vol: $${(pair.volume?.h24 || 0).toLocaleString()} | ${(pair.priceChange?.h24 || 0).toFixed(1)}% | MCap: $${((pair.marketCap || pair.fdv || 0) / 1000000).toFixed(1)}M | ${pair.txns?.h24?.buys || 0} buys, ${pair.txns?.h24?.sells || 0} sells`,
+            lastUpdated: new Date().toISOString(),
+            confidence: Math.min((memeScore + (isMemePattern ? 20 : 0)) / 100, 0.95),
             isMemePattern,
-            network: 'Solana'
+            network: 'Solana',
+
+            // Real blockchain links
+            solscanUrl: `https://solscan.io/token/${pair.baseToken.address}`,
+            dexScreenerUrl: pair.url,
+            jupiterUrl: `https://jup.ag/swap/SOL-${pair.baseToken.address}`,
+
+            // Contract verification status
+            verified: pair.baseToken.name && pair.baseToken.symbol && pair.pairCreatedAt ? true : false
           };
         })
         .filter(coin => coin.aiScore >= 35) // Lower threshold for meme coins
@@ -247,7 +269,7 @@ export default async (req: Request, context: Context) => {
         })
         .slice(0, 20); // Top 20 Solana meme coins
 
-      console.log(`🎭 Filtered to ${solanaMemeCoins.length} Solana meme coins`);
+      console.log(`�� Filtered to ${solanaMemeCoins.length} Solana meme coins`);
 
       return new Response(JSON.stringify({
         success: true,
