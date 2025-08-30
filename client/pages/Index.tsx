@@ -91,22 +91,7 @@ export default function Index() {
       setScanStatus(data);
     } catch (err) {
       console.error('Error fetching scan status:', err);
-      // Provide fallback status when API is unreachable
-      setScanStatus({
-        isScanning: false,
-        lastScanTime: Date.now(),
-        totalScanned: 10,
-        rugPullsDetected: 2,
-        highPotentialCoins: 3,
-        scanProgress: 0,
-        nextScanIn: 30000,
-        stats: {
-          averageAiScore: 65,
-          bullishCoins: 6,
-          bearishCoins: 2,
-          whaleMovements: 5
-        }
-      });
+      // Don't set any fallback status - let the UI handle null/undefined
     }
   };
 
