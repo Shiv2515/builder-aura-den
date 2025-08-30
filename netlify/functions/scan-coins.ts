@@ -184,8 +184,8 @@ export default async (req: Request, context: Context) => {
           const name = pair.baseToken.name || '';
           const symbol = pair.baseToken.symbol || '';
 
-          // Exclude major tokens and stablecoins
-          const excludedTokens = ['SOL', 'WSOL', 'USDC', 'USDT', 'RAY', 'ORCA', 'SRM', 'FTT', 'STEP', 'COPE', 'MAPS', 'MEDIA'];
+          // Exclude only major stablecoins and SOL itself
+          const excludedTokens = ['SOL', 'WSOL', 'USDC', 'USDT'];
           if (excludedTokens.includes(symbol)) return false;
 
           // Exclude tokens that are clearly not memes (DeFi protocols, utilities)
