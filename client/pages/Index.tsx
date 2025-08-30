@@ -344,9 +344,9 @@ export default function Index() {
                 holders: Math.floor(((pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0)) * 2.5) + 50,
                 reasoning: `🔗 DIRECT API - Real Solana token from DexScreener | Vol: $${(pair.volume?.h24 || 0).toLocaleString()} | ${(pair.priceChange?.h24 || 0).toFixed(1)}%`
               }))
-              .filter((coin: any) => coin.aiScore >= 15)
+              .filter((coin: any) => coin.aiScore >= 5) // Much lower threshold
               .sort((a: any, b: any) => b.volume - a.volume)
-              .slice(0, 30);
+              .slice(0, 50); // More coins
 
             if (solanaMemeCoins.length > 0) {
               setCoins(solanaMemeCoins);
