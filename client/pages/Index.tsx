@@ -211,6 +211,9 @@ export default function Index() {
 
       } catch (fetchError) {
         console.error('❌ Real API failed, trying backup:', fetchError);
+        console.error('❌ Error type:', fetchError.constructor.name);
+        console.error('❌ Error message:', fetchError.message);
+        console.error('❌ Full error:', fetchError);
 
         // Fallback to backup API if real API fails
         try {
