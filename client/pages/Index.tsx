@@ -196,16 +196,15 @@ export default function Index() {
   };
 
   useEffect(() => {
-    // Initial load
-    fetchCoins();
+    // Initial load with cache busting
+    console.log('🚀 App starting - fetching fresh data...');
+    fetchCoins(true);
     fetchScanStatus();
 
     // Auto-refresh every 30 seconds
     const interval = setInterval(() => {
       fetchScanStatus();
-      if (!scanStatus?.isScanning) {
-        fetchCoins();
-      }
+      fetchCoins(); // Always fetch fresh data
     }, 30000);
 
     return () => clearInterval(interval);
