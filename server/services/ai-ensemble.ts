@@ -80,8 +80,7 @@ class AIEnsemble {
       const apiKey = process.env.OPENAI_API_KEY || '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';
 
       if (!apiKey || apiKey === '') {
-        console.log('OpenAI API key not found, using fallback analysis');
-        return this.getFallbackAnalysis('GPT-4', tokenData);
+        throw new Error('OpenAI API key not found - no fallback analysis available');
       }
 
       const prompt = `
@@ -173,7 +172,7 @@ Respond in JSON:
       };
     } catch (error) {
       console.error('GPT-4 analysis error:', error);
-      return this.getFallbackAnalysis('GPT-4', tokenData);
+      throw new Error(`GPT-4 analysis failed: ${error.message}`);
     }
   }
 
@@ -252,7 +251,7 @@ Respond in JSON:
       };
     } catch (error) {
       console.error('Claude analysis error:', error);
-      return this.getFallbackAnalysis('Claude-3', tokenData);
+      throw new Error(`Claude analysis failed: ${error.message}`);
     }
   }
 
@@ -400,63 +399,13 @@ Respond in JSON:
 
     } catch (error) {
       console.error('Ensemble analysis error:', error);
-      return this.getFallbackEnsemble(tokenData);
+      throw new Error(`Ensemble analysis failed: ${error.message}`);
     }
   }
 
-  private getFallbackAnalysis(modelName: string, tokenData: TokenAnalysis): AIModelResult {
-    const score = Math.floor(Math.random() * 60) + 30;
-    return {
-      modelName,
-      aiScore: score,
-      rugRisk: score > 60 ? 'low' : score > 40 ? 'medium' : 'high',
-      prediction: score > 60 ? 'bullish' : score < 40 ? 'bearish' : 'neutral',
-      confidence: score,
-      reasoning: `${modelName} fallback analysis based on basic metrics`,
-      marketPsychology: {
-        fomo: Math.floor(Math.random() * 100),
-        fear: Math.floor(Math.random() * 100),
-        greed: Math.floor(Math.random() * 100),
-        hype: Math.floor(Math.random() * 100)
-      },
-      timingPrediction: {
-        nextMoveIn: Math.floor(Math.random() * 120) + 30,
-        pumpDuration: Math.floor(Math.random() * 180) + 60,
-        volatilityScore: Math.floor(Math.random() * 100)
-      }
-    };
-  }
+  // Removed getFallbackAnalysis - only real AI responses allowed
 
-  private getFallbackEnsemble(tokenData: TokenAnalysis): EnsembleResult {
-    const score = Math.floor(Math.random() * 60) + 40;
-    return {
-      finalScore: score,
-      ensembleConfidence: score,
-      consensusRisk: score > 60 ? 'low' : 'medium',
-      consensusPrediction: score > 60 ? 'bullish' : 'neutral',
-      modelAgreement: 70,
-      detailedAnalysis: {
-        technicalAnalysis: null,
-        fundamentalAnalysis: null,
-        sentimentAnalysis: null,
-        riskAssessment: null
-      },
-      advancedMetrics: {
-        rugPullProbability: 30,
-        moonPotential: score,
-        whaleManipulation: 40,
-        communityStrength: 60,
-        liquidityHealth: 70
-      },
-      microTimingSignals: {
-        buySignalStrength: score,
-        sellSignalStrength: 100 - score,
-        nextSignalIn: 60,
-        optimalEntryPrice: 0,
-        optimalExitPrice: 0
-      }
-    };
-  }
+  // Removed getFallbackEnsemble - only real AI ensemble analysis allowed
 }
 
 export const aiEnsemble = new AIEnsemble();

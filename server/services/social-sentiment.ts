@@ -43,7 +43,7 @@ class SocialSentimentAnalyzer {
 
     } catch (error) {
       console.error('Social sentiment analysis error:', error);
-      return this.getFallbackMetrics(tokenSymbol);
+      throw new Error(`Social sentiment analysis failed: ${error.message}`);
     }
   }
 
@@ -147,8 +147,8 @@ class SocialSentimentAnalyzer {
       };
 
     } catch (error) {
-      console.log('Falling back to pattern-based estimation');
-      return this.getFallbackMetrics(symbol);
+      console.log('No real social data available');
+      throw new Error(`No real social data available for ${symbol}`);
     }
   }
 
@@ -341,20 +341,7 @@ class SocialSentimentAnalyzer {
     };
   }
 
-  private getFallbackMetrics(symbol: string): SocialMetrics {
-    // Deterministic fallback based on symbol characteristics
-    const symbolHash = symbol.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    
-    return {
-      twitterMentions: 50 + (symbolHash % 200),
-      redditPosts: 5 + (symbolHash % 20),
-      sentiment: 0.4 + ((symbolHash % 20) / 100), // 0.4-0.6 range
-      engagementScore: 40 + (symbolHash % 30),
-      viralityScore: 30 + (symbolHash % 40),
-      communityHealth: 45 + (symbolHash % 25),
-      influencerBuzz: 25 + (symbolHash % 35)
-    };
-  }
+  // Removed getFallbackMetrics - only real social data allowed
 }
 
 export const socialSentimentAnalyzer = new SocialSentimentAnalyzer({
