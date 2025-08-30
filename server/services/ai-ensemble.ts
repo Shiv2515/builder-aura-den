@@ -80,7 +80,8 @@ class AIEnsemble {
       const apiKey = process.env.OPENAI_API_KEY || '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';
 
       if (!apiKey || apiKey === '') {
-        throw new Error('OpenAI API key not found - no fallback analysis available');
+        console.warn('⚠️ OpenAI API key not found');
+        throw new Error('OpenAI API key not available');
       }
 
       const prompt = `
@@ -171,8 +172,8 @@ Respond in JSON:
         }
       };
     } catch (error) {
-      console.error('GPT-4 analysis error:', error);
-      throw new Error(`GPT-4 analysis failed: ${error.message}`);
+      console.error('GPT-4 analysis error:', error.message || error);
+      throw new Error(`GPT-4 analysis failed: ${error.message || 'API unavailable'}`);
     }
   }
 
@@ -250,8 +251,8 @@ Respond in JSON:
         }
       };
     } catch (error) {
-      console.error('Claude analysis error:', error);
-      throw new Error(`Claude analysis failed: ${error.message}`);
+      console.error('Claude analysis error:', error.message || error);
+      throw new Error(`Claude analysis failed: ${error.message || 'Analysis unavailable'}`);
     }
   }
 
@@ -398,8 +399,8 @@ Respond in JSON:
       };
 
     } catch (error) {
-      console.error('Ensemble analysis error:', error);
-      throw new Error(`Ensemble analysis failed: ${error.message}`);
+      console.error('Ensemble analysis error:', error.message || error);
+      throw new Error(`Ensemble analysis failed: ${error.message || 'AI services unavailable'}`);
     }
   }
 
