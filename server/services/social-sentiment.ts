@@ -70,7 +70,7 @@ class SocialSentimentAnalyzer {
 
       if (!response.ok) throw new Error(`Twitter API error: ${response.status}`);
 
-      const data = await response.json();
+      const data = await response.json() as any;
       const tweets = data.data || [];
 
       return {
@@ -107,7 +107,7 @@ class SocialSentimentAnalyzer {
         });
 
         if (response.ok) {
-          const data = await response.json();
+          const data = await response.json() as any;
           const posts = data.data?.children || [];
           
           totalPosts += posts.length;
@@ -158,13 +158,13 @@ class SocialSentimentAnalyzer {
       const response = await fetch(`https://api.coingecko.com/api/v3/search?query=${symbol}`);
       if (!response.ok) return {};
 
-      const data = await response.json();
+      const data = await response.json() as any;
       const coin = data.coins?.[0];
       
       if (coin) {
         const detailResponse = await fetch(`https://api.coingecko.com/api/v3/coins/${coin.id}`);
         if (detailResponse.ok) {
-          const details = await detailResponse.json();
+          const details = await detailResponse.json() as any;
           return {
             twitterFollowers: details.community_data?.twitter_followers || 0,
             redditSubscribers: details.community_data?.reddit_subscribers || 0,
@@ -185,7 +185,7 @@ class SocialSentimentAnalyzer {
       const response = await fetch(`https://api.dexscreener.com/latest/dex/search/?q=${symbol}`);
       if (!response.ok) return {};
 
-      const data = await response.json();
+      const data = await response.json() as any;
       const pair = data.pairs?.[0];
       
       if (pair?.info) {
