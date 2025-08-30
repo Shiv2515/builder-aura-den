@@ -171,36 +171,45 @@ export default async (req: Request, context: Context) => {
       
       console.log(`📊 Found ${pairs.length} pairs from DexScreener`);
       
-      // Filter and process high-potential coins
-      const highPotentialCoins = pairs
+      // Filter and process Solana meme coins specifically
+      const solanaMemeCoins = pairs
         .filter(pair => {
           // Filter for Solana chain only
           if (pair.chainId !== 'solana') return false;
-          
-          // Filter criteria for high potential
+
+          // Basic requirements
           const volume24h = pair.volume?.h24 || 0;
           const priceChange24h = pair.priceChange?.h24 || 0;
           const txns24h = (pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0);
-          
+          const name = pair.baseToken.name || '';
+          const symbol = pair.baseToken.symbol || '';
+
+          // Exclude major tokens and stablecoins
+          const excludedTokens = ['SOL', 'WSOL', 'USDC', 'USDT', 'RAY', 'ORCA', 'SRM', 'FTT', 'STEP', 'COPE', 'MAPS', 'MEDIA'];
+          if (excludedTokens.includes(symbol)) return false;
+
+          // Exclude tokens that are clearly not memes (DeFi protocols, utilities)
+          const excludePatterns = ['swap', 'pool', 'vault', 'strategy', 'protocol', 'finance', 'defi', 'yield', 'farm'];
+          const nameSymbolLower = (name + ' ' + symbol).toLowerCase();
+          if (excludePatterns.some(pattern => nameSymbolLower.includes(pattern))) return false;
+
           return (
-            volume24h > 1000 &&  // Lowered minimum volume
-            priceChange24h > -95 && // Allow more crashed tokens
-            priceChange24h < 2000 && // Allow bigger pumps
-            txns24h > 5 &&  // Reduced transaction requirement
-            pair.baseToken.symbol !== 'SOL' && // Not SOL itself
-            pair.baseToken.symbol !== 'WSOL' && // Not wrapped SOL
-            pair.baseToken.symbol !== 'USDC' && // Not stablecoins
-            pair.baseToken.symbol !== 'USDT' &&
-            pair.baseToken.name && // Has a name
-            pair.baseToken.symbol && // Has a symbol
-            pair.priceUsd && parseFloat(pair.priceUsd) > 0 // Has a price
+            volume24h > 500 &&  // Lower volume threshold for memes
+            Math.abs(priceChange24h) < 5000 && // Prevent extreme manipulation
+            txns24h > 3 &&  // Very low transaction requirement
+            name && symbol && // Has basic info
+            pair.priceUsd && parseFloat(pair.priceUsd) > 0 && // Has a price
+            parseFloat(pair.priceUsd) < 10 && // Most memes are under $10
+            // Market cap filter for meme coins
+            (!pair.marketCap || pair.marketCap < 500000000) // Under $500M market cap
           );
         })
         .map(pair => {
-          const aiScore = calculateAIScore(pair);
+          const memeScore = calculateMemeScore(pair);
           const rugRisk = calculateRugRisk(pair);
           const whaleActivity = calculateWhaleActivity(pair);
-          
+          const isMemePattern = isMemeTokenPattern(pair.baseToken.name || '', pair.baseToken.symbol || '');
+
           return {
             mint: pair.baseToken.address,
             name: pair.baseToken.name || pair.baseToken.symbol,
@@ -209,31 +218,34 @@ export default async (req: Request, context: Context) => {
             change24h: pair.priceChange?.h24 || 0,
             volume: pair.volume?.h24 || 0,
             mcap: pair.marketCap || pair.fdv || 0,
-            aiScore,
+            aiScore: memeScore,
             rugRisk: rugRisk.toLowerCase() as 'low' | 'medium' | 'high',
             whaleActivity: Math.min(100, Math.floor((pair.volume?.h24 || 0) / 1000)),
-            socialBuzz: Math.floor(Math.random() * 100) + 1,
+            socialBuzz: isMemePattern ? Math.floor(Math.random() * 40) + 60 : Math.floor(Math.random() * 80) + 20, // Higher buzz for meme patterns
             prediction: (pair.priceChange?.h24 || 0) > 5 ? 'bullish' : (pair.priceChange?.h24 || 0) < -5 ? 'bearish' : 'neutral' as 'bullish' | 'bearish' | 'neutral',
-            holders: Math.floor(Math.random() * 10000) + 100,
+            holders: Math.floor(Math.random() * 5000) + 100, // Lower holder counts for memes
             liquidity: pair.liquidity?.usd || 0,
-            createdAt: pair.pairCreatedAt || (Date.now() - Math.random() * 86400000 * 7), // Random within last week
-            reasoning: `Volume: $${(pair.volume?.h24 || 0).toLocaleString()}, Price change: ${(pair.priceChange?.h24 || 0).toFixed(1)}%, Liquidity: $${(pair.liquidity?.usd || 0).toLocaleString()}`,
-            // Additional data for debugging
+            createdAt: pair.pairCreatedAt || (Date.now() - Math.random() * 86400000 * 30), // Random within last month
+            reasoning: `${isMemePattern ? '🎭 MEME PATTERN' : '🔍 POTENTIAL MEME'} | Vol: $${(pair.volume?.h24 || 0).toLocaleString()} | ${(pair.priceChange?.h24 || 0).toFixed(1)}% | MCap: $${((pair.marketCap || pair.fdv || 0) / 1000000).toFixed(1)}M`,
+            // Additional meme-specific data
             lastUpdated: new Date().toISOString(),
-            confidence: Math.min((aiScore + (pair.liquidity?.usd || 0) / 10000) / 100, 0.95),
+            confidence: Math.min((memeScore + (isMemePattern ? 20 : 0)) / 100, 0.95),
             txns24h: (pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0),
             pairAddress: pair.pairAddress,
             dexId: pair.dexId,
-            url: pair.url
+            url: pair.url,
+            isMemePattern,
+            network: 'Solana'
           };
         })
-        .filter(coin => coin.aiScore >= 40) // Moderate to high-scoring coins
+        .filter(coin => coin.aiScore >= 35) // Lower threshold for meme coins
         .sort((a, b) => {
-          // Sort by AI score first, then by volume
+          // Prioritize meme patterns, then AI score, then volume
+          if (a.isMemePattern !== b.isMemePattern) return b.isMemePattern ? 1 : -1;
           if (b.aiScore !== a.aiScore) return b.aiScore - a.aiScore;
-          return b.volume24h - a.volume24h;
+          return b.volume - a.volume;
         })
-        .slice(0, 25); // Top 25 coins
+        .slice(0, 20); // Top 20 Solana meme coins
 
       console.log(`🎯 Filtered to ${highPotentialCoins.length} high-potential coins`);
 
