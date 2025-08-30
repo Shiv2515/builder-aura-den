@@ -368,11 +368,11 @@ export default function Index() {
             ) : coins.length === 0 ? (
               <div className="text-center py-12">
                 <Brain className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-lg font-semibold text-foreground">No Coins Found</p>
-                <p className="text-muted-foreground mb-4">Start a new scan to discover potential coins</p>
+                <p className="text-lg font-semibold text-foreground">No Live Data Available</p>
+                <p className="text-muted-foreground mb-4">No tokens found with sufficient live market data. Only tokens with real price, volume, and liquidity data are displayed.</p>
                 <Button onClick={startNewScan}>
                   <Zap className="h-4 w-4 mr-2" />
-                  Start AI Scan
+                  Scan for Live Data
                 </Button>
               </div>
             ) : (
