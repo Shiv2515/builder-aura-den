@@ -72,12 +72,20 @@ export default function Index() {
 
   const fetchScanStatus = async () => {
     try {
-      const response = await fetch('/api/scan/status');
+      const response = await fetch('/api/scan/status?' + Date.now()); // Cache busting
       if (!response.ok) throw new Error('Failed to fetch scan status');
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.warn('Scan status returned non-JSON response');
+        return;
+      }
+
       const data = await response.json();
       setScanStatus(data);
     } catch (err) {
       console.error('Error fetching scan status:', err);
+      // Don't show error to user for status updates
     }
   };
 
