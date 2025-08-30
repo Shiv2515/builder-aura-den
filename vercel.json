@@ -2,10 +2,6 @@
   "version": 2,
   "builds": [
     {
-      "src": "dist/server/node-build.mjs",
-      "use": "@vercel/node"
-    },
-    {
       "src": "dist/spa/**/*",
       "use": "@vercel/static"
     }
@@ -13,7 +9,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/dist/server/node-build.mjs"
+      "dest": "/api/$1"
     },
     {
       "src": "/(.*)",
@@ -22,11 +18,11 @@
   ],
   "env": {
     "NODE_ENV": "production",
-    "OPENAI_API_KEY": "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",
+    "OPENAI_API_KEY": "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",
     "SOLANA_RPC_URL": "https://api.mainnet-beta.solana.com"
   },
   "functions": {
-    "dist/server/node-build.mjs": {
+    "api/**/*.ts": {
       "runtime": "nodejs18.x"
     }
   }
