@@ -194,14 +194,14 @@ export default async (req: Request, context: Context) => {
           if (excludePatterns.some(pattern => nameSymbolLower.includes(pattern))) return false;
 
           return (
-            volume24h > 500 &&  // Lower volume threshold for memes
-            Math.abs(priceChange24h) < 5000 && // Prevent extreme manipulation
-            txns24h > 3 &&  // Very low transaction requirement
+            volume24h > 100 &&  // Very low volume threshold to catch new memes
+            Math.abs(priceChange24h) < 10000 && // Allow extreme volatility for memes
+            txns24h > 1 &&  // Minimal transaction requirement
             name && symbol && // Has basic info
             pair.priceUsd && parseFloat(pair.priceUsd) > 0 && // Has a price
-            parseFloat(pair.priceUsd) < 10 && // Most memes are under $10
-            // Market cap filter for meme coins
-            (!pair.marketCap || pair.marketCap < 500000000) // Under $500M market cap
+            parseFloat(pair.priceUsd) < 100 && // Allow higher priced memes
+            // Market cap filter for meme coins - more permissive
+            (!pair.marketCap || pair.marketCap < 1000000000) // Under $1B market cap
           );
         })
         .map(pair => {
@@ -269,7 +269,7 @@ export default async (req: Request, context: Context) => {
         })
         .slice(0, 20); // Top 20 Solana meme coins
 
-      console.log(`�� Filtered to ${solanaMemeCoins.length} Solana meme coins`);
+      console.log(`🎭 Filtered to ${solanaMemeCoins.length} Solana meme coins`);
 
       return new Response(JSON.stringify({
         success: true,
