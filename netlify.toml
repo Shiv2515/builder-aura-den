@@ -3,6 +3,36 @@
   command = "npm run build"
 
 [[redirects]]
+  from = "/api/scan/coins"
+  to = "/.netlify/functions/scan-coins"
+  status = 200
+
+[[redirects]]
+  from = "/api/scan/start"
+  to = "/.netlify/functions/scan-start"
+  status = 200
+
+[[redirects]]
+  from = "/api/scan/status"
+  to = "/.netlify/functions/scan-status"
+  status = 200
+
+[[redirects]]
+  from = "/api/backup-coins"
+  to = "/.netlify/functions/backup-coins"
+  status = 200
+
+[[redirects]]
+  from = "/api/whale-tracking"
+  to = "/.netlify/functions/whale-tracking"
+  status = 200
+
+[[redirects]]
+  from = "/api/ping"
+  to = "/.netlify/functions/ping"
+  status = 200
+
+[[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"
   status = 200
