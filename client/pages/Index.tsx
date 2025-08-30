@@ -78,7 +78,9 @@ export default function Index() {
         apiUrl = 'https://pulsesignal-ai.netlify.app/.netlify/functions/scan-status?' + Date.now();
       }
 
+      console.log('🔍 Scan Status API URL:', apiUrl);
       const response = await fetch(apiUrl); // Cache busting
+      console.log('🔍 Scan Status Response Status:', response.status);
       if (!response.ok) throw new Error('Failed to fetch scan status');
 
       const contentType = response.headers.get('content-type');
