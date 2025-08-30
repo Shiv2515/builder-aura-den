@@ -99,15 +99,15 @@ export default function Index() {
       setIsLoading(true);
       setError(null);
 
-      // Use backup API as primary since it has guaranteed live data
-      console.log('🔄 Fetching live crypto data...');
+      // Try real DexScreener API first for authentic contract data
+      console.log('🔄 Fetching real Solana meme coin data...');
 
       try {
-        // Try local API first, then fallback to Netlify if on dev server
-        let apiUrl = '/api/backup-coins?' + Date.now();
+        // Try real scan API first for authentic contract addresses
+        let apiUrl = '/api/scan/coins?' + Date.now();
         if (window.location.hostname.includes('fly.dev') || window.location.hostname.includes('localhost')) {
-          apiUrl = 'https://pulsesignal-ai.netlify.app/api/backup-coins?' + Date.now();
-          console.log('🔄 Using Netlify API from dev server');
+          apiUrl = 'https://pulsesignal-ai.netlify.app/api/scan/coins?' + Date.now();
+          console.log('🔄 Using Netlify real API from dev server');
         }
 
         const response = await fetch(apiUrl); // Cache busting
