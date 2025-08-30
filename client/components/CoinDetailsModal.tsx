@@ -494,63 +494,120 @@ export function CoinDetailsModal({ coin, isOpen, onClose }: CoinDetailsModalProp
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Shield className="h-5 w-5" />
-                  <span>Smart Contract Security</span>
+                  <span>Risk Assessment</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-muted-foreground mb-2">Security Score</p>
+                      <p className="text-sm text-muted-foreground mb-2">Risk Score</p>
                       <div className="flex items-center space-x-3">
-                        <Progress value={coin.rugRisk === 'low' ? 85 : coin.rugRisk === 'medium' ? 60 : 30} className="flex-1" />
+                        <Progress value={coin.rugRisk === 'low' ? 20 : coin.rugRisk === 'medium' ? 50 : 80} className="flex-1" />
                         <span className="text-lg font-bold">
-                          {coin.rugRisk === 'low' ? '85' : coin.rugRisk === 'medium' ? '60' : '30'}
+                          {coin.rugRisk === 'low' ? 'LOW' : coin.rugRisk === 'medium' ? 'MED' : 'HIGH'}
                         </span>
                       </div>
                     </div>
-                    
+
                     <div>
-                      <p className="text-sm text-muted-foreground mb-2">Rug Pull Risk</p>
+                      <p className="text-sm text-muted-foreground mb-2">Confidence</p>
                       <Badge className={getRiskColor(coin.rugRisk)}>
-                        {coin.rugRisk === 'low' ? '15%' : coin.rugRisk === 'medium' ? '45%' : '80%'} Risk
+                        {coin.rugRisk.toUpperCase()} RISK
                       </Badge>
                     </div>
                   </div>
 
+                  {/* Real metrics based on available data */}
                   <div className="space-y-3">
                     <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <span className="text-sm">Ownership Renounced</span>
-                      {coin.rugRisk === 'low' ? (
+                      <div>
+                        <span className="text-sm font-medium">Liquidity Available</span>
+                        <p className="text-xs text-muted-foreground">
+                          ${coin.liquidity >= 1000000 ?
+                            `${(coin.liquidity / 1000000).toFixed(1)}M` :
+                            coin.liquidity >= 1000 ?
+                            `${(coin.liquidity / 1000).toFixed(1)}K` :
+                            coin.liquidity.toFixed(0)}
+                        </p>
+                      </div>
+                      {coin.liquidity > 50000 ? (
                         <CheckCircle className="h-4 w-4 text-success" />
-                      ) : (
+                      ) : coin.liquidity > 10000 ? (
                         <AlertTriangle className="h-4 w-4 text-warning" />
-                      )}
-                    </div>
-                    
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <span className="text-sm">Liquidity Locked</span>
-                      {coin.rugRisk !== 'high' ? (
-                        <CheckCircle className="h-4 w-4 text-success" />
                       ) : (
                         <X className="h-4 w-4 text-destructive" />
                       )}
                     </div>
-                    
+
                     <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <span className="text-sm">Honeypot Check</span>
-                      <CheckCircle className="h-4 w-4 text-success" />
+                      <div>
+                        <span className="text-sm font-medium">Trading Activity</span>
+                        <p className="text-xs text-muted-foreground">
+                          {coin.txns24h || 0} transactions in 24h
+                        </p>
+                      </div>
+                      {(coin.txns24h || 0) > 100 ? (
+                        <CheckCircle className="h-4 w-4 text-success" />
+                      ) : (coin.txns24h || 0) > 20 ? (
+                        <AlertTriangle className="h-4 w-4 text-warning" />
+                      ) : (
+                        <X className="h-4 w-4 text-destructive" />
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <span className="text-sm font-medium">Token Age</span>
+                        <p className="text-xs text-muted-foreground">
+                          Created {formatTimeAgo(coin.createdAt)}
+                        </p>
+                      </div>
+                      {Date.now() - coin.createdAt > 7 * 24 * 60 * 60 * 1000 ? (
+                        <CheckCircle className="h-4 w-4 text-success" />
+                      ) : Date.now() - coin.createdAt > 24 * 60 * 60 * 1000 ? (
+                        <AlertTriangle className="h-4 w-4 text-warning" />
+                      ) : (
+                        <X className="h-4 w-4 text-destructive" />
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <span className="text-sm font-medium">Volume/Liquidity Ratio</span>
+                        <p className="text-xs text-muted-foreground">
+                          {coin.liquidity > 0 ? `${((coin.volume / coin.liquidity) * 100).toFixed(1)}%` : 'N/A'}
+                        </p>
+                      </div>
+                      {coin.liquidity > 0 && (coin.volume / coin.liquidity) < 5 ? (
+                        <CheckCircle className="h-4 w-4 text-success" />
+                      ) : coin.liquidity > 0 && (coin.volume / coin.liquidity) < 20 ? (
+                        <AlertTriangle className="h-4 w-4 text-warning" />
+                      ) : (
+                        <X className="h-4 w-4 text-destructive" />
+                      )}
                     </div>
                   </div>
 
-                  {coin.rugRisk === 'high' && (
-                    <Alert className="border-destructive bg-destructive/10">
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertDescription>
-                        <strong>High Risk Detected:</strong> This token shows multiple risk factors. Proceed with extreme caution.
-                      </AlertDescription>
-                    </Alert>
-                  )}
+                  <Alert className={cn(
+                    "border",
+                    coin.rugRisk === 'high' ? "border-destructive bg-destructive/10" :
+                    coin.rugRisk === 'medium' ? "border-warning bg-warning/10" :
+                    "border-success bg-success/10"
+                  )}>
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      <strong>Analysis based on real blockchain data:</strong> Liquidity levels, transaction activity, token age, and trading patterns.
+                      {coin.rugRisk === 'high' && ' High risk factors detected - exercise extreme caution.'}
+                      {coin.rugRisk === 'medium' && ' Moderate risk - perform additional research before investing.'}
+                      {coin.rugRisk === 'low' && ' Lower risk profile based on available metrics.'}
+                    </AlertDescription>
+                  </Alert>
+
+                  <div className="text-xs text-muted-foreground p-3 bg-muted/20 rounded-lg">
+                    <p className="font-medium mb-1">⚠️ Important Disclaimer:</p>
+                    <p>Risk assessment is based on available on-chain data. Always perform your own research, check token contracts on Solscan, verify liquidity locks, and never invest more than you can afford to lose. Meme coins are highly speculative investments.</p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
