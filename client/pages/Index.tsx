@@ -166,9 +166,6 @@ export default function Index() {
             setCoins(data.coins);
             setLastUpdate(new Date());
             console.log(`⚠️ Fallback: Using backup data (${data.coins.length} coins) - some addresses may be simulated`);
-
-            // Show warning about backup data
-            setError('Using backup data - some contract details may be simulated. Real blockchain data preferred.');
           } else {
             throw new Error('No coins available from backup API');
           }
