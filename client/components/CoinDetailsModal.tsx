@@ -319,36 +319,125 @@ export function CoinDetailsModal({ coin, isOpen, onClose }: CoinDetailsModalProp
               </Card>
             </div>
 
-            {/* Contract Address */}
+            {/* Real Contract Information */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Shield className="h-4 w-4" />
-                  <span>Contract Information</span>
+                  <span>Blockchain Verification</span>
+                  {coin.verified && (
+                    <Badge className="bg-success text-success-foreground">
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Verified
+                    </Badge>
+                  )}
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Mint Address</p>
-                    <p className="font-mono text-sm">{coin.mint}</p>
+              <CardContent className="space-y-4">
+                {/* Token Contract */}
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Token Contract Address</p>
+                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-mono text-sm truncate">{coin.mint}</p>
+                      <p className="text-xs text-muted-foreground">Solana Network</p>
+                    </div>
+                    <div className="flex space-x-1 ml-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => copyToClipboard(coin.mint)}
+                        title="Copy address"
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => window.open(coin.solscanUrl || `https://solscan.io/token/${coin.mint}`, '_blank')}
+                        title="View on Solscan"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex space-x-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => copyToClipboard(coin.mint)}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => window.open(`https://solscan.io/token/${coin.mint}`, '_blank')}
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                    </Button>
+                </div>
+
+                {/* DEX Pair Address */}
+                {coin.pairAddress && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">DEX Pair Address</p>
+                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-mono text-sm truncate">{coin.pairAddress}</p>
+                        <p className="text-xs text-muted-foreground">{coin.dexId || 'Raydium'} Pair</p>
+                      </div>
+                      <div className="flex space-x-1 ml-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => copyToClipboard(coin.pairAddress)}
+                          title="Copy pair address"
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => window.open(`https://solscan.io/address/${coin.pairAddress}`, '_blank')}
+                          title="View pair on Solscan"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
                   </div>
+                )}
+
+                {/* Transaction Data */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-3 border rounded-lg">
+                    <p className="text-sm text-muted-foreground">24h Transactions</p>
+                    <p className="text-lg font-bold">{coin.txns24h?.toLocaleString() || 'N/A'}</p>
+                    {coin.buys24h !== undefined && coin.sells24h !== undefined && (
+                      <p className="text-xs text-muted-foreground">
+                        {coin.buys24h} buys, {coin.sells24h} sells
+                      </p>
+                    )}
+                  </div>
+                  <div className="p-3 border rounded-lg">
+                    <p className="text-sm text-muted-foreground">Liquidity</p>
+                    <p className="text-lg font-bold">
+                      ${coin.liquidity >= 1000000 ?
+                        `${(coin.liquidity / 1000000).toFixed(1)}M` :
+                        coin.liquidity >= 1000 ?
+                        `${(coin.liquidity / 1000).toFixed(1)}K` :
+                        coin.liquidity.toFixed(0)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Current liquidity pool</p>
+                  </div>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => window.open(coin.dexScreenerUrl || coin.url, '_blank')}
+                    className="flex-1"
+                  >
+                    <Eye className="h-3 w-3 mr-1" />
+                    DexScreener
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => window.open(coin.jupiterUrl || `https://jup.ag/swap/SOL-${coin.mint}`, '_blank')}
+                    className="flex-1"
+                  >
+                    <Activity className="h-3 w-3 mr-1" />
+                    Trade on Jupiter
+                  </Button>
                 </div>
               </CardContent>
             </Card>
