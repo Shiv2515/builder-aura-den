@@ -207,7 +207,7 @@ export default async (req: Request, context: Context) => {
           if (b.aiScore !== a.aiScore) return b.aiScore - a.aiScore;
           return b.volume24h - a.volume24h;
         })
-        .slice(0, 15); // Top 15 coins
+        .slice(0, 25); // Top 25 coins
 
       console.log(`🎯 Filtered to ${highPotentialCoins.length} high-potential coins`);
 
