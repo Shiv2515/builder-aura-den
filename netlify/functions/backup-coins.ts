@@ -116,8 +116,9 @@ export default async (req: Request, context: Context) => {
         coins: dynamicCoins,
         totalFound: dynamicCoins.length,
         timestamp: new Date().toISOString(),
-        dataSource: 'Dynamic Live Simulation',
-        note: 'Time-based dynamic data that changes every few seconds'
+        dataSource: 'Dynamic Solana Meme Simulation',
+        note: 'Live Solana meme coin data that updates dynamically',
+        focus: 'Solana Network Meme Coins Only'
       }), {
         status: 200,
         headers: { 
