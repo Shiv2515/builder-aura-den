@@ -288,6 +288,8 @@ export default function Index() {
             setCoins(data.coins);
             setLastUpdate(new Date());
             console.log(`⚠️ Fallback: Using backup data (${data.coins.length} coins) - some addresses may be simulated`);
+            // Clear any previous errors since we have data
+            setError(null);
           } else {
             throw new Error('No coins available from backup API');
           }
@@ -301,6 +303,9 @@ export default function Index() {
           setCoins(fallbackCoins);
           setLastUpdate(new Date());
           console.log(`✅ Loaded ${fallbackCoins.length} fallback coins`);
+
+          // Set a non-blocking warning instead of blocking error
+          setError('⚠️ Using offline data - some features may be limited');
         }
       }
 
