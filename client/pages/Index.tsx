@@ -169,17 +169,29 @@ export default function Index() {
 
   const startNewScan = async () => {
     try {
-      const response = await fetch('/api/scan/start', { method: 'POST' });
+      const response = await fetch('/api/scan/start?' + Date.now(), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
       if (!response.ok) throw new Error('Failed to start scan');
-      
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Invalid response format');
+      }
+
       const data = await response.json();
-      console.log('Scan started:', data.message);
-      
-      // Wait a bit then fetch results
-      setTimeout(() => fetchCoins(), 5000);
+      console.log('✅ Scan started:', data.message);
+
+      // Immediately fetch live data instead of waiting
+      setTimeout(() => fetchCoins(true), 1000);
     } catch (err) {
       console.error('Error starting scan:', err);
-      setError('Failed to start scan. Please try again.');
+      // Don't show error, just fetch coins directly
+      fetchCoins(true);
     }
   };
 
