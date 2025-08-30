@@ -61,57 +61,6 @@ interface ScanStatus {
   };
 }
 
-// Generate fallback coins when all APIs are unreachable
-function generateFallbackCoins(): CoinData[] {
-  const memeCoins = [
-    { name: 'SolPepe', symbol: 'SPEPE', score: 75 },
-    { name: 'SolBonk', symbol: 'SBONK', score: 68 },
-    { name: 'SolShiba', symbol: 'SSHIB', score: 82 },
-    { name: 'SolMoon', symbol: 'SMOON', score: 71 },
-    { name: 'SolApe', symbol: 'SAPE', score: 64 },
-    { name: 'SolCat', symbol: 'SCAT', score: 59 },
-    { name: 'SolDoge', symbol: 'SDOGE', score: 77 },
-    { name: 'SolWif', symbol: 'SWIF', score: 73 },
-    { name: 'SolFrog', symbol: 'SFROG', score: 66 },
-    { name: 'SolLambo', symbol: 'SLAMB', score: 70 }
-  ];
-
-  return memeCoins.map((coin, index) => {
-    const currentTime = Date.now();
-    const timeVariant = Math.sin(currentTime / 100000 + index) * 50;
-    const randomFactor = Math.random() * 100 - 30;
-
-    // Generate realistic Solana address format
-    const generateAddress = () => {
-      const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz123456789';
-      return Array.from({ length: 44 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-    };
-
-    const price = 0.000001 + Math.random() * 0.01;
-    const volume = 10000 + Math.random() * 500000;
-    const change = timeVariant + randomFactor;
-    const mcap = volume * (Math.random() * 20 + 5);
-
-    return {
-      mint: generateAddress(),
-      name: coin.name,
-      symbol: coin.symbol,
-      price,
-      change24h: change,
-      volume,
-      mcap,
-      aiScore: coin.score + Math.floor((timeVariant + randomFactor) / 10),
-      rugRisk: coin.score > 70 ? 'low' : coin.score > 60 ? 'medium' : 'high',
-      whaleActivity: Math.floor(Math.random() * 80) + 20,
-      socialBuzz: Math.floor(Math.random() * 60) + 40,
-      prediction: change > 10 ? 'bullish' : change < -10 ? 'bearish' : 'neutral',
-      holders: Math.floor(volume / 2000) + 500,
-      liquidity: volume * 0.2,
-      createdAt: currentTime - Math.random() * 86400000 * 30,
-      reasoning: `🔄 OFFLINE DATA - ${coin.name} community meme with ${coin.score}% AI confidence (fallback mode)`
-    } as CoinData;
-  });
-}
 
 export default function Index() {
   const [coins, setCoins] = useState<CoinData[]>([]);
