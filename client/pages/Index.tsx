@@ -72,7 +72,12 @@ export default function Index() {
 
   const fetchScanStatus = async () => {
     try {
-      const response = await fetch('/api/scan/status?' + Date.now()); // Cache busting
+      let apiUrl = '/api/scan/status?' + Date.now();
+      if (window.location.hostname.includes('fly.dev') || window.location.hostname.includes('localhost')) {
+        apiUrl = 'https://pulsesignal-ai.netlify.app/api/scan/status?' + Date.now();
+      }
+
+      const response = await fetch(apiUrl); // Cache busting
       if (!response.ok) throw new Error('Failed to fetch scan status');
 
       const contentType = response.headers.get('content-type');
