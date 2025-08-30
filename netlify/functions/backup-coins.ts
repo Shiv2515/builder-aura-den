@@ -63,8 +63,9 @@ export default async (req: Request, context: Context) => {
         coins: liveCoins,
         totalFound: liveCoins.length,
         timestamp: new Date().toISOString(),
-        dataSource: 'CoinGecko Trending - Live Data',
-        note: 'Backup data source providing real trending cryptocurrencies'
+        dataSource: 'CoinGecko Trending - Solana Meme Focus',
+        note: 'Backup data source providing Solana meme coin alternatives',
+        focus: 'Solana Network Meme Coins Only'
       }), {
         status: 200,
         headers: { 
