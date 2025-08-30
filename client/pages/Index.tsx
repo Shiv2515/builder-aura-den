@@ -304,7 +304,7 @@ export default function Index() {
                   {scanStatus?.isScanning ? 'Scanning Solana Network...' : 'Monitoring Market'}
                 </span>
                 <span className="text-foreground">
-                  {scanStatus?.isScanning ? `${scanStatus.scanProgress}% Complete` : 'Ready'}
+                  {scanStatus?.isScanning ? `${scanStatus.scanProgress || 0}% Complete` : 'Ready'}
                 </span>
               </div>
               <Progress 
