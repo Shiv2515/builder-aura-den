@@ -157,8 +157,8 @@ export default async (req: Request, context: Context) => {
 
     console.log('🎭 Fetching live Solana meme coins from DexScreener...');
 
-    // Fetch trending pairs from DexScreener
-    const trendingUrl = 'https://api.dexscreener.com/latest/dex/pairs/solana'; // All Solana pairs
+    // Fetch trending Solana pairs from DexScreener
+    const trendingUrl = 'https://api.dexscreener.com/latest/dex/search/?q=solana'; // Search for Solana pairs
     
     try {
       const response = await fetch(trendingUrl);
