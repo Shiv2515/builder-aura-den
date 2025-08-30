@@ -111,19 +111,32 @@ export default function Index() {
         }
 
         const response = await fetch(apiUrl); // Cache busting
+        console.log(`🔍 API Response Status: ${response.status}`);
+        console.log(`🔍 API Response Headers:`, Object.fromEntries(response.headers.entries()));
 
         if (!response.ok) {
-          throw new Error(`API responded with status: ${response.status}`);
+          const errorText = await response.text();
+          console.error(`❌ API Error Response:`, errorText);
+          throw new Error(`API responded with status: ${response.status} - ${errorText}`);
         }
 
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
+          const responseText = await response.text();
+          console.error(`❌ Non-JSON Response:`, responseText);
           throw new Error(`Expected JSON, got ${contentType}`);
         }
 
         const data = await response.json();
+        console.log(`🔍 API Response Data:`, {
+          success: data.success,
+          coinsLength: data.coins?.length,
+          totalFound: data.totalFound,
+          dataSource: data.dataSource
+        });
 
         if (!data.success) {
+          console.error(`❌ API Unsuccessful:`, data);
           throw new Error(data.error || 'API returned unsuccessful response');
         }
 
