@@ -576,7 +576,11 @@ export default function Index() {
                     key={`${coin.mint}-${index}`}
                     className={cn(
                       "p-4 rounded-lg border transition-all duration-300",
-                      coin.aiScore > 80 ? "border-success bg-success/5 pulse-glow" : "border-border bg-background/50",
+                      // Only show as high potential if safe (no rug pull risk)
+                      (coin.aiScore > 70 && coin.rugRisk === 'low' && coin.liquidity > 50000 && coin.change24h > -30) ? "border-success bg-success/5 pulse-glow" :
+                      // Show as risky if multiple risk factors
+                      (coin.rugRisk === 'high' || coin.liquidity < 10000 || coin.change24h < -50) ? "border-destructive bg-destructive/5" :
+                      "border-border bg-background/50",
                       "hover:border-primary/50"
                     )}
                   >
