@@ -804,7 +804,7 @@ class SolanaScanner {
         volume,
         mcap,
         aiScore,
-        rugRisk: aiScore > 70 ? 'low' : aiScore > 40 ? 'medium' : 'high',
+        rugRisk: this.calculateRugRisk(tokenData, liquidityData, aiScore, volume, mcap),
         whaleActivity: Math.floor(whaleActivity),
         socialBuzz: Math.floor(socialBuzz),
         prediction: aiScore > 65 ? 'bullish' : aiScore < 35 ? 'bearish' : 'neutral',
