@@ -230,16 +230,7 @@ export default function Index() {
 
         } catch (fallbackError) {
           console.error('❌ All APIs failed:', fallbackError);
-          console.log('🔄 Using local fallback data...');
-
-          // Use local fallback data when all APIs fail
-          const fallbackCoins = generateFallbackCoins();
-          setCoins(fallbackCoins);
-          setLastUpdate(new Date());
-          console.log(`✅ Loaded ${fallbackCoins.length} fallback coins`);
-
-          // Set a non-blocking warning instead of blocking error
-          setError('⚠️ Using offline data - some features may be limited');
+          setError('Unable to connect to coin data APIs. Please check your connection.');
         }
       }
 
