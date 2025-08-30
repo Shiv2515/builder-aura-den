@@ -57,7 +57,8 @@ export class Database {
       return result;
     } catch (error) {
       console.error('❌ Database query error:', error);
-      throw error;
+      // Return empty result instead of throwing to make database optional
+      return { rows: [], rowCount: 0 };
     }
   }
 
@@ -85,10 +86,10 @@ export class Database {
   // Health check
   async healthCheck(): Promise<boolean> {
     try {
-      const result = await this.query('SELECT NOW() as server_time');
+      const result = await this.pool.query('SELECT NOW() as server_time');
       return result.rows.length > 0;
     } catch (error) {
-      console.error('❌ Database health check failed:', error);
+      console.warn('⚠️ Database health check failed (database optional):', error.message);
       return false;
     }
   }
@@ -97,15 +98,15 @@ export class Database {
   async initialize(): Promise<void> {
     try {
       console.log('🔄 Initializing database...');
-      
+
       // Check if tables exist
       const tablesExist = await this.query(`
-        SELECT COUNT(*) as count 
-        FROM information_schema.tables 
+        SELECT COUNT(*) as count
+        FROM information_schema.tables
         WHERE table_schema = 'public' AND table_name = 'tokens'
       `);
 
-      if (parseInt(tablesExist.rows[0].count) === 0) {
+      if (parseInt(tablesExist.rows[0]?.count || '0') === 0) {
         console.log('📋 Creating database schema...');
         // In production, you'd run migrations instead
         console.log('⚠️ Please run the schema.sql file manually to create tables');
@@ -115,10 +116,10 @@ export class Database {
 
       // Insert default data sources
       await this.insertDefaultDataSources();
-      
+
     } catch (error) {
-      console.error('❌ Database initialization failed:', error);
-      throw error;
+      console.warn('⚠️ Database initialization failed (database optional):', error.message);
+      // Don't throw error - make database optional for development
     }
   }
 
