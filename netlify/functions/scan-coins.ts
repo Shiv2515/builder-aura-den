@@ -155,8 +155,8 @@ export default async (req: Request, context: Context) => {
       });
     }
 
-    console.log('🔄 Fetching live Solana token data from DexScreener...');
-    
+    console.log('🎭 Fetching live Solana meme coins from DexScreener...');
+
     // Fetch Solana pairs from DexScreener search
     const trendingUrl = 'https://api.dexscreener.com/latest/dex/search/?q=SOL';
     
