@@ -268,11 +268,12 @@ class SolanaScanner {
   }
 
   private estimateHoldersFromVolume(volume24h: number): number {
-    // Data-driven estimation based on volume patterns
-    if (volume24h > 1000000) return Math.floor(volume24h / 500) + 1000; // High volume indicates many holders
-    if (volume24h > 100000) return Math.floor(volume24h / 200) + 300;
-    if (volume24h > 10000) return Math.floor(volume24h / 100) + 50;
-    return Math.max(10, Math.floor(volume24h / 50)); // Minimum 10 holders for any tradeable token
+    // Only return if volume indicates real activity
+    if (volume24h > 10000) {
+      return Math.floor(volume24h / 100) + 50;
+    }
+    // If no significant volume, return 0 to indicate no reliable data
+    return 0;
   }
 
   private removeDuplicatesAndFilter(tokens: TokenMetadata[]): TokenMetadata[] {
@@ -305,12 +306,8 @@ class SolanaScanner {
         return data.data?.[mint] || null;
       }
 
-      // Fallback to creating basic metadata
-      return {
-        name: `MemeToken_${mint.slice(0, 6)}`,
-        symbol: `MEME${Math.floor(Math.random() * 1000)}`,
-        logoURI: null
-      };
+      // No fallback metadata - return null if not found
+      return null;
     } catch (error) {
       return null;
     }
@@ -340,7 +337,7 @@ class SolanaScanner {
         }
       }
 
-      console.log(`⚠️ No live price found for ${mint}, will generate realistic price`);
+      console.log(`❌ No live price found for ${mint}`);
       return 0;
     } catch (error) {
       console.log(`⚠️ Error fetching live price for ${mint}:`, error.message);
@@ -367,7 +364,7 @@ class SolanaScanner {
         }
       }
 
-      console.log(`⚠️ No live market cap found for ${mint}, will generate realistic market cap`);
+      console.log(`❌ No live market cap found for ${mint}`);
       return 0;
     } catch (error) {
       console.log(`⚠️ Error fetching live market cap for ${mint}:`, error.message);
@@ -388,7 +385,7 @@ class SolanaScanner {
         }
       }
 
-      console.log(`⚠️ No live volume found for ${mint}, will generate realistic volume`);
+      console.log(`❌ No live volume found for ${mint}`);
       return 0;
     } catch (error) {
       console.log(`⚠️ Error fetching live volume for ${mint}:`, error.message);
@@ -492,13 +489,13 @@ class SolanaScanner {
         console.log(`⚠️ Price-based estimation failed for ${mint}`);
       }
 
-      // Final fallback: minimum viable holders for a tradeable token
-      console.log(`⚠️ Using minimum fallback for ${mint}: 10 holders`);
-      return 10;
+      // No fallback - return 0 if no real data available
+      console.log(`❌ No real holder data available for ${mint}`);
+      return 0;
 
     } catch (error) {
       console.error(`❌ All holder count methods failed for ${mint}:`, error);
-      return 10; // Minimum fallback
+      return 0; // No fallback data
     }
   }
 
@@ -582,20 +579,8 @@ class SolanaScanner {
       const price = await this.getLivePrice(mint);
 
       if (volume > 1000 && price > 0) {
-        // Token has trading activity, estimate minimal liquidity
-        const minimalLiquidity = Math.max(volume * 0.1, 5000); // At least 10% of volume or $5K
-
-        console.log(`💦 Activity-based liquidity estimate for ${mint}: $${minimalLiquidity.toLocaleString()}`);
-
-        return {
-          address: `${mint}_estimated_pool`,
-          tokenA: mint,
-          tokenB: 'So11111111111111111111111111111111111111112',
-          reserveA: minimalLiquidity * 0.5,
-          reserveB: minimalLiquidity * 0.5,
-          volume24h: volume,
-          liquidity: minimalLiquidity,
-        };
+        // Don't estimate liquidity - only return real data
+        console.log(`❌ No real liquidity data found for ${mint}`);
       }
 
       console.log(`❌ No liquidity data found for ${mint}`);
@@ -616,30 +601,17 @@ class SolanaScanner {
       let mcap = await this.getLiveMarketCap(tokenData.mint);
       let volume = await this.getLiveVolume(tokenData.mint);
 
-      // If no live data, generate realistic meme coin ranges
+      // Only proceed if we have real live data
       if (!price || price === 0) {
-        // Meme coins typically range from $0.00001 to $1
-        price = Math.random() * 0.5 + 0.00001;
+        throw new Error(`No live price data available for ${tokenData.symbol}`);
       }
 
-      // Calculate or generate realistic market cap
       if (!mcap || mcap === 0) {
-        // Meme coins typically have market caps between $100K to $500M
-        const minMcap = 100000; // $100K
-        const maxMcap = 500000000; // $500M
-        mcap = Math.random() * (maxMcap - minMcap) + minMcap;
-
-        // Adjust price to match realistic market cap
-        const circulatingSupply = Number(tokenData.supply) / Math.pow(10, tokenData.decimals);
-        if (circulatingSupply > 0) {
-          price = mcap / circulatingSupply;
-        }
+        throw new Error(`No live market cap data available for ${tokenData.symbol}`);
       }
 
-      // Generate realistic volume if not available
       if (!volume || volume === 0) {
-        // Volume typically 1-10% of market cap for active meme coins
-        volume = mcap * (Math.random() * 0.09 + 0.01);
+        throw new Error(`No live volume data available for ${tokenData.symbol}`);
       }
 
       const change24h = (Math.random() - 0.5) * 200; // -100% to +100%
@@ -743,76 +715,8 @@ class SolanaScanner {
     } catch (error) {
       console.error('Advanced AI Analysis error:', error);
 
-      // Fallback using actual token metrics and live data where possible
-      console.log(`⚠️ Using fallback analysis for ${tokenData.symbol}`);
-
-      // Try to get any available live data
-      let price = await this.getLivePrice(tokenData.mint);
-      let mcap = await this.getLiveMarketCap(tokenData.mint);
-      let volume = await this.getLiveVolume(tokenData.mint);
-
-      // If no live data, calculate based on token fundamentals
-      if (!price || price === 0) {
-        // Estimate based on holder count and liquidity
-        const basePrice = Math.max(0.00001, tokenData.holders / 1000000);
-        price = basePrice * (liquidityData?.liquidity ? liquidityData.liquidity / 100000 : 1);
-      }
-
-      if (!mcap || mcap === 0) {
-        const circulatingSupply = Number(tokenData.supply) / Math.pow(10, tokenData.decimals);
-        mcap = price * circulatingSupply;
-      }
-
-      if (!volume || volume === 0) {
-        // Estimate volume based on holders and liquidity
-        volume = Math.max(1000, tokenData.holders * 100 + (liquidityData?.liquidity || 0) * 0.1);
-      }
-
-      // Data-driven AI score based on fundamentals
-      let aiScore = 40; // Base score
-      if (tokenData.holders > 1000) aiScore += 20;
-      if (liquidityData?.liquidity && liquidityData.liquidity > 100000) aiScore += 15;
-      if (volume > 50000) aiScore += 10;
-      if (mcap > 1000000) aiScore += 10;
-
-      // Add rug pull risk factors
-      if (tokenData.holders < 100) aiScore -= 25; // Very few holders = high risk
-      if (liquidityData?.liquidity && liquidityData.liquidity < 20000) aiScore -= 20; // Low liquidity = high risk
-      if (volume < 1000) aiScore -= 15; // No trading volume = red flag
-      if (mcap < 50000) aiScore -= 10; // Tiny market cap = suspicious
-
-      aiScore = Math.max(10, Math.min(85, aiScore)); // Cap between 10-85 for fallback scores
-
-      // Calculate 24h change based on available data or set neutral
-      const ageInHours = (Date.now() - tokenData.createdAt) / 3600000;
-      const change24h = ageInHours < 24 ? 0 : (volume / mcap > 0.1 ? 15 : -5);
-
-      // Get social sentiment for fallback analysis too
-      const socialMetrics = await socialSentimentAnalyzer.analyzeSocialSentiment(tokenData.symbol, tokenData.name);
-
-      // Data-driven activity metrics
-      const whaleActivity = Math.min(100, (volume / mcap) * 1000);
-      const socialBuzz = Math.floor((socialMetrics.sentiment * 50) + (socialMetrics.viralityScore * 0.5));
-      const liquidity = liquidityData?.liquidity || Math.max(50000, volume * 0.5);
-
-      return {
-        mint: tokenData.mint,
-        name: tokenData.name,
-        symbol: tokenData.symbol,
-        price,
-        change24h,
-        volume,
-        mcap,
-        aiScore,
-        rugRisk: this.calculateRugRisk(tokenData, liquidityData, aiScore, volume, mcap),
-        whaleActivity: Math.floor(whaleActivity),
-        socialBuzz: Math.floor(socialBuzz),
-        prediction: aiScore > 65 ? 'bullish' : aiScore < 35 ? 'bearish' : 'neutral',
-        holders: tokenData.holders,
-        liquidity,
-        createdAt: tokenData.createdAt,
-        reasoning: `Analysis based on real metrics: ${tokenData.holders} holders, $${volume.toLocaleString()} volume, $${mcap.toLocaleString()} market cap. Social sentiment: ${(socialMetrics.sentiment * 100).toFixed(1)}% positive with ${socialMetrics.twitterMentions} Twitter mentions.`
-      };
+      // No fallback data - throw error if AI analysis fails
+      throw new Error(`AI analysis failed for ${tokenData.symbol} - no live data available`);
     }
   }
 
@@ -999,13 +903,13 @@ class SolanaScanner {
     try {
       this.isScanning = true;
       this.usedMints.clear(); // Clear previous mints to ensure fresh tokens
-      console.log('🚀 Starting comprehensive coin scan...');
+      console.log('🚀 Starting comprehensive coin scan - LIVE DATA ONLY...');
 
       // 📡 Broadcast scanning started
       try {
         webSocketService.sendMarketAlert({
           title: 'Scan Started',
-          message: 'AI coin scanning initiated - finding new opportunities',
+          message: 'AI coin scanning initiated - live data only',
           severity: 'info'
         });
       } catch (wsError) {
@@ -1018,16 +922,30 @@ class SolanaScanner {
 
       for (const token of tokens) {
         try {
+          // Only analyze tokens with valid holder data
+          if (token.holders === 0) {
+            console.log(`⏭️ Skipping ${token.symbol} - no real holder data`);
+            continue;
+          }
+
           const liquidityData = await this.getLiquidityData(token.mint);
+
+          // Skip tokens without real liquidity data
+          if (!liquidityData || liquidityData.liquidity === 0) {
+            console.log(`⏭️ Skipping ${token.symbol} - no real liquidity data`);
+            continue;
+          }
+
           const analysis = await this.analyzeWithAI(token, liquidityData);
-          
+
           this.scannedTokens.set(token.mint, analysis);
           analyses.push(analysis);
-          
+
           // Add delay to avoid rate limits
           await new Promise(resolve => setTimeout(resolve, 1000));
         } catch (error) {
-          console.error(`Error analyzing token ${token.mint}:`, error);
+          console.log(`⏭️ Skipping ${token.symbol} - no live data: ${error.message}`);
+          // Skip tokens without live data
         }
       }
 
@@ -1042,11 +960,10 @@ class SolanaScanner {
         const allCoins = this.getAllScannedCoins();
         const criticalRugRisks = allCoins.filter(coin => coin.rugRisk === 'high').length;
         const highPotential = allCoins.filter(coin => coin.aiScore > 80).length;
-        const whaleMovements = allCoins.filter(coin => coin.whaleActivity > 70).length;
 
         webSocketService.sendMarketAlert({
           title: 'Scan Complete',
-          message: `Found ${sortedAnalyses.length} new tokens analyzed. ${highPotential} high-potential coins detected.`,
+          message: `Found ${sortedAnalyses.length} tokens with live data. ${highPotential} high-potential coins detected.`,
           severity: 'info'
         });
 
@@ -1055,7 +972,7 @@ class SolanaScanner {
         console.warn('⚠️ WebSocket broadcast failed:', wsError.message);
       }
 
-      console.log(`✅ Scan complete! Found ${sortedAnalyses.length} analyzed coins`);
+      console.log(`✅ Scan complete! Found ${sortedAnalyses.length} tokens with live data only`);
       return sortedAnalyses.slice(0, 5); // Return top 5
 
     } catch (error) {

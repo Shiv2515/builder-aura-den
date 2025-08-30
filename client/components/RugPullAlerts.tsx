@@ -63,14 +63,7 @@ export function RugPullAlerts() {
       // Analyze each coin for rug pull risks
       const rugPullAlerts: RugPullAlert[] = [];
 
-      // Create alerts directly from coin data first (immediate analysis)
-      for (const coin of coins.slice(0, 15)) {
-        if (coin.rugRisk === 'high' || coin.aiScore < 35) {
-          // Create alert from coin data directly
-          const alert = createQuickAlert(coin);
-          if (alert) rugPullAlerts.push(alert);
-        }
-      }
+      // Only create alerts from detailed contract analysis - no quick fallback alerts
 
       // Then try detailed contract analysis for top risk coins
       for (const coin of coins.slice(0, 5)) {
@@ -95,7 +88,7 @@ export function RugPullAlerts() {
           }
         } catch (error) {
           console.warn(`Contract analysis failed for ${coin.symbol}:`, error);
-          // Keep the quick alert if detailed analysis fails
+          // No fallback alerts - only real contract analysis
         }
       }
 
@@ -108,42 +101,7 @@ export function RugPullAlerts() {
     }
   };
 
-  const createQuickAlert = (coin: any): RugPullAlert | null => {
-    if (coin.rugRisk !== 'high' && coin.aiScore >= 35) {
-      return null;
-    }
-
-    const reasons: string[] = [];
-
-    if (coin.rugRisk === 'high') {
-      reasons.push('High rug pull risk detected by AI analysis');
-    }
-
-    if (coin.aiScore < 35) {
-      reasons.push(`Low AI confidence score: ${coin.aiScore}%`);
-    }
-
-    if (coin.liquidity < 50000) {
-      reasons.push('Low liquidity - high manipulation risk');
-    }
-
-    if (coin.whaleActivity > 80) {
-      reasons.push('Unusual whale activity detected');
-    }
-
-    return {
-      id: coin.mint,
-      coinName: coin.name,
-      coinSymbol: coin.symbol,
-      riskLevel: coin.rugRisk === 'high' ? 'critical' : 'high',
-      reasons: reasons.slice(0, 3),
-      timestamp: Date.now(),
-      dismissed: false,
-      liquidityChange: coin.rugRisk === 'high' ? -40 : -20,
-      holderChange: coin.rugRisk === 'high' ? -25 : -10,
-      confidence: coin.rugRisk === 'high' ? 85 : 70
-    };
-  };
+  // Removed createQuickAlert - only use real contract analysis data
 
   const createAlertFromAnalysis = (coin: any, analysis: any): RugPullAlert | null => {
     const rugPullProb = analysis.riskFactors?.rugPullProbability || 0;
