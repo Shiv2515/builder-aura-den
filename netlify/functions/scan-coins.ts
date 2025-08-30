@@ -157,10 +157,10 @@ export default async (req: Request, context: Context) => {
           const txns24h = (pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0);
           
           return (
-            volume24h > 5000 &&  // Minimum volume
-            priceChange24h > -90 && // Not completely rugged
-            priceChange24h < 1000 && // Not obviously manipulated
-            txns24h > 10 &&  // Some activity
+            volume24h > 1000 &&  // Lowered minimum volume
+            priceChange24h > -95 && // Allow more crashed tokens
+            priceChange24h < 2000 && // Allow bigger pumps
+            txns24h > 5 &&  // Reduced transaction requirement
             pair.baseToken.symbol !== 'SOL' && // Not SOL itself
             pair.baseToken.symbol !== 'WSOL' && // Not wrapped SOL
             pair.baseToken.symbol !== 'USDC' && // Not stablecoins
