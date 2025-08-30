@@ -150,13 +150,13 @@ export default function Index() {
         });
 
       } catch (fetchError) {
-        console.error('❌ Backup API failed:', fetchError);
+        console.error('❌ Real API failed, trying backup:', fetchError);
 
-        // Try original API as fallback
+        // Fallback to backup API if real API fails
         try {
-          let fallbackUrl = `/api/scan/coins?${Date.now()}`;
+          let fallbackUrl = `/api/backup-coins?${Date.now()}`;
           if (window.location.hostname.includes('fly.dev') || window.location.hostname.includes('localhost')) {
-            fallbackUrl = `https://pulsesignal-ai.netlify.app/api/scan/coins?${Date.now()}`;
+            fallbackUrl = `https://pulsesignal-ai.netlify.app/api/backup-coins?${Date.now()}`;
           }
 
           const response = await fetch(fallbackUrl);
@@ -165,9 +165,12 @@ export default function Index() {
           if (data.success && data.coins && data.coins.length > 0) {
             setCoins(data.coins);
             setLastUpdate(new Date());
-            console.log(`✅ Fallback: Loaded ${data.coins.length} coins from ${data.dataSource}`);
+            console.log(`⚠️ Fallback: Using backup data (${data.coins.length} coins) - some addresses may be simulated`);
+
+            // Show warning about backup data
+            setError('Using backup data - some contract details may be simulated. Real blockchain data preferred.');
           } else {
-            throw new Error('No coins available from any API');
+            throw new Error('No coins available from backup API');
           }
 
         } catch (fallbackError) {
