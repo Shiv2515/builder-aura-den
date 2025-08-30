@@ -247,15 +247,16 @@ export default async (req: Request, context: Context) => {
         })
         .slice(0, 20); // Top 20 Solana meme coins
 
-      console.log(`🎯 Filtered to ${highPotentialCoins.length} high-potential coins`);
+      console.log(`🎭 Filtered to ${solanaMemeCoins.length} Solana meme coins`);
 
       return new Response(JSON.stringify({
         success: true,
-        coins: highPotentialCoins,
-        totalFound: highPotentialCoins.length,
+        coins: solanaMemeCoins,
+        totalFound: solanaMemeCoins.length,
         timestamp: new Date().toISOString(),
-        dataSource: 'DexScreener API - Live Data',
-        totalPairsScanned: pairs.length
+        dataSource: 'DexScreener API - Solana Meme Coins',
+        totalPairsScanned: pairs.length,
+        focus: 'Solana Network Meme Coins Only'
       }), {
         status: 200,
         headers: { 
