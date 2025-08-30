@@ -98,7 +98,14 @@ export default function Index() {
       console.log('🔄 Fetching live crypto data...');
 
       try {
-        const response = await fetch('/api/backup-coins?' + Date.now()); // Cache busting
+        // Try local API first, then fallback to Netlify if on dev server
+        let apiUrl = '/api/backup-coins?' + Date.now();
+        if (window.location.hostname.includes('fly.dev') || window.location.hostname.includes('localhost')) {
+          apiUrl = 'https://pulsesignal-ai.netlify.app/api/backup-coins?' + Date.now();
+          console.log('🔄 Using Netlify API from dev server');
+        }
+
+        const response = await fetch(apiUrl); // Cache busting
 
         if (!response.ok) {
           throw new Error(`API responded with status: ${response.status}`);
