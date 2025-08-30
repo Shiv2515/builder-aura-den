@@ -140,10 +140,12 @@ export default function Index() {
           throw new Error(data.error || 'API returned unsuccessful response');
         }
 
+        console.log(`🔍 Setting coins in state:`, data.coins?.slice(0, 3)); // Log first 3 coins
         setCoins(data.coins || []);
         setLastUpdate(new Date());
 
         console.log(`✅ Loaded ${data.coins?.length || 0} coins from ${data.dataSource}`);
+        console.log(`🔍 Coins state will be updated with:`, data.coins?.length, 'coins');
 
         // Identify rug pull risks based on real data
         const rugPullCoins = data.coins?.filter((coin: any) => {
