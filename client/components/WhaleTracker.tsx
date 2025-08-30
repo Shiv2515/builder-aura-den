@@ -142,7 +142,7 @@ export function WhaleTracker() {
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-foreground">
-              {formatAmount(whaleData.largestMovement.amount)}
+              {whaleData.largestMovement ? formatAmount(whaleData.largestMovement.amount) : '$0'}
             </p>
             <p className="text-sm text-muted-foreground">Largest Move</p>
           </div>
