@@ -116,12 +116,7 @@ export default async (req: Request, context: Context) => {
         focus: 'Solana Network Meme Coins Only'
       }), {
         status: 200,
-        headers: { 
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type'
-        }
+        headers
       });
       
     } catch (apiError) {
@@ -207,24 +202,19 @@ export default async (req: Request, context: Context) => {
         focus: 'Solana Network Meme Coins Only'
       }), {
         status: 200,
-        headers: { 
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type'
-        }
+        headers
       });
     }
     
   } catch (error) {
     console.error('💥 Backup coins error:', error);
-    return new Response(JSON.stringify({ 
+    return new Response(JSON.stringify({
       error: 'Internal server error',
       details: error.message,
       success: false
-    }), { 
+    }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      headers
     });
   }
 };
