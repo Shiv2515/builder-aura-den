@@ -309,7 +309,8 @@ export default function Index() {
                 const excludedTokens = ['SOL', 'WSOL', 'USDC', 'USDT'];
                 if (excludedTokens.includes(symbol)) return false;
 
-                const excludePatterns = ['swap', 'pool', 'vault', 'strategy', 'protocol', 'finance', 'defi', 'yield', 'farm'];
+                // Only exclude obvious DeFi protocols, keep most tokens
+                const excludePatterns = ['uniswap', 'compound', 'aave', 'curve'];
                 const nameSymbolLower = (name + ' ' + symbol).toLowerCase();
                 if (excludePatterns.some((pattern: string) => nameSymbolLower.includes(pattern))) return false;
 
