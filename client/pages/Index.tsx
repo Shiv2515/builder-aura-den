@@ -71,6 +71,40 @@ export default function Index() {
   const [selectedCoin, setSelectedCoin] = useState<CoinData | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
+  // Calculate real scan status from coin data
+  const updateScanStatusFromCoins = (coinData: CoinData[]) => {
+    const rugPullsDetected = coinData.filter(coin => {
+      let riskScore = 0;
+      if (coin.rugRisk === 'high') riskScore += 40;
+      if (coin.liquidity < 10000) riskScore += 30;
+      if (coin.change24h < -50) riskScore += 20;
+      return riskScore >= 50;
+    }).length;
+
+    const highPotentialCoins = coinData.filter(coin =>
+      coin.aiScore > 70 &&
+      coin.rugRisk === 'low' &&
+      coin.liquidity > 50000 &&
+      coin.change24h > -30
+    ).length;
+
+    setScanStatus({
+      isScanning: false,
+      lastScanTime: Date.now(),
+      totalScanned: coinData.length,
+      rugPullsDetected,
+      highPotentialCoins,
+      scanProgress: 100,
+      nextScanIn: 30000,
+      stats: {
+        averageAiScore: coinData.length > 0 ? coinData.reduce((sum, coin) => sum + coin.aiScore, 0) / coinData.length : 0,
+        bullishCoins: coinData.filter(c => c.prediction === 'bullish').length,
+        bearishCoins: coinData.filter(c => c.prediction === 'bearish').length,
+        whaleMovements: coinData.filter(c => c.whaleActivity > 60).length
+      }
+    });
+  };
+
   const fetchScanStatus = async () => {
     try {
       let apiUrl = '/.netlify/functions/scan-status?' + Date.now();
