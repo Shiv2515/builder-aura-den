@@ -335,7 +335,7 @@ class SolanaScanner {
         const data = await dexResponse.json();
         const pair = data.pairs?.[0];
         if (pair?.priceUsd) {
-          console.log(`�� Got live price from DexScreener for ${mint}: $${pair.priceUsd}`);
+          console.log(`📈 Got live price from DexScreener for ${mint}: $${pair.priceUsd}`);
           return parseFloat(pair.priceUsd);
         }
       }
@@ -723,32 +723,19 @@ class SolanaScanner {
         timingAnalysis
       };
 
-      // 📡 Broadcast real-time coin analysis update
+      // 📡 Send high-value coin alerts via WebSocket
       try {
-        webSocketService.broadcastTokenPrice({
-          mint: tokenData.mint,
-          symbol: tokenData.symbol,
-          price,
-          change24h,
-          volume,
-          mcap,
-          timestamp: Date.now()
-        });
-
-        webSocketService.broadcastAIPrediction({
-          mint: tokenData.mint,
-          symbol: tokenData.symbol,
-          aiScore: ensembleResult.finalScore,
-          prediction: ensembleResult.consensusPrediction,
-          rugRisk: ensembleResult.consensusRisk,
-          whaleActivity: 100 - ensembleResult.advancedMetrics.whaleManipulation,
-          reasoning: enhancedReasoning,
-          timestamp: Date.now()
-        });
-
-        console.log(`📡 Broadcasted live update for ${tokenData.symbol}`);
+        if (ensembleResult.finalScore > 80) {
+          webSocketService.sendMarketAlert({
+            title: `High Potential Coin Detected`,
+            message: `${tokenData.symbol} scored ${ensembleResult.finalScore}% with ${ensembleResult.consensusPrediction} prediction`,
+            severity: 'info',
+            token_mint: tokenData.mint
+          });
+          console.log(`📡 Sent market alert for high-potential ${tokenData.symbol}`);
+        }
       } catch (wsError) {
-        console.warn(`⚠️ WebSocket broadcast failed for ${tokenData.symbol}:`, wsError.message);
+        console.warn(`⚠️ WebSocket alert failed for ${tokenData.symbol}:`, wsError.message);
       }
 
       return analysisResult;
@@ -964,8 +951,7 @@ class SolanaScanner {
         webSocketService.sendMarketAlert({
           title: 'Scan Started',
           message: 'AI coin scanning initiated - finding new opportunities',
-          type: 'info',
-          timestamp: Date.now()
+          severity: 'info'
         });
       } catch (wsError) {
         console.warn('⚠️ WebSocket broadcast failed:', wsError.message);
@@ -1003,23 +989,10 @@ class SolanaScanner {
         const highPotential = allCoins.filter(coin => coin.aiScore > 80).length;
         const whaleMovements = allCoins.filter(coin => coin.whaleActivity > 70).length;
 
-        webSocketService.broadcastPerformanceMetrics({
-          totalScanned: allCoins.length,
-          rugPullsDetected: criticalRugRisks,
-          highPotentialCoins: highPotential,
-          whaleMovements,
-          averageAiScore: allCoins.length > 0 ?
-            Math.round(allCoins.reduce((sum, coin) => sum + coin.aiScore, 0) / allCoins.length) : 0,
-          lastScanTime: this.lastScanTime,
-          isScanning: false,
-          timestamp: Date.now()
-        });
-
         webSocketService.sendMarketAlert({
           title: 'Scan Complete',
           message: `Found ${sortedAnalyses.length} new tokens analyzed. ${highPotential} high-potential coins detected.`,
-          type: 'success',
-          timestamp: Date.now()
+          severity: 'info'
         });
 
         console.log(`📡 Broadcasted scan completion metrics`);
