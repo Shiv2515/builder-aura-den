@@ -416,23 +416,21 @@ export default function Index() {
         setIsLoading(true);
         console.log('🚀 App starting - fetching directly from DexScreener...');
 
-        // Try multiple API endpoints to get more coins
-        let pairs = [];
+        // Use the most reliable DexScreener endpoint
+        console.log('🔍 Fetching from DexScreener pairs endpoint...');
+        const response = await fetch('https://api.dexscreener.com/latest/dex/pairs/solana', {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+          }
+        });
 
-        try {
-          // First try trending endpoint
-          const trendingResponse = await fetch('https://api.dexscreener.com/latest/dex/tokens/trending');
-          const trendingData = await trendingResponse.json();
-          pairs = trendingData.pairs || [];
-          console.log(`📈 Trending API returned ${pairs.length} pairs`);
-        } catch (trendingError) {
-          console.log('❌ Trending API failed, trying search...');
-          // Fallback to search if trending fails
-          const searchResponse = await fetch('https://api.dexscreener.com/latest/dex/search/?q=SOL');
-          const searchData = await searchResponse.json();
-          pairs = searchData.pairs || [];
-          console.log(`🔍 Search API returned ${pairs.length} pairs`);
+        if (!response.ok) {
+          throw new Error(`DexScreener API returned ${response.status}: ${response.statusText}`);
         }
+
+        const data = await response.json();
+        const pairs = data.pairs || [];
 
         console.log(`📊 Raw DexScreener pairs received: ${pairs.length}`);
 
