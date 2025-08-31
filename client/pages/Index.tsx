@@ -416,22 +416,37 @@ export default function Index() {
         setIsLoading(true);
         console.log('🚀 App starting - fetching directly from DexScreener...');
 
-        // Use correct DexScreener search endpoint
-        console.log('🔍 Fetching from DexScreener search endpoint...');
-        const response = await fetch('https://api.dexscreener.com/latest/dex/search?q=solana', {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-          }
-        });
+        // Use multiple search terms to get more tokens
+        console.log('🔍 Fetching multiple search results from DexScreener...');
 
-        if (!response.ok) {
-          throw new Error(`DexScreener API returned ${response.status}: ${response.statusText}`);
+        const searchTerms = ['bonk', 'wif', 'pepe', 'dogwifhat', 'solana'];
+        let allPairs = [];
+
+        for (const term of searchTerms) {
+          try {
+            const response = await fetch(`https://api.dexscreener.com/latest/dex/search?q=${term}`, {
+              method: 'GET',
+              headers: { 'Accept': 'application/json' }
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              const termPairs = data.pairs || [];
+              allPairs.push(...termPairs);
+              console.log(`📊 Search term "${term}" returned ${termPairs.length} pairs`);
+            }
+          } catch (termError) {
+            console.log(`❌ Search term "${term}" failed:`, termError);
+          }
         }
 
-        const data = await response.json();
-        const pairs = data.pairs || [];
-        console.log(`📊 DexScreener search returned ${pairs.length} pairs`);
+        // Remove duplicates by pair address
+        const uniquePairs = allPairs.filter((pair, index, self) =>
+          index === self.findIndex(p => p.pairAddress === pair.pairAddress)
+        );
+
+        const pairs = uniquePairs;
+        console.log(`📊 Total unique pairs collected: ${pairs.length}`);
 
         console.log(`📊 Raw DexScreener pairs received: ${pairs.length}`);
 
