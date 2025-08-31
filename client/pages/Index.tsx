@@ -420,15 +420,30 @@ export default function Index() {
         const data = await response.json();
         const pairs = data.pairs || [];
 
+        console.log(`📊 Raw DexScreener pairs received: ${pairs.length}`);
+
+        // Count filters for debugging
+        let solanaCount = 0;
+        let afterExcludeCount = 0;
+        let finalCount = 0;
+
         const solanaMemeCoins = pairs
           .filter((pair: any) => {
+            // Only filter by Solana chain
             if (pair.chainId !== 'solana') return false;
-            const volume24h = pair.volume?.h24 || 0;
-            const name = pair.baseToken.name || '';
+            solanaCount++;
+
+            // Only exclude major stablecoins and SOL
             const symbol = pair.baseToken.symbol || '';
             const excludedTokens = ['SOL', 'WSOL', 'USDC', 'USDT'];
             if (excludedTokens.includes(symbol)) return false;
-            return volume24h > 1 && name && symbol && pair.priceUsd;
+            afterExcludeCount++;
+
+            // Very minimal requirements - just needs basic data
+            const hasBasicData = pair.baseToken.name && pair.baseToken.symbol && pair.priceUsd;
+            if (hasBasicData) finalCount++;
+
+            return hasBasicData;
           })
           .map((pair: any) => ({
             mint: pair.baseToken.address,
