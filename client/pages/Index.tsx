@@ -429,21 +429,20 @@ export default function Index() {
 
         const solanaMemeCoins = pairs
           .filter((pair: any) => {
-            // Only filter by Solana chain
+            // Only filter by Solana chain - accept ALL Solana tokens
             if (pair.chainId !== 'solana') return false;
             solanaCount++;
 
-            // Only exclude major stablecoins and SOL
+            // Don't exclude anything except SOL itself
             const symbol = pair.baseToken.symbol || '';
-            const excludedTokens = ['SOL', 'WSOL', 'USDC', 'USDT'];
-            if (excludedTokens.includes(symbol)) return false;
+            if (symbol === 'SOL') return false;
             afterExcludeCount++;
 
-            // Very minimal requirements - just needs basic data
-            const hasBasicData = pair.baseToken.name && pair.baseToken.symbol && pair.priceUsd;
-            if (hasBasicData) finalCount++;
+            // Accept ANY token with basic data
+            const hasAnyData = pair.baseToken.address && pair.baseToken.symbol;
+            if (hasAnyData) finalCount++;
 
-            return hasBasicData;
+            return hasAnyData;
           })
           .map((pair: any, index: number) => {
             console.log(`🔍 Processing coin ${index + 1}: ${pair.baseToken.name} (${pair.baseToken.symbol})`);
