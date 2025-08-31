@@ -399,13 +399,15 @@ export default function Index() {
                 pairAddress: pair.pairAddress,
                 dexId: pair.dexId,
                 url: pair.url,
-                aiScore: Math.min(
-                  100,
-                  30 +
-                    Math.floor((pair.volume?.h24 || 0) / 10000) +
-                    (Math.abs(pair.priceChange?.h24 || 0) > 20 ? 20 : 0),
-                ),
-                rugRisk: "medium" as "low" | "medium" | "high",
+                aiScore: Math.min(100, Math.max(15,
+                  25 + Math.floor((pair.volume?.h24 || 0) / 100000) + // Volume factor
+                  (Math.abs(pair.priceChange?.h24 || 0) > 15 ? 15 : 0) + // Volatility bonus
+                  (((pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0)) > 200 ? 10 : 0) + // Activity bonus
+                  ((pair.liquidity?.usd || 0) > 150000 ? 20 : (pair.liquidity?.usd || 0) > 50000 ? 10 : 0) + // Liquidity bonus
+                  (pair.pairCreatedAt && (Date.now() - pair.pairCreatedAt) > 7 * 24 * 60 * 60 * 1000 ? 10 : 0) // Age bonus
+                )), // Realistic scoring 15-100
+                rugRisk: (pair.liquidity?.usd || 0) < 20000 ? 'high' :
+                         (pair.liquidity?.usd || 0) < 100000 ? 'medium' : 'low', // Real risk assessment
                 whaleActivity: Math.min(
                   100,
                   Math.floor((pair.volume?.h24 || 0) / 1000),
