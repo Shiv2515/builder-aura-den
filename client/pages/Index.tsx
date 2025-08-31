@@ -468,7 +468,13 @@ export default function Index() {
             reasoning: `🔗 DIRECT API - Real Solana token | Vol: $${(pair.volume?.h24 || 0).toLocaleString()}`
           }))
           .sort((a: any, b: any) => b.volume - a.volume)
-          .slice(0, 50);
+          .slice(0, 100); // Increase to 100 coins
+
+        console.log(`🔍 Filtering results:`);
+        console.log(`- Solana pairs: ${solanaCount}`);
+        console.log(`- After excluding major tokens: ${afterExcludeCount}`);
+        console.log(`- With basic data: ${finalCount}`);
+        console.log(`- Final coins after mapping: ${solanaMemeCoins.length}`);
 
         setCoins(solanaMemeCoins);
         setLastUpdate(new Date());
