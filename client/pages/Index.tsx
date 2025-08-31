@@ -460,7 +460,7 @@ export default function Index() {
               pairAddress: pair.pairAddress,
               dexId: pair.dexId,
               url: pair.url,
-              aiScore: Math.max(20, Math.min(100, 30 + Math.floor((pair.volume?.h24 || 0) / 10000))), // Ensure minimum 20
+              aiScore: Math.max(75, Math.min(100, 80 + Math.floor((pair.volume?.h24 || 0) / 10000))), // High AI scores 75-100
               rugRisk: 'low' as 'low' | 'medium' | 'high', // Set all to low risk
               whaleActivity: Math.min(100, Math.floor((pair.volume?.h24 || 0) / 1000)),
               socialBuzz: Math.min(100, Math.floor(((pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0)) / 10) + 30),
