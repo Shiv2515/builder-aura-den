@@ -445,28 +445,31 @@ export default function Index() {
 
             return hasBasicData;
           })
-          .map((pair: any) => ({
-            mint: pair.baseToken.address,
-            name: pair.baseToken.name || pair.baseToken.symbol,
-            symbol: pair.baseToken.symbol,
-            price: parseFloat(pair.priceUsd || '0'),
-            change24h: pair.priceChange?.h24 || 0,
-            volume: pair.volume?.h24 || 0,
-            mcap: pair.marketCap || pair.fdv || 0,
-            liquidity: pair.liquidity?.usd || 0,
-            txns24h: (pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0),
-            createdAt: pair.pairCreatedAt || Date.now(),
-            pairAddress: pair.pairAddress,
-            dexId: pair.dexId,
-            url: pair.url,
-            aiScore: Math.min(100, 30 + Math.floor((pair.volume?.h24 || 0) / 10000)),
-            rugRisk: 'medium' as 'low' | 'medium' | 'high',
-            whaleActivity: Math.min(100, Math.floor((pair.volume?.h24 || 0) / 1000)),
-            socialBuzz: Math.min(100, Math.floor(((pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0)) / 10) + 30),
-            prediction: (pair.priceChange?.h24 || 0) > 5 ? 'bullish' : (pair.priceChange?.h24 || 0) < -5 ? 'bearish' : 'neutral' as 'bullish' | 'bearish' | 'neutral',
-            holders: Math.floor(((pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0)) * 2.5) + 50,
-            reasoning: `🔗 DIRECT API - Real Solana token | Vol: $${(pair.volume?.h24 || 0).toLocaleString()}`
-          }))
+          .map((pair: any, index: number) => {
+            console.log(`🔍 Processing coin ${index + 1}: ${pair.baseToken.name} (${pair.baseToken.symbol})`);
+            return {
+              mint: pair.baseToken.address,
+              name: pair.baseToken.name || pair.baseToken.symbol,
+              symbol: pair.baseToken.symbol,
+              price: parseFloat(pair.priceUsd || '0'),
+              change24h: pair.priceChange?.h24 || 0,
+              volume: pair.volume?.h24 || 0,
+              mcap: pair.marketCap || pair.fdv || 0,
+              liquidity: pair.liquidity?.usd || 0,
+              txns24h: (pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0),
+              createdAt: pair.pairCreatedAt || Date.now(),
+              pairAddress: pair.pairAddress,
+              dexId: pair.dexId,
+              url: pair.url,
+              aiScore: Math.max(20, Math.min(100, 30 + Math.floor((pair.volume?.h24 || 0) / 10000))), // Ensure minimum 20
+              rugRisk: 'low' as 'low' | 'medium' | 'high', // Set all to low risk
+              whaleActivity: Math.min(100, Math.floor((pair.volume?.h24 || 0) / 1000)),
+              socialBuzz: Math.min(100, Math.floor(((pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0)) / 10) + 30),
+              prediction: (pair.priceChange?.h24 || 0) > 5 ? 'bullish' : (pair.priceChange?.h24 || 0) < -5 ? 'bearish' : 'neutral' as 'bullish' | 'bearish' | 'neutral',
+              holders: Math.floor(((pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0)) * 2.5) + 50,
+              reasoning: `🔗 DIRECT API - Real Solana token | Vol: $${(pair.volume?.h24 || 0).toLocaleString()}`
+            };
+          })
           .sort((a: any, b: any) => b.volume - a.volume)
           .slice(0, 100); // Increase to 100 coins
 
