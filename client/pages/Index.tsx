@@ -107,9 +107,9 @@ export default function Index() {
 
   const fetchScanStatus = async () => {
     try {
-      let apiUrl = '/.netlify/functions/scan-status?' + Date.now();
+      let apiUrl = '/api/scan/status?' + Date.now();
       if (window.location.hostname.includes('fly.dev') || window.location.hostname.includes('localhost')) {
-        apiUrl = 'https://pulsesignal-ai.netlify.app/.netlify/functions/scan-status?' + Date.now();
+        apiUrl = 'https://pulsesignal-ai.netlify.app/api/scan/status?' + Date.now();
       }
 
       console.log('🔍 Scan Status API URL:', apiUrl);
@@ -145,9 +145,9 @@ export default function Index() {
 
       try {
         // Try real scan API first for authentic contract addresses
-        let apiUrl = '/.netlify/functions/scan-coins?' + Date.now();
+        let apiUrl = '/api/scan/coins?' + Date.now();
         if (window.location.hostname.includes('fly.dev') || window.location.hostname.includes('localhost')) {
-          apiUrl = 'https://pulsesignal-ai.netlify.app/.netlify/functions/scan-coins?' + Date.now();
+          apiUrl = 'https://pulsesignal-ai.netlify.app/api/scan/coins?' + Date.now();
           console.log('🔄 Using Netlify real API from dev server');
         }
 
@@ -260,9 +260,9 @@ export default function Index() {
 
         // Fallback to backup API if real API fails
         try {
-          let fallbackUrl = `/.netlify/functions/backup-coins?${Date.now()}`;
+          let fallbackUrl = `/api/backup-coins?${Date.now()}`;
           if (window.location.hostname.includes('fly.dev') || window.location.hostname.includes('localhost')) {
-            fallbackUrl = `https://pulsesignal-ai.netlify.app/.netlify/functions/backup-coins?${Date.now()}`;
+            fallbackUrl = `https://pulsesignal-ai.netlify.app/api/backup-coins?${Date.now()}`;
           }
 
           const response = await fetch(fallbackUrl);
@@ -378,9 +378,9 @@ export default function Index() {
 
   const startNewScan = async () => {
     try {
-      let apiUrl = '/.netlify/functions/scan-start?' + Date.now();
+      let apiUrl = '/api/scan/start?' + Date.now();
       if (window.location.hostname.includes('fly.dev') || window.location.hostname.includes('localhost')) {
-        apiUrl = 'https://pulsesignal-ai.netlify.app/.netlify/functions/scan-start?' + Date.now();
+        apiUrl = 'https://pulsesignal-ai.netlify.app/api/scan/start?' + Date.now();
       }
 
       const response = await fetch(apiUrl, {
