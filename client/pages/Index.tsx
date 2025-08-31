@@ -160,7 +160,7 @@ export default function Index() {
 
         if (!response.ok) {
           const errorText = await response.text();
-          console.error(`❌ API Error Response:`, errorText);
+          console.error(`�� API Error Response:`, errorText);
           console.error(`❌ Full response object:`, response);
           throw new Error(`API responded with status: ${response.status} - ${errorText}`);
         }
@@ -470,7 +470,7 @@ export default function Index() {
             };
           })
           .sort((a: any, b: any) => b.volume - a.volume)
-          .slice(0, 100); // Increase to 100 coins
+          .slice(0, 15); // Exactly 15 coins as requested
 
         console.log(`🔍 Filtering results:`);
         console.log(`- Solana pairs: ${solanaCount}`);
