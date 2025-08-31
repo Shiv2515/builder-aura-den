@@ -501,51 +501,8 @@ export default function Index() {
       } catch (error) {
         console.error('❌ Direct API failed:', error);
 
-        // Fallback: Create 15 real Solana token examples
-        const fallbackCoins = [
-          { symbol: 'BONK', name: 'Bonk', address: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263' },
-          { symbol: 'WIF', name: 'dogwifhat', address: '8gC27nSzMW7AwvLhLAaVHhAgQ1Jn6Kj8kKGFu3xKBaKo' },
-          { symbol: 'SAMO', name: 'Samoyedcoin', address: '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU' },
-          { symbol: 'MYRO', name: 'Myro', address: 'HhJpBhRRn4g56VsyLuT8DL5Bv31HkXqsrahTTUCZeZg4' },
-          { symbol: 'POPCAT', name: 'Popcat', address: '7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr' },
-          { symbol: 'MEW', name: 'cat in a dogs world', address: 'MEW1gQWJ3nEXg2qgERiKu7FAFj79PHvQVREQUzScPP5' },
-          { symbol: 'BOME', name: 'BOOK OF MEME', address: 'ukHH6c7mMyiWCf1b9pnWe25TSpkDDt3H5pQZgZ74J82' },
-          { symbol: 'SLERF', name: 'Slerf', address: '7BgBvyjrZX1YKz4oh9mjb8ZScatkkwb8DzFx7LoiVkM3' },
-          { symbol: 'PONKE', name: 'PonkeChain', address: '5z3EqYQo9HiCEs3R84RCDMu2n7anpDMxRhdK8PSWmrRC' },
-          { symbol: 'WOLF', name: 'Solana Wolf', address: 'CiKu4eHsVrc1eueVQeHn7qhXTcVu95gSQmBpX4utjL9z' },
-          { symbol: 'PEPE', name: 'Solana Pepe', address: 'BfmvKcjCa7eUGqLAhQSNMgHKUzgBgS8cUJ7WyRJfMZbM' },
-          { symbol: 'DOGE', name: 'SolDoge', address: 'AppnbRgMLrAmXKRx8R2JE1HxFfVEj6YpjmGy8hRhSRwP' },
-          { symbol: 'SHIB', name: 'SolShib', address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB' },
-          { symbol: 'CAT', name: 'Solana Cat', address: '4ThReWAbAVBjdQW9DjigHCiFEjkZXJwMGg8bCP5JeKtV' },
-          { symbol: 'MOON', name: 'SolMoon', address: '9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E' }
-        ].map((token, index) => ({
-          mint: token.address,
-          name: token.name,
-          symbol: token.symbol,
-          price: 0.00001 + Math.random() * 0.01,
-          change24h: (Math.random() - 0.5) * 200,
-          volume: 10000 + Math.random() * 500000,
-          mcap: 1000000 + Math.random() * 50000000,
-          liquidity: 50000 + Math.random() * 200000,
-          txns24h: 100 + Math.floor(Math.random() * 1000),
-          createdAt: Date.now() - Math.random() * 86400000 * 30,
-          pairAddress: `pair${index}`,
-          dexId: 'raydium',
-          url: `https://dexscreener.com/solana/${token.address}`,
-          aiScore: 75 + Math.floor(Math.random() * 25),
-          rugRisk: 'low' as 'low' | 'medium' | 'high',
-          whaleActivity: 20 + Math.floor(Math.random() * 60),
-          socialBuzz: 50 + Math.floor(Math.random() * 50),
-          prediction: ['bullish', 'bearish', 'neutral'][Math.floor(Math.random() * 3)] as 'bullish' | 'bearish' | 'neutral',
-          holders: 500 + Math.floor(Math.random() * 5000),
-          reasoning: `🔗 Real Solana token: ${token.name} (${token.symbol}) - Authentic contract address`
-        }));
-
-        setCoins(fallbackCoins);
-        setLastUpdate(new Date());
-        updateScanStatusFromCoins(fallbackCoins);
         setIsLoading(false);
-        console.log(`✅ Loaded ${fallbackCoins.length} fallback coins with real addresses`);
+        setError('Unable to fetch real-time coin data from DexScreener API.');
       }
     };
 
