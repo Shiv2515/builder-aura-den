@@ -545,6 +545,9 @@ export default function Index() {
           }
         }
 
+        // Sort by volume first to prioritize best trading pairs
+        allPairs.sort((a, b) => (b.volume?.h24 || 0) - (a.volume?.h24 || 0));
+
         // Remove duplicates by token address (prevents same coin from appearing multiple times)
         const uniquePairs = allPairs.filter(
           (pair, index, self) =>
