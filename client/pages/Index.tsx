@@ -545,10 +545,10 @@ export default function Index() {
           }
         }
 
-        // Remove duplicates by pair address
+        // Remove duplicates by token address (prevents same coin from appearing multiple times)
         const uniquePairs = allPairs.filter(
           (pair, index, self) =>
-            index === self.findIndex((p) => p.pairAddress === pair.pairAddress),
+            index === self.findIndex((p) => p.baseToken?.address === pair.baseToken?.address),
         );
 
         const pairs = uniquePairs;
