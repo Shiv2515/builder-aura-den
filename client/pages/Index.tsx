@@ -416,9 +416,9 @@ export default function Index() {
         setIsLoading(true);
         console.log('🚀 App starting - fetching directly from DexScreener...');
 
-        // Use the most reliable DexScreener endpoint
-        console.log('🔍 Fetching from DexScreener pairs endpoint...');
-        const response = await fetch('https://api.dexscreener.com/latest/dex/pairs/solana', {
+        // Use correct DexScreener search endpoint
+        console.log('🔍 Fetching from DexScreener search endpoint...');
+        const response = await fetch('https://api.dexscreener.com/latest/dex/search?q=solana', {
           method: 'GET',
           headers: {
             'Accept': 'application/json',
@@ -431,6 +431,7 @@ export default function Index() {
 
         const data = await response.json();
         const pairs = data.pairs || [];
+        console.log(`📊 DexScreener search returned ${pairs.length} pairs`);
 
         console.log(`📊 Raw DexScreener pairs received: ${pairs.length}`);
 
