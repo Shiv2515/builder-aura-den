@@ -1,15 +1,15 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Eye, 
-  Shield, 
-  Zap, 
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  TrendingUp,
+  TrendingDown,
+  Eye,
+  Shield,
+  Zap,
   Brain,
   Wallet,
   AlertTriangle,
@@ -19,12 +19,12 @@ import {
   Users,
   RefreshCw,
   Loader,
-  ExternalLink
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { WhaleTracker } from '@/components/WhaleTracker';
-import { RugPullAlerts } from '@/components/RugPullAlerts';
-import { CoinDetailsModal } from '@/components/CoinDetailsModal';
+  ExternalLink,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { WhaleTracker } from "@/components/WhaleTracker";
+import { RugPullAlerts } from "@/components/RugPullAlerts";
+import { CoinDetailsModal } from "@/components/CoinDetailsModal";
 
 interface CoinData {
   mint: string;
@@ -35,10 +35,10 @@ interface CoinData {
   volume: number;
   mcap: number;
   aiScore: number;
-  rugRisk: 'low' | 'medium' | 'high';
+  rugRisk: "low" | "medium" | "high";
   whaleActivity: number;
   socialBuzz: number;
-  prediction: 'bullish' | 'bearish' | 'neutral';
+  prediction: "bullish" | "bearish" | "neutral";
   holders: number;
   liquidity: number;
   createdAt: number;
@@ -61,7 +61,6 @@ interface ScanStatus {
   };
 }
 
-
 export default function Index() {
   const [coins, setCoins] = useState<CoinData[]>([]);
   const [scanStatus, setScanStatus] = useState<ScanStatus | null>(null);
@@ -73,19 +72,20 @@ export default function Index() {
 
   // Calculate real scan status from coin data
   const updateScanStatusFromCoins = (coinData: CoinData[]) => {
-    const rugPullsDetected = coinData.filter(coin => {
+    const rugPullsDetected = coinData.filter((coin) => {
       let riskScore = 0;
-      if (coin.rugRisk === 'high') riskScore += 40;
+      if (coin.rugRisk === "high") riskScore += 40;
       if (coin.liquidity < 10000) riskScore += 30;
       if (coin.change24h < -50) riskScore += 20;
       return riskScore >= 50;
     }).length;
 
-    const highPotentialCoins = coinData.filter(coin =>
-      coin.aiScore > 70 &&
-      coin.rugRisk === 'low' &&
-      coin.liquidity > 50000 &&
-      coin.change24h > -30
+    const highPotentialCoins = coinData.filter(
+      (coin) =>
+        coin.aiScore > 70 &&
+        coin.rugRisk === "low" &&
+        coin.liquidity > 50000 &&
+        coin.change24h > -30,
     ).length;
 
     setScanStatus({
@@ -97,36 +97,44 @@ export default function Index() {
       scanProgress: 100,
       nextScanIn: 30000,
       stats: {
-        averageAiScore: coinData.length > 0 ? coinData.reduce((sum, coin) => sum + coin.aiScore, 0) / coinData.length : 0,
-        bullishCoins: coinData.filter(c => c.prediction === 'bullish').length,
-        bearishCoins: coinData.filter(c => c.prediction === 'bearish').length,
-        whaleMovements: coinData.filter(c => c.whaleActivity > 60).length
-      }
+        averageAiScore:
+          coinData.length > 0
+            ? coinData.reduce((sum, coin) => sum + coin.aiScore, 0) /
+              coinData.length
+            : 0,
+        bullishCoins: coinData.filter((c) => c.prediction === "bullish").length,
+        bearishCoins: coinData.filter((c) => c.prediction === "bearish").length,
+        whaleMovements: coinData.filter((c) => c.whaleActivity > 60).length,
+      },
     });
   };
 
   const fetchScanStatus = async () => {
     try {
-      let apiUrl = '/api/scan/status?' + Date.now();
-      if (window.location.hostname.includes('fly.dev') || window.location.hostname.includes('localhost')) {
-        apiUrl = 'https://pulsesignal-ai.netlify.app/api/scan/status?' + Date.now();
+      let apiUrl = "/api/scan/status?" + Date.now();
+      if (
+        window.location.hostname.includes("fly.dev") ||
+        window.location.hostname.includes("localhost")
+      ) {
+        apiUrl =
+          "https://pulsesignal-ai.netlify.app/api/scan/status?" + Date.now();
       }
 
-      console.log('🔍 Scan Status API URL:', apiUrl);
+      console.log("🔍 Scan Status API URL:", apiUrl);
       const response = await fetch(apiUrl); // Cache busting
-      console.log('🔍 Scan Status Response Status:', response.status);
-      if (!response.ok) throw new Error('Failed to fetch scan status');
+      console.log("🔍 Scan Status Response Status:", response.status);
+      if (!response.ok) throw new Error("Failed to fetch scan status");
 
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        console.warn('Scan status returned non-JSON response');
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        console.warn("Scan status returned non-JSON response");
         return;
       }
 
       const data = await response.json();
       setScanStatus(data);
     } catch (err) {
-      console.error('Error fetching scan status:', err);
+      console.error("Error fetching scan status:", err);
 
       // If we have coins data, generate real status from that
       if (coins && coins.length > 0) {
@@ -141,32 +149,41 @@ export default function Index() {
       setError(null);
 
       // Try real DexScreener API first for authentic contract data
-      console.log('🔄 Fetching real Solana meme coin data...');
+      console.log("🔄 Fetching real Solana meme coin data...");
 
       try {
         // Try real scan API first for authentic contract addresses
-        let apiUrl = '/api/scan/coins?' + Date.now();
-        if (window.location.hostname.includes('fly.dev') || window.location.hostname.includes('localhost')) {
-          apiUrl = 'https://pulsesignal-ai.netlify.app/api/scan/coins?' + Date.now();
-          console.log('🔄 Using Netlify real API from dev server');
+        let apiUrl = "/api/scan/coins?" + Date.now();
+        if (
+          window.location.hostname.includes("fly.dev") ||
+          window.location.hostname.includes("localhost")
+        ) {
+          apiUrl =
+            "https://pulsesignal-ai.netlify.app/api/scan/coins?" + Date.now();
+          console.log("🔄 Using Netlify real API from dev server");
         }
 
-        console.log('🔍 Calling API URL:', apiUrl);
-        console.log('🔍 Current hostname:', window.location.hostname);
+        console.log("🔍 Calling API URL:", apiUrl);
+        console.log("🔍 Current hostname:", window.location.hostname);
 
         const response = await fetch(apiUrl); // Cache busting
         console.log(`🔍 API Response Status: ${response.status}`);
-        console.log(`🔍 API Response Headers:`, Object.fromEntries(response.headers.entries()));
+        console.log(
+          `🔍 API Response Headers:`,
+          Object.fromEntries(response.headers.entries()),
+        );
 
         if (!response.ok) {
           const errorText = await response.text();
           console.error(`❌ API Error Response:`, errorText);
           console.error(`❌ Full response object:`, response);
-          throw new Error(`API responded with status: ${response.status} - ${errorText}`);
+          throw new Error(
+            `API responded with status: ${response.status} - ${errorText}`,
+          );
         }
 
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
           const responseText = await response.text();
           console.error(`❌ Non-JSON Response:`, responseText);
           throw new Error(`Expected JSON, got ${contentType}`);
@@ -177,63 +194,75 @@ export default function Index() {
           success: data.success,
           coinsLength: data.coins?.length,
           totalFound: data.totalFound,
-          dataSource: data.dataSource
+          dataSource: data.dataSource,
         });
 
         if (!data.success) {
           console.error(`❌ API Unsuccessful:`, data);
-          throw new Error(data.error || 'API returned unsuccessful response');
+          throw new Error(data.error || "API returned unsuccessful response");
         }
 
         console.log(`🔍 Setting coins in state:`, data.coins?.slice(0, 3)); // Log first 3 coins
         setCoins(data.coins || []);
         setLastUpdate(new Date());
 
-        console.log(`✅ Loaded ${data.coins?.length || 0} coins from ${data.dataSource}`);
-        console.log(`🔍 Coins state will be updated with:`, data.coins?.length, 'coins');
+        console.log(
+          `✅ Loaded ${data.coins?.length || 0} coins from ${data.dataSource}`,
+        );
+        console.log(
+          `🔍 Coins state will be updated with:`,
+          data.coins?.length,
+          "coins",
+        );
 
         // Update scan status with real data from coins
         updateScanStatusFromCoins(data.coins || []);
 
         // Identify rug pull risks based on real data
-        const rugPullCoins = data.coins?.filter((coin: any) => {
-          // Same logic as RugPullAlerts component
-          let riskScore = 0;
+        const rugPullCoins =
+          data.coins?.filter((coin: any) => {
+            // Same logic as RugPullAlerts component
+            let riskScore = 0;
 
-          if (coin.rugRisk === 'high') riskScore += 40;
-          else if (coin.rugRisk === 'medium') riskScore += 20;
+            if (coin.rugRisk === "high") riskScore += 40;
+            else if (coin.rugRisk === "medium") riskScore += 20;
 
-          if (coin.liquidity < 10000) riskScore += 30;
-          else if (coin.liquidity < 50000) riskScore += 20;
+            if (coin.liquidity < 10000) riskScore += 30;
+            else if (coin.liquidity < 50000) riskScore += 20;
 
-          if (coin.liquidity > 0 && (coin.volume / coin.liquidity) > 20) riskScore += 25;
-          if (coin.txns24h && coin.txns24h < 10) riskScore += 15;
-          if (coin.change24h < -50) riskScore += 20;
-          if (coin.change24h < -80) riskScore += 35;
+            if (coin.liquidity > 0 && coin.volume / coin.liquidity > 20)
+              riskScore += 25;
+            if (coin.txns24h && coin.txns24h < 10) riskScore += 15;
+            if (coin.change24h < -50) riskScore += 20;
+            if (coin.change24h < -80) riskScore += 35;
 
-          if (coin.createdAt) {
-            const age = Date.now() - coin.createdAt;
-            const ageInDays = age / (1000 * 60 * 60 * 24);
-            if (ageInDays < 1) riskScore += 25;
-            else if (ageInDays < 7) riskScore += 15;
-          }
+            if (coin.createdAt) {
+              const age = Date.now() - coin.createdAt;
+              const ageInDays = age / (1000 * 60 * 60 * 24);
+              if (ageInDays < 1) riskScore += 25;
+              else if (ageInDays < 7) riskScore += 15;
+            }
 
-          if (coin.aiScore < 30) riskScore += 20;
-          if (coin.holders && coin.holders < 100) riskScore += 20;
+            if (coin.aiScore < 30) riskScore += 20;
+            if (coin.holders && coin.holders < 100) riskScore += 20;
 
-          return riskScore >= 50; // Same threshold as rug pull alerts
-        }) || [];
+            return riskScore >= 50; // Same threshold as rug pull alerts
+          }) || [];
 
-        const rugPullMints = new Set(rugPullCoins.map((coin: any) => coin.mint));
+        const rugPullMints = new Set(
+          rugPullCoins.map((coin: any) => coin.mint),
+        );
 
         // High potential coins EXCLUDE rug pull risks
-        const safeHighPotentialCoins = data.coins?.filter((coin: any) =>
-          coin.aiScore > 70 &&
-          !rugPullMints.has(coin.mint) &&
-          coin.rugRisk === 'low' &&
-          coin.liquidity > 50000 && // Decent liquidity
-          coin.change24h > -30 // Not crashing severely
-        ) || [];
+        const safeHighPotentialCoins =
+          data.coins?.filter(
+            (coin: any) =>
+              coin.aiScore > 70 &&
+              !rugPullMints.has(coin.mint) &&
+              coin.rugRisk === "low" &&
+              coin.liquidity > 50000 && // Decent liquidity
+              coin.change24h > -30, // Not crashing severely
+          ) || [];
 
         // Update scan status with coordinated data
         setScanStatus({
@@ -245,23 +274,35 @@ export default function Index() {
           scanProgress: 100,
           nextScanIn: 30000,
           stats: {
-            averageAiScore: data.coins?.reduce((sum: number, coin: any) => sum + coin.aiScore, 0) / (data.coins?.length || 1) || 0,
-            bullishCoins: data.coins?.filter((c: any) => c.prediction === 'bullish' && !rugPullMints.has(c.mint)).length || 0,
-            bearishCoins: data.coins?.filter((c: any) => c.prediction === 'bearish').length || 0,
-            whaleMovements: Math.floor(Math.random() * 10) + 1
-          }
+            averageAiScore:
+              data.coins?.reduce(
+                (sum: number, coin: any) => sum + coin.aiScore,
+                0,
+              ) / (data.coins?.length || 1) || 0,
+            bullishCoins:
+              data.coins?.filter(
+                (c: any) =>
+                  c.prediction === "bullish" && !rugPullMints.has(c.mint),
+              ).length || 0,
+            bearishCoins:
+              data.coins?.filter((c: any) => c.prediction === "bearish")
+                .length || 0,
+            whaleMovements: Math.floor(Math.random() * 10) + 1,
+          },
         });
-
       } catch (fetchError) {
-        console.error('❌ Real API failed, trying backup:', fetchError);
-        console.error('❌ Error type:', fetchError.constructor.name);
-        console.error('❌ Error message:', fetchError.message);
-        console.error('❌ Full error:', fetchError);
+        console.error("❌ Real API failed, trying backup:", fetchError);
+        console.error("❌ Error type:", fetchError.constructor.name);
+        console.error("❌ Error message:", fetchError.message);
+        console.error("❌ Full error:", fetchError);
 
         // Fallback to backup API if real API fails
         try {
           let fallbackUrl = `/api/backup-coins?${Date.now()}`;
-          if (window.location.hostname.includes('fly.dev') || window.location.hostname.includes('localhost')) {
+          if (
+            window.location.hostname.includes("fly.dev") ||
+            window.location.hostname.includes("localhost")
+          ) {
             fallbackUrl = `https://pulsesignal-ai.netlify.app/api/backup-coins?${Date.now()}`;
           }
 
@@ -271,26 +312,34 @@ export default function Index() {
           if (data.success && data.coins && data.coins.length > 0) {
             setCoins(data.coins);
             setLastUpdate(new Date());
-            console.log(`⚠️ Fallback: Using backup data (${data.coins.length} coins) - some addresses may be simulated`);
+            console.log(
+              `⚠️ Fallback: Using backup data (${data.coins.length} coins) - some addresses may be simulated`,
+            );
             // Clear any previous errors since we have data
             setError(null);
 
             // Update scan status with real data
             updateScanStatusFromCoins(data.coins);
           } else {
-            throw new Error('No coins available from backup API');
+            throw new Error("No coins available from backup API");
           }
-
         } catch (fallbackError) {
-          console.error('❌ Backup API failed, trying direct DexScreener:', fallbackError);
+          console.error(
+            "❌ Backup API failed, trying direct DexScreener:",
+            fallbackError,
+          );
 
           // Try direct DexScreener API call as final fallback
           try {
-            console.log('🔄 Calling DexScreener API directly...');
-            const directResponse = await fetch('https://api.dexscreener.com/latest/dex/search/?q=solana');
+            console.log("🔄 Calling DexScreener API directly...");
+            const directResponse = await fetch(
+              "https://api.dexscreener.com/latest/dex/search/?q=solana",
+            );
 
             if (!directResponse.ok) {
-              throw new Error(`DexScreener API error: ${directResponse.status}`);
+              throw new Error(
+                `DexScreener API error: ${directResponse.status}`,
+              );
             }
 
             const directData = await directResponse.json();
@@ -299,26 +348,38 @@ export default function Index() {
             // Filter and process the same way as the Netlify function
             const solanaMemeCoins = pairs
               .filter((pair: any) => {
-                if (pair.chainId !== 'solana') return false;
+                if (pair.chainId !== "solana") return false;
 
                 const volume24h = pair.volume?.h24 || 0;
                 const priceChange24h = pair.priceChange?.h24 || 0;
-                const name = pair.baseToken.name || '';
-                const symbol = pair.baseToken.symbol || '';
+                const name = pair.baseToken.name || "";
+                const symbol = pair.baseToken.symbol || "";
 
-                const excludedTokens = ['SOL', 'WSOL', 'USDC', 'USDT'];
+                const excludedTokens = ["SOL", "WSOL", "USDC", "USDT"];
                 if (excludedTokens.includes(symbol)) return false;
 
                 // Only exclude obvious DeFi protocols, keep most tokens
-                const excludePatterns = ['uniswap', 'compound', 'aave', 'curve'];
-                const nameSymbolLower = (name + ' ' + symbol).toLowerCase();
-                if (excludePatterns.some((pattern: string) => nameSymbolLower.includes(pattern))) return false;
+                const excludePatterns = [
+                  "uniswap",
+                  "compound",
+                  "aave",
+                  "curve",
+                ];
+                const nameSymbolLower = (name + " " + symbol).toLowerCase();
+                if (
+                  excludePatterns.some((pattern: string) =>
+                    nameSymbolLower.includes(pattern),
+                  )
+                )
+                  return false;
 
                 return (
-                  volume24h > 1 &&  // Much lower volume threshold
+                  volume24h > 1 && // Much lower volume threshold
                   Math.abs(priceChange24h) < 100000 && // More permissive price change
-                  name && symbol &&
-                  pair.priceUsd && parseFloat(pair.priceUsd) > 0 &&
+                  name &&
+                  symbol &&
+                  pair.priceUsd &&
+                  parseFloat(pair.priceUsd) > 0 &&
                   parseFloat(pair.priceUsd) < 10000 && // Higher price cap
                   (!pair.marketCap || pair.marketCap < 50000000000) // Higher market cap limit
                 );
@@ -327,23 +388,49 @@ export default function Index() {
                 mint: pair.baseToken.address,
                 name: pair.baseToken.name || pair.baseToken.symbol,
                 symbol: pair.baseToken.symbol,
-                price: parseFloat(pair.priceUsd || '0'),
+                price: parseFloat(pair.priceUsd || "0"),
                 change24h: pair.priceChange?.h24 || 0,
                 volume: pair.volume?.h24 || 0,
                 mcap: pair.marketCap || pair.fdv || 0,
                 liquidity: pair.liquidity?.usd || 0,
-                txns24h: (pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0),
+                txns24h:
+                  (pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0),
                 createdAt: pair.pairCreatedAt || Date.now(),
                 pairAddress: pair.pairAddress,
                 dexId: pair.dexId,
                 url: pair.url,
-                aiScore: Math.min(100, 30 + Math.floor((pair.volume?.h24 || 0) / 10000) + (Math.abs(pair.priceChange?.h24 || 0) > 20 ? 20 : 0)),
-                rugRisk: 'medium' as 'low' | 'medium' | 'high',
-                whaleActivity: Math.min(100, Math.floor((pair.volume?.h24 || 0) / 1000)),
-                socialBuzz: Math.min(100, Math.floor(((pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0)) / 10) + 30),
-                prediction: (pair.priceChange?.h24 || 0) > 5 ? 'bullish' : (pair.priceChange?.h24 || 0) < -5 ? 'bearish' : 'neutral' as 'bullish' | 'bearish' | 'neutral',
-                holders: Math.floor(((pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0)) * 2.5) + 50,
-                reasoning: `🔗 DIRECT API - Real Solana token from DexScreener | Vol: $${(pair.volume?.h24 || 0).toLocaleString()} | ${(pair.priceChange?.h24 || 0).toFixed(1)}%`
+                aiScore: Math.min(
+                  100,
+                  30 +
+                    Math.floor((pair.volume?.h24 || 0) / 10000) +
+                    (Math.abs(pair.priceChange?.h24 || 0) > 20 ? 20 : 0),
+                ),
+                rugRisk: "medium" as "low" | "medium" | "high",
+                whaleActivity: Math.min(
+                  100,
+                  Math.floor((pair.volume?.h24 || 0) / 1000),
+                ),
+                socialBuzz: Math.min(
+                  100,
+                  Math.floor(
+                    ((pair.txns?.h24?.buys || 0) +
+                      (pair.txns?.h24?.sells || 0)) /
+                      10,
+                  ) + 30,
+                ),
+                prediction:
+                  (pair.priceChange?.h24 || 0) > 5
+                    ? "bullish"
+                    : (pair.priceChange?.h24 || 0) < -5
+                      ? "bearish"
+                      : ("neutral" as "bullish" | "bearish" | "neutral"),
+                holders:
+                  Math.floor(
+                    ((pair.txns?.h24?.buys || 0) +
+                      (pair.txns?.h24?.sells || 0)) *
+                      2.5,
+                  ) + 50,
+                reasoning: `🔗 DIRECT API - Real Solana token from DexScreener | Vol: $${(pair.volume?.h24 || 0).toLocaleString()} | ${(pair.priceChange?.h24 || 0).toFixed(1)}%`,
               }))
               .filter((coin: any) => coin.aiScore >= 5) // Much lower threshold
               .sort((a: any, b: any) => b.volume - a.volume)
@@ -352,25 +439,34 @@ export default function Index() {
             if (solanaMemeCoins.length > 0) {
               setCoins(solanaMemeCoins);
               setLastUpdate(new Date());
-              console.log(`✅ Direct API: Loaded ${solanaMemeCoins.length} real Solana coins`);
+              console.log(
+                `✅ Direct API: Loaded ${solanaMemeCoins.length} real Solana coins`,
+              );
               setError(null); // Clear any previous errors
 
               // Update scan status with real data
               updateScanStatusFromCoins(solanaMemeCoins);
             } else {
-              throw new Error('No suitable Solana coins found in DexScreener data');
+              throw new Error(
+                "No suitable Solana coins found in DexScreener data",
+              );
             }
-
           } catch (directApiError) {
-            console.error('❌ Direct DexScreener API also failed:', directApiError);
-            setError('Unable to connect to any coin data sources. Please check your internet connection.');
+            console.error(
+              "❌ Direct DexScreener API also failed:",
+              directApiError,
+            );
+            setError(
+              "Unable to connect to any coin data sources. Please check your internet connection.",
+            );
           }
         }
       }
-
     } catch (err) {
-      console.error('Error fetching coins:', err);
-      setError('Failed to load coin data. Please check your connection and try again.');
+      console.error("Error fetching coins:", err);
+      setError(
+        "Failed to load coin data. Please check your connection and try again.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -378,32 +474,36 @@ export default function Index() {
 
   const startNewScan = async () => {
     try {
-      let apiUrl = '/api/scan/start?' + Date.now();
-      if (window.location.hostname.includes('fly.dev') || window.location.hostname.includes('localhost')) {
-        apiUrl = 'https://pulsesignal-ai.netlify.app/api/scan/start?' + Date.now();
+      let apiUrl = "/api/scan/start?" + Date.now();
+      if (
+        window.location.hostname.includes("fly.dev") ||
+        window.location.hostname.includes("localhost")
+      ) {
+        apiUrl =
+          "https://pulsesignal-ai.netlify.app/api/scan/start?" + Date.now();
       }
 
       const response = await fetch(apiUrl, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
-        }
+          "Content-Type": "application/json",
+        },
       });
 
-      if (!response.ok) throw new Error('Failed to start scan');
+      if (!response.ok) throw new Error("Failed to start scan");
 
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        throw new Error('Invalid response format');
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Invalid response format");
       }
 
       const data = await response.json();
-      console.log('✅ Scan started:', data.message);
+      console.log("✅ Scan started:", data.message);
 
       // Immediately fetch live data instead of waiting
       setTimeout(() => fetchCoins(true), 1000);
     } catch (err) {
-      console.error('Error starting scan:', err);
+      console.error("Error starting scan:", err);
       // Don't show error, just fetch coins directly
       fetchCoins(true);
     }
@@ -414,26 +514,31 @@ export default function Index() {
     const fetchDirectly = async () => {
       try {
         setIsLoading(true);
-        console.log('🚀 App starting - fetching directly from DexScreener...');
+        console.log("🚀 App starting - fetching directly from DexScreener...");
 
         // Use multiple search terms to get more tokens
-        console.log('🔍 Fetching multiple search results from DexScreener...');
+        console.log("🔍 Fetching multiple search results from DexScreener...");
 
-        const searchTerms = ['bonk', 'wif', 'pepe', 'dogwifhat', 'solana'];
+        const searchTerms = ["bonk", "wif", "pepe", "dogwifhat", "solana"];
         let allPairs = [];
 
         for (const term of searchTerms) {
           try {
-            const response = await fetch(`https://api.dexscreener.com/latest/dex/search?q=${term}`, {
-              method: 'GET',
-              headers: { 'Accept': 'application/json' }
-            });
+            const response = await fetch(
+              `https://api.dexscreener.com/latest/dex/search?q=${term}`,
+              {
+                method: "GET",
+                headers: { Accept: "application/json" },
+              },
+            );
 
             if (response.ok) {
               const data = await response.json();
               const termPairs = data.pairs || [];
               allPairs.push(...termPairs);
-              console.log(`📊 Search term "${term}" returned ${termPairs.length} pairs`);
+              console.log(
+                `📊 Search term "${term}" returned ${termPairs.length} pairs`,
+              );
             }
           } catch (termError) {
             console.log(`❌ Search term "${term}" failed:`, termError);
@@ -441,8 +546,9 @@ export default function Index() {
         }
 
         // Remove duplicates by pair address
-        const uniquePairs = allPairs.filter((pair, index, self) =>
-          index === self.findIndex(p => p.pairAddress === pair.pairAddress)
+        const uniquePairs = allPairs.filter(
+          (pair, index, self) =>
+            index === self.findIndex((p) => p.pairAddress === pair.pairAddress),
         );
 
         const pairs = uniquePairs;
@@ -458,12 +564,12 @@ export default function Index() {
         const solanaMemeCoins = pairs
           .filter((pair: any) => {
             // Only filter by Solana chain - accept ALL Solana tokens
-            if (pair.chainId !== 'solana') return false;
+            if (pair.chainId !== "solana") return false;
             solanaCount++;
 
             // Don't exclude anything except SOL itself
-            const symbol = pair.baseToken.symbol || '';
-            if (symbol === 'SOL') return false;
+            const symbol = pair.baseToken.symbol || "";
+            if (symbol === "SOL") return false;
             afterExcludeCount++;
 
             // Accept ANY token with basic data
@@ -473,28 +579,52 @@ export default function Index() {
             return hasAnyData;
           })
           .map((pair: any, index: number) => {
-            console.log(`🔍 Processing coin ${index + 1}: ${pair.baseToken.name} (${pair.baseToken.symbol})`);
+            console.log(
+              `🔍 Processing coin ${index + 1}: ${pair.baseToken.name} (${pair.baseToken.symbol})`,
+            );
             return {
               mint: pair.baseToken.address,
               name: pair.baseToken.name || pair.baseToken.symbol,
               symbol: pair.baseToken.symbol,
-              price: parseFloat(pair.priceUsd || '0'),
+              price: parseFloat(pair.priceUsd || "0"),
               change24h: pair.priceChange?.h24 || 0,
               volume: pair.volume?.h24 || 0,
               mcap: pair.marketCap || pair.fdv || 0,
               liquidity: pair.liquidity?.usd || 0,
-              txns24h: (pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0),
+              txns24h:
+                (pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0),
               createdAt: pair.pairCreatedAt || Date.now(),
               pairAddress: pair.pairAddress,
               dexId: pair.dexId,
               url: pair.url,
-              aiScore: Math.max(75, Math.min(100, 80 + Math.floor((pair.volume?.h24 || 0) / 10000))), // High AI scores 75-100
-              rugRisk: 'low' as 'low' | 'medium' | 'high', // Set all to low risk
-              whaleActivity: Math.min(100, Math.floor((pair.volume?.h24 || 0) / 1000)),
-              socialBuzz: Math.min(100, Math.floor(((pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0)) / 10) + 30),
-              prediction: (pair.priceChange?.h24 || 0) > 5 ? 'bullish' : (pair.priceChange?.h24 || 0) < -5 ? 'bearish' : 'neutral' as 'bullish' | 'bearish' | 'neutral',
-              holders: Math.floor(((pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0)) * 2.5) + 50,
-              reasoning: `🔗 DIRECT API - Real Solana token | Vol: $${(pair.volume?.h24 || 0).toLocaleString()}`
+              aiScore: Math.max(
+                75,
+                Math.min(100, 80 + Math.floor((pair.volume?.h24 || 0) / 10000)),
+              ), // High AI scores 75-100
+              rugRisk: "low" as "low" | "medium" | "high", // Set all to low risk
+              whaleActivity: Math.min(
+                100,
+                Math.floor((pair.volume?.h24 || 0) / 1000),
+              ),
+              socialBuzz: Math.min(
+                100,
+                Math.floor(
+                  ((pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0)) /
+                    10,
+                ) + 30,
+              ),
+              prediction:
+                (pair.priceChange?.h24 || 0) > 5
+                  ? "bullish"
+                  : (pair.priceChange?.h24 || 0) < -5
+                    ? "bearish"
+                    : ("neutral" as "bullish" | "bearish" | "neutral"),
+              holders:
+                Math.floor(
+                  ((pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0)) *
+                    2.5,
+                ) + 50,
+              reasoning: `🔗 DIRECT API - Real Solana token | Vol: $${(pair.volume?.h24 || 0).toLocaleString()}`,
             };
           })
           .sort((a: any, b: any) => b.volume - a.volume)
@@ -510,13 +640,14 @@ export default function Index() {
         setLastUpdate(new Date());
         updateScanStatusFromCoins(solanaMemeCoins);
         setIsLoading(false);
-        console.log(`✅ Loaded ${solanaMemeCoins.length} coins directly from DexScreener`);
-
+        console.log(
+          `✅ Loaded ${solanaMemeCoins.length} coins directly from DexScreener`,
+        );
       } catch (error) {
-        console.error('❌ Direct API failed:', error);
+        console.error("❌ Direct API failed:", error);
 
         setIsLoading(false);
-        setError('Unable to fetch real-time coin data from DexScreener API.');
+        setError("Unable to fetch real-time coin data from DexScreener API.");
       }
     };
 
@@ -532,37 +663,44 @@ export default function Index() {
 
   const getRiskColor = (risk: string) => {
     switch (risk) {
-      case 'low': return 'text-success border-success';
-      case 'medium': return 'text-warning border-warning';
-      case 'high': return 'text-destructive border-destructive';
-      default: return 'text-muted-foreground border-muted';
+      case "low":
+        return "text-success border-success";
+      case "medium":
+        return "text-warning border-warning";
+      case "high":
+        return "text-destructive border-destructive";
+      default:
+        return "text-muted-foreground border-muted";
     }
   };
 
   const getPredictionIcon = (prediction: string) => {
     switch (prediction) {
-      case 'bullish': return <TrendingUp className="h-4 w-4 text-success" />;
-      case 'bearish': return <TrendingDown className="h-4 w-4 text-destructive" />;
-      default: return <Activity className="h-4 w-4 text-muted-foreground" />;
+      case "bullish":
+        return <TrendingUp className="h-4 w-4 text-success" />;
+      case "bearish":
+        return <TrendingDown className="h-4 w-4 text-destructive" />;
+      default:
+        return <Activity className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
   const formatTimeAgo = (timestamp: number) => {
-    if (!timestamp) return 'Unknown';
+    if (!timestamp) return "Unknown";
     const diff = Date.now() - timestamp;
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(diff / 3600000);
-    
+
     if (hours > 0) return `${hours}h ago`;
     if (minutes > 0) return `${minutes}m ago`;
-    return 'Just now';
+    return "Just now";
   };
 
   const getAIScoreColor = (score: number) => {
-    if (score >= 80) return 'text-success';
-    if (score >= 60) return 'text-primary';
-    if (score >= 40) return 'text-warning';
-    return 'text-destructive';
+    if (score >= 80) return "text-success";
+    if (score >= 60) return "text-primary";
+    if (score >= 40) return "text-warning";
+    return "text-destructive";
   };
 
   const openCoinDetails = (coin: CoinData) => {
@@ -586,17 +724,28 @@ export default function Index() {
                 <Brain className="h-6 w-6 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-foreground">PulseSignal AI</h1>
-                <p className="text-sm text-muted-foreground">Real-Time Solana Meme Coin Intelligence</p>
+                <h1 className="text-2xl font-bold text-foreground">
+                  PulseSignal AI
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  Real-Time Solana Meme Coin Intelligence
+                </p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Badge variant={scanStatus?.isScanning ? "default" : "secondary"} className={scanStatus?.isScanning ? "pulse-glow" : ""}>
-                {scanStatus?.isScanning ? <Loader className="h-3 w-3 mr-1 animate-spin" /> : <Eye className="h-3 w-3 mr-1" />}
-                {scanStatus?.isScanning ? 'AI Scanning...' : 'Monitoring'}
+              <Badge
+                variant={scanStatus?.isScanning ? "default" : "secondary"}
+                className={scanStatus?.isScanning ? "pulse-glow" : ""}
+              >
+                {scanStatus?.isScanning ? (
+                  <Loader className="h-3 w-3 mr-1 animate-spin" />
+                ) : (
+                  <Eye className="h-3 w-3 mr-1" />
+                )}
+                {scanStatus?.isScanning ? "AI Scanning..." : "Monitoring"}
               </Badge>
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 onClick={() => fetchCoins(true)}
                 disabled={isLoading || scanStatus?.isScanning}
                 className="bg-accent hover:bg-accent/80"
@@ -606,7 +755,7 @@ export default function Index() {
                 ) : (
                   <RefreshCw className="h-4 w-4 mr-2" />
                 )}
-                {scanStatus?.isScanning ? 'Scanning...' : 'Refresh Scan'}
+                {scanStatus?.isScanning ? "Scanning..." : "Refresh Scan"}
               </Button>
             </div>
           </div>
@@ -653,9 +802,11 @@ export default function Index() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Coins Scanned</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Coins Scanned
+                  </p>
                   <p className="text-2xl font-bold text-foreground">
-                    {scanStatus?.totalScanned?.toLocaleString() || '0'}
+                    {scanStatus?.totalScanned?.toLocaleString() || "0"}
                   </p>
                 </div>
                 <Eye className="h-8 w-8 text-primary" />
@@ -667,9 +818,11 @@ export default function Index() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Rug Pulls Detected</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Rug Pulls Detected
+                  </p>
                   <p className="text-2xl font-bold text-destructive">
-                    {scanStatus?.rugPullsDetected || '0'}
+                    {scanStatus?.rugPullsDetected || "0"}
                   </p>
                 </div>
                 <Shield className="h-8 w-8 text-destructive" />
@@ -681,9 +834,11 @@ export default function Index() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Whale Moves</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Whale Moves
+                  </p>
                   <p className="text-2xl font-bold text-accent">
-                    {scanStatus?.stats?.whaleMovements || '0'}
+                    {scanStatus?.stats?.whaleMovements || "0"}
                   </p>
                 </div>
                 <Wallet className="h-8 w-8 text-accent" />
@@ -695,9 +850,11 @@ export default function Index() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">High Potential</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    High Potential
+                  </p>
                   <p className="text-2xl font-bold text-success">
-                    {scanStatus?.highPotentialCoins || '0'}
+                    {scanStatus?.highPotentialCoins || "0"}
                   </p>
                 </div>
                 <TrendingUp className="h-8 w-8 text-success" />
@@ -712,31 +869,45 @@ export default function Index() {
             <CardTitle className="flex items-center space-x-2">
               <Brain className="h-5 w-5 text-primary" />
               <span>AI Blockchain Scanner</span>
-              {scanStatus?.isScanning && <Badge variant="default" className="pulse-glow">LIVE</Badge>}
+              {scanStatus?.isScanning && (
+                <Badge variant="default" className="pulse-glow">
+                  LIVE
+                </Badge>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">
-                  {scanStatus?.isScanning ? 'Scanning Solana Network...' : 'Monitoring Market'}
+                  {scanStatus?.isScanning
+                    ? "Scanning Solana Network..."
+                    : "Monitoring Market"}
                 </span>
                 <span className="text-foreground">
-                  {scanStatus?.isScanning ? `${scanStatus.scanProgress || 0}% Complete` : 'Ready'}
+                  {scanStatus?.isScanning
+                    ? `${scanStatus.scanProgress || 0}% Complete`
+                    : "Ready"}
                 </span>
               </div>
               <Progress
-                value={scanStatus?.isScanning ? (scanStatus.scanProgress || 0) : 100}
+                value={
+                  scanStatus?.isScanning ? scanStatus.scanProgress || 0 : 100
+                }
                 className="h-2"
               />
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="h-4 w-4 text-success" />
-                  <span className="text-muted-foreground">Blockchain Analysis</span>
+                  <span className="text-muted-foreground">
+                    Blockchain Analysis
+                  </span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Brain className="h-4 w-4 text-primary" />
-                  <span className="text-muted-foreground">OpenAI Processing</span>
+                  <span className="text-muted-foreground">
+                    OpenAI Processing
+                  </span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Users className="h-4 w-4 text-accent" />
@@ -745,7 +916,8 @@ export default function Index() {
               </div>
               {scanStatus?.lastScanTime && (
                 <div className="text-xs text-muted-foreground text-center pt-2 border-t">
-                  Last scan: {formatTimeAgo(scanStatus.lastScanTime)} • Next scan: {Math.floor((scanStatus.nextScanIn || 0) / 60000)}m
+                  Last scan: {formatTimeAgo(scanStatus.lastScanTime)} • Next
+                  scan: {Math.floor((scanStatus.nextScanIn || 0) / 60000)}m
                 </div>
               )}
             </div>
@@ -764,15 +936,18 @@ export default function Index() {
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center space-x-2">
                 <span>AI-Discovered Meme Coins</span>
-                {scanStatus?.isScanning && <Loader className="h-4 w-4 animate-spin" />}
+                {scanStatus?.isScanning && (
+                  <Loader className="h-4 w-4 animate-spin" />
+                )}
               </CardTitle>
               <div className="flex items-center space-x-2">
-                <Badge variant="outline" className="text-primary border-primary">
+                <Badge
+                  variant="outline"
+                  className="text-primary border-primary"
+                >
                   Solana Network
                 </Badge>
-                <Badge variant="outline">
-                  AI Powered
-                </Badge>
+                <Badge variant="outline">AI Powered</Badge>
               </div>
             </div>
           </CardHeader>
@@ -780,14 +955,23 @@ export default function Index() {
             {isLoading && coins.length === 0 ? (
               <div className="text-center py-12">
                 <Loader className="h-12 w-12 text-primary mx-auto mb-4 animate-spin" />
-                <p className="text-lg font-semibold text-foreground">AI Scanning Solana Network...</p>
-                <p className="text-muted-foreground">Discovering high-potential meme coins</p>
+                <p className="text-lg font-semibold text-foreground">
+                  AI Scanning Solana Network...
+                </p>
+                <p className="text-muted-foreground">
+                  Discovering high-potential meme coins
+                </p>
               </div>
             ) : coins.length === 0 ? (
               <div className="text-center py-12">
                 <Brain className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-lg font-semibold text-foreground">No Live Data Available</p>
-                <p className="text-muted-foreground mb-4">No tokens found with sufficient live market data. Only tokens with real price, volume, and liquidity data are displayed.</p>
+                <p className="text-lg font-semibold text-foreground">
+                  No Live Data Available
+                </p>
+                <p className="text-muted-foreground mb-4">
+                  No tokens found with sufficient live market data. Only tokens
+                  with real price, volume, and liquidity data are displayed.
+                </p>
                 <Button onClick={startNewScan}>
                   <Zap className="h-4 w-4 mr-2" />
                   Scan for Live Data
@@ -797,35 +981,43 @@ export default function Index() {
               <div className="space-y-4">
                 {/* Calculate safe high potential coins (excluding rug pull risks) */}
                 {(() => {
-                  const safeHighPotentialCoins = coins.filter(coin => {
+                  const safeHighPotentialCoins = coins.filter((coin) => {
                     // Check if coin would trigger rug pull alert
                     let riskScore = 0;
-                    if (coin.rugRisk === 'high') riskScore += 40;
-                    else if (coin.rugRisk === 'medium') riskScore += 20;
+                    if (coin.rugRisk === "high") riskScore += 40;
+                    else if (coin.rugRisk === "medium") riskScore += 20;
                     if (coin.liquidity < 10000) riskScore += 30;
-                    if (coin.liquidity > 0 && (coin.volume / coin.liquidity) > 20) riskScore += 25;
+                    if (coin.liquidity > 0 && coin.volume / coin.liquidity > 20)
+                      riskScore += 25;
                     if (coin.change24h < -50) riskScore += 20;
 
                     // Only show as high potential if: high AI score AND not rug pull risk
-                    return coin.aiScore > 70 &&
-                           riskScore < 50 &&
-                           coin.rugRisk === 'low' &&
-                           coin.liquidity > 50000 &&
-                           coin.change24h > -30;
+                    return (
+                      coin.aiScore > 70 &&
+                      riskScore < 50 &&
+                      coin.rugRisk === "low" &&
+                      coin.liquidity > 50000 &&
+                      coin.change24h > -30
+                    );
                   });
 
-                  return safeHighPotentialCoins.length > 0 && (
-                    <div className="p-4 bg-success/10 border border-success/30 rounded-lg mb-6">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <Zap className="h-5 w-5 text-success" />
-                        <h3 className="text-lg font-bold text-success">
-                          🚀 SAFE HIGH POTENTIAL DETECTED ({safeHighPotentialCoins.length} coins)
-                        </h3>
+                  return (
+                    safeHighPotentialCoins.length > 0 && (
+                      <div className="p-4 bg-success/10 border border-success/30 rounded-lg mb-6">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <Zap className="h-5 w-5 text-success" />
+                          <h3 className="text-lg font-bold text-success">
+                            🚀 SAFE HIGH POTENTIAL DETECTED (
+                            {safeHighPotentialCoins.length} coins)
+                          </h3>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          AI has identified low-risk coins with high growth
+                          potential. These have good liquidity and pass rug pull
+                          screening.
+                        </p>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        AI has identified low-risk coins with high growth potential. These have good liquidity and pass rug pull screening.
-                      </p>
-                    </div>
+                    )
                   );
                 })()}
 
@@ -835,11 +1027,18 @@ export default function Index() {
                     className={cn(
                       "p-4 rounded-lg border transition-all duration-300",
                       // Only show as high potential if safe (no rug pull risk)
-                      (coin.aiScore > 70 && coin.rugRisk === 'low' && coin.liquidity > 50000 && coin.change24h > -30) ? "border-success bg-success/5 pulse-glow" :
-                      // Show as risky if multiple risk factors
-                      (coin.rugRisk === 'high' || coin.liquidity < 10000 || coin.change24h < -50) ? "border-destructive bg-destructive/5" :
-                      "border-border bg-background/50",
-                      "hover:border-primary/50"
+                      coin.aiScore > 70 &&
+                        coin.rugRisk === "low" &&
+                        coin.liquidity > 50000 &&
+                        coin.change24h > -30
+                        ? "border-success bg-success/5 pulse-glow"
+                        : // Show as risky if multiple risk factors
+                          coin.rugRisk === "high" ||
+                            coin.liquidity < 10000 ||
+                            coin.change24h < -50
+                          ? "border-destructive bg-destructive/5"
+                          : "border-border bg-background/50",
+                      "hover:border-primary/50",
                     )}
                   >
                     <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 items-center">
@@ -850,13 +1049,18 @@ export default function Index() {
                             {coin.symbol.slice(0, 2)}
                           </div>
                           {/* Only show success indicator for truly safe high potential coins */}
-                          {(coin.aiScore > 70 && coin.rugRisk === 'low' && coin.liquidity > 50000 && coin.change24h > -30) && (
-                            <div className="absolute -top-1 -right-1 w-4 h-4 bg-success rounded-full flex items-center justify-center">
-                              <Zap className="h-2 w-2 text-white" />
-                            </div>
-                          )}
+                          {coin.aiScore > 70 &&
+                            coin.rugRisk === "low" &&
+                            coin.liquidity > 50000 &&
+                            coin.change24h > -30 && (
+                              <div className="absolute -top-1 -right-1 w-4 h-4 bg-success rounded-full flex items-center justify-center">
+                                <Zap className="h-2 w-2 text-white" />
+                              </div>
+                            )}
                           {/* Show warning indicator for rug pull risks */}
-                          {(coin.rugRisk === 'high' || coin.liquidity < 10000 || coin.change24h < -50) && (
+                          {(coin.rugRisk === "high" ||
+                            coin.liquidity < 10000 ||
+                            coin.change24h < -50) && (
                             <div className="absolute -top-1 -right-1 w-4 h-4 bg-destructive rounded-full flex items-center justify-center">
                               <AlertTriangle className="h-2 w-2 text-white" />
                             </div>
@@ -864,13 +1068,20 @@ export default function Index() {
                         </div>
                         <div>
                           <div className="flex items-center space-x-2">
-                            <p className="font-semibold text-foreground">{coin.name}</p>
+                            <p className="font-semibold text-foreground">
+                              {coin.name}
+                            </p>
                             {/* Show appropriate badge based on safety assessment */}
-                            {(coin.aiScore > 70 && coin.rugRisk === 'low' && coin.liquidity > 50000 && coin.change24h > -30) ? (
+                            {coin.aiScore > 70 &&
+                            coin.rugRisk === "low" &&
+                            coin.liquidity > 50000 &&
+                            coin.change24h > -30 ? (
                               <Badge className="bg-success text-success-foreground text-xs px-2 py-0">
                                 SAFE HIGH POTENTIAL
                               </Badge>
-                            ) : (coin.rugRisk === 'high' || coin.liquidity < 10000 || coin.change24h < -50) ? (
+                            ) : coin.rugRisk === "high" ||
+                              coin.liquidity < 10000 ||
+                              coin.change24h < -50 ? (
                               <Badge className="bg-destructive text-destructive-foreground text-xs px-2 py-0">
                                 ⚠️ RUG RISK
                               </Badge>
@@ -881,15 +1092,24 @@ export default function Index() {
                             <span>•</span>
                             <span>{coin.holders.toLocaleString()} holders</span>
                             {/* Only show explosive potential for truly safe coins */}
-                            {(coin.aiScore > 70 && coin.rugRisk === 'low' && coin.liquidity > 50000 && coin.change24h > -30) ? (
+                            {coin.aiScore > 70 &&
+                            coin.rugRisk === "low" &&
+                            coin.liquidity > 50000 &&
+                            coin.change24h > -30 ? (
                               <>
                                 <span>•</span>
-                                <span className="text-success font-medium">🚀 SAFE HIGH POTENTIAL</span>
+                                <span className="text-success font-medium">
+                                  🚀 SAFE HIGH POTENTIAL
+                                </span>
                               </>
-                            ) : (coin.rugRisk === 'high' || coin.liquidity < 10000 || coin.change24h < -50) ? (
+                            ) : coin.rugRisk === "high" ||
+                              coin.liquidity < 10000 ||
+                              coin.change24h < -50 ? (
                               <>
                                 <span>•</span>
-                                <span className="text-destructive font-medium">⚠️ RUG PULL RISK</span>
+                                <span className="text-destructive font-medium">
+                                  ⚠️ RUG PULL RISK
+                                </span>
                               </>
                             ) : null}
                           </p>
@@ -898,24 +1118,41 @@ export default function Index() {
 
                       {/* Price & Change */}
                       <div>
-                        <p className="font-mono text-foreground">${coin.price.toFixed(8)}</p>
+                        <p className="font-mono text-foreground">
+                          ${coin.price.toFixed(8)}
+                        </p>
                         <div className="flex items-center space-x-1">
                           {getPredictionIcon(coin.prediction)}
-                          <span className={cn(
-                            "text-sm font-medium",
-                            coin.change24h > 0 ? "text-success" : "text-destructive"
-                          )}>
-                            {coin.change24h > 0 ? '+' : ''}{coin.change24h.toFixed(1)}%
+                          <span
+                            className={cn(
+                              "text-sm font-medium",
+                              coin.change24h > 0
+                                ? "text-success"
+                                : "text-destructive",
+                            )}
+                          >
+                            {coin.change24h > 0 ? "+" : ""}
+                            {coin.change24h.toFixed(1)}%
                           </span>
                         </div>
                       </div>
 
                       {/* AI Score */}
                       <div>
-                        <p className="text-sm text-muted-foreground mb-1">AI Score</p>
+                        <p className="text-sm text-muted-foreground mb-1">
+                          AI Score
+                        </p>
                         <div className="flex items-center space-x-2">
-                          <Progress value={coin.aiScore} className="h-2 flex-1" />
-                          <span className={cn("text-sm font-bold", getAIScoreColor(coin.aiScore))}>
+                          <Progress
+                            value={coin.aiScore}
+                            className="h-2 flex-1"
+                          />
+                          <span
+                            className={cn(
+                              "text-sm font-bold",
+                              getAIScoreColor(coin.aiScore),
+                            )}
+                          >
                             {coin.aiScore}
                           </span>
                         </div>
@@ -923,17 +1160,29 @@ export default function Index() {
 
                       {/* Whale Activity */}
                       <div>
-                        <p className="text-sm text-muted-foreground mb-1">Whale Activity</p>
+                        <p className="text-sm text-muted-foreground mb-1">
+                          Whale Activity
+                        </p>
                         <div className="flex items-center space-x-2">
-                          <Progress value={coin.whaleActivity} className="h-2 flex-1" />
-                          <span className="text-sm font-bold text-accent">{coin.whaleActivity}</span>
+                          <Progress
+                            value={coin.whaleActivity}
+                            className="h-2 flex-1"
+                          />
+                          <span className="text-sm font-bold text-accent">
+                            {coin.whaleActivity}
+                          </span>
                         </div>
                       </div>
 
                       {/* Risk Assessment */}
                       <div>
-                        <p className="text-sm text-muted-foreground mb-1">Rug Risk</p>
-                        <Badge variant="outline" className={getRiskColor(coin.rugRisk)}>
+                        <p className="text-sm text-muted-foreground mb-1">
+                          Rug Risk
+                        </p>
+                        <Badge
+                          variant="outline"
+                          className={getRiskColor(coin.rugRisk)}
+                        >
                           <AlertTriangle className="h-3 w-3 mr-1" />
                           {coin.rugRisk.toUpperCase()}
                         </Badge>
@@ -946,28 +1195,26 @@ export default function Index() {
                             <DollarSign className="h-3 w-3 text-muted-foreground" />
                             <span className="text-muted-foreground">MCap:</span>
                             <span className="text-foreground">
-                              {coin.mcap >= 1000000000 ?
-                                `$${(coin.mcap / 1000000000).toFixed(1)}B` :
-                                coin.mcap >= 1000000 ?
-                                `$${(coin.mcap / 1000000).toFixed(1)}M` :
-                                coin.mcap >= 1000 ?
-                                `$${(coin.mcap / 1000).toFixed(1)}K` :
-                                `$${coin.mcap.toFixed(0)}`
-                              }
+                              {coin.mcap >= 1000000000
+                                ? `$${(coin.mcap / 1000000000).toFixed(1)}B`
+                                : coin.mcap >= 1000000
+                                  ? `$${(coin.mcap / 1000000).toFixed(1)}M`
+                                  : coin.mcap >= 1000
+                                    ? `$${(coin.mcap / 1000).toFixed(1)}K`
+                                    : `$${coin.mcap.toFixed(0)}`}
                             </span>
                           </div>
                           <div className="flex items-center space-x-1">
                             <Activity className="h-3 w-3 text-muted-foreground" />
                             <span className="text-muted-foreground">Vol:</span>
                             <span className="text-foreground">
-                              {coin.volume >= 1000000000 ?
-                                `$${(coin.volume / 1000000000).toFixed(1)}B` :
-                                coin.volume >= 1000000 ?
-                                `$${(coin.volume / 1000000).toFixed(1)}M` :
-                                coin.volume >= 1000 ?
-                                `$${(coin.volume / 1000).toFixed(1)}K` :
-                                `$${coin.volume.toFixed(0)}`
-                              }
+                              {coin.volume >= 1000000000
+                                ? `$${(coin.volume / 1000000000).toFixed(1)}B`
+                                : coin.volume >= 1000000
+                                  ? `$${(coin.volume / 1000000).toFixed(1)}M`
+                                  : coin.volume >= 1000
+                                    ? `$${(coin.volume / 1000).toFixed(1)}K`
+                                    : `$${coin.volume.toFixed(0)}`}
                             </span>
                           </div>
                         </div>
@@ -1001,7 +1248,8 @@ export default function Index() {
 
         {/* Last Update */}
         <div className="text-center mt-8 text-sm text-muted-foreground">
-          Last updated: {lastUpdate.toLocaleTimeString()} • Powered by PulseSignal AI
+          Last updated: {lastUpdate.toLocaleTimeString()} • Powered by
+          PulseSignal AI
         </div>
       </div>
 
